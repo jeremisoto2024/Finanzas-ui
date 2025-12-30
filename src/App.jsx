@@ -1,16 +1,17 @@
-import { motion } from 'framer-motion'
 import { BanknotesIcon } from '@heroicons/react/24/outline'
+import { motion } from 'framer-motion'
 
+import Layout from '@/components/layout/Layout'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 export default function App() {
   return (
-    <div className="min-h-screen p-6">
+    <Layout>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md mx-auto space-y-4"
+        className="max-w-md space-y-4"
       >
         <Card>
           <CardHeader>
@@ -24,11 +25,7 @@ export default function App() {
         <Button className="w-full">
           Añadir gasto
         </Button>
-
-        <Button variant="outline" className="w-full">
-          Ver detalle
-        </Button>
       </motion.div>
-    </div>
+    </Layout>
   )
 }
