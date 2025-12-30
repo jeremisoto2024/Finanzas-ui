@@ -1,8 +1,7 @@
-import { motion } from 'framer-motion'
-
-import Layout from '@/components/layout/Layout'
-import ResumenGastos from '@/components/dashboard/ResumenGastos'
-import { Button } from '@/components/ui/button'
+import { motion } from "framer-motion"
+import Layout from "./components/layout/Layout"
+import ResumenGastos from "./components/dashboard/ResumenGastos"
+import { Button } from "./components/ui/button"
 
 export default function App() {
   return (
@@ -10,7 +9,7 @@ export default function App() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md space-y-4"
+        className="max-w-md space-y-4 mx-auto"
       >
         <ResumenGastos />
 
