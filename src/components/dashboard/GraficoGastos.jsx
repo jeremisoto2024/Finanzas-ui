@@ -31,21 +31,30 @@ export default function GraficoGastos() {
 
       <CardContent className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="value"
-              innerRadius={50}
-              outerRadius={80}
-            >
-              {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.color}
-                />
-              ))}
-            </Pie>
-          </PieChart>
+          <motion.div
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.4, ease: 'easeOut' }}
+  className="w-full h-full"
+>
+  <PieChart>
+    <Pie
+      data={data}
+      dataKey="value"
+      innerRadius={50}
+      outerRadius={80}
+      isAnimationActive={true}
+    >
+      {data.map((entry, index) => (
+        <Cell
+          key={cell-${index}}
+          fill={entry.color}
+          className="transition-transform duration-200 hover:scale-105"
+        />
+      ))}
+    </Pie>
+  </PieChart>
+</motion.div>
         </ResponsiveContainer>
       </CardContent>
     </Card>
