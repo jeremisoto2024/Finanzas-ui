@@ -9,7 +9,7 @@ export default function App() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md space-y-4 mx-auto"
+        className="max-w-md space-y-6 mx-auto"
       >
         <ResumenGastos />
 
