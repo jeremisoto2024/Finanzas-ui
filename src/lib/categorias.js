@@ -8,22 +8,18 @@ import {
 export const categoriasConfig = {
   Alimentación: {
     icon: ShoppingCartIcon,
-    color: 'text-emerald-400',
-    hex: '#34d399'
+    color: '#34d399' // emerald-400
   },
   Alquiler: {
     icon: HomeIcon,
-    color: 'text-indigo-400',
-    hex: '#818cf8'
+    color: '#6366f1' // indigo-500
   },
   Transporte: {
     icon: TruckIcon,
-    color: 'text-yellow-400',
-    hex: '#facc15'
+    color: '#facc15' // yellow-400
   },
   Otros: {
     icon: EllipsisHorizontalIcon,
-    color: 'text-slate-400',
-    hex: '#94a3b8'
+    color: '#94a3b8' // slate-400
   }
 }
