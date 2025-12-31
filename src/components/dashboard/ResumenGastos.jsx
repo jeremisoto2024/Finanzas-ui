@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { gastos } from '@/lib/data'
 import { totalGastos, gastosPorCategoria } from '@/lib/finanzas'
 import { categoriasConfig } from '@/lib/categorias'
+import { motion } from 'framer-motion'
 
 export default function ResumenGastos() {
   const total = totalGastos(gastos)
