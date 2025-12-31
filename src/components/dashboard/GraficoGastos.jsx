@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { gastos } from '@/lib/data'
 import { gastosPorCategoria } from '@/lib/finanzas'
 import { categoriasConfig } from '@/lib/categorias'
+import { motion } from 'framer-motion'
 
 export default function GraficoGastos() {
   const porCategoria = gastosPorCategoria(gastos)
