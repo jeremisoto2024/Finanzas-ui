@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import Layout from "./components/layout/Layout"
 import ResumenGastos from "./components/dashboard/ResumenGastos"
-import GraficoGastos from '@/components/dashboard/GraficoGastos'
+import GraficoGastos from "./components/dashboard/GraficoGastos'
 import { Button } from "./components/ui/button"
 
 export default function App() {
