@@ -38,7 +38,7 @@ export default function GraficoGastos() {
               outerRadius={80}
             >
               {data.map((entry, index) => (
-                <Cell key={index} fill={entry.color} />
+                <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
           </PieChart>
