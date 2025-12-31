@@ -33,9 +33,10 @@ export default function GraficoGastos() {
       <CardContent className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <motion.div
-  initial={{ opacity: 0, scale: 20 }}
-  animate={{ opacity: 1, scale: 0 }}
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
   transition={{ duration: 0.4, ease: 'easeOut' }}
+  className="w-full h-full"
 >
   <PieChart>
     <Pie
