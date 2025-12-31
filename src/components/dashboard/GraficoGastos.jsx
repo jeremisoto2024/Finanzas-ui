@@ -3,7 +3,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Tooltip,
 } from 'recharts'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { gastos } from '@/lib/data'
@@ -17,7 +16,7 @@ export default function GraficoGastos() {
     ([categoria, monto]) => ({
       name: categoria,
       value: monto,
-      color: categoriasConfig[categoria]?.hex || '#64748b',
+      color: categoriasConfig[categoria]?.hex || '#94a3b8',
     })
   )
 
@@ -35,27 +34,13 @@ export default function GraficoGastos() {
             <Pie
               data={data}
               dataKey="value"
-              nameKey="name"
-              innerRadius={55}
-              outerRadius={85}
-              paddingAngle={4}
+              innerRadius={50}
+              outerRadius={80}
             >
               {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.color}
-                />
+                <Cell key={index} fill={entry.color} />
               ))}
             </Pie>
-
-            <Tooltip
-              contentStyle={{
-                background: '#020617',
-                border: '1px solid #1e293b',
-                borderRadius: '8px',
-                color: '#e5e7eb',
-              }}
-            />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
