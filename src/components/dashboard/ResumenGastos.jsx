@@ -38,7 +38,7 @@ export default function ResumenGastos() {
               >
                 <div className="flex items-center gap-2">
                   {Icon && (
-                    <Icon className={h-4 w-4 ${color}} />
+                    <Icon className={`h-4 w-4 ${color}`} />
                   )}
                   <span className="text-slate-300">
                     {categoria}
