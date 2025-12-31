@@ -24,15 +24,18 @@ export default function ResumenGastos() {
         </p>
 
         <div className="mt-6 space-y-3">
-          {Object.entries(porCategoria).map(([categoria, monto]) => {
+          {Object.entries(porCategoria).map(([categoria, monto], index) => {
             const Icon = categoriasConfig[categoria]?.icon
             const color = categoriasConfig[categoria]?.color || 'text-slate-400'
 
             return (
               <motion.div
-                key={categoria}
-                className="flex items-center justify-between rounded-lg bg-slate-800/40 px-3 py-2"
-              >
+  key={categoria}
+  initial={{ opacity: 0, x: -12 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ delay: index * 0.08, ease: 'easeOut' }}
+  className="flex items-center justify-between rounded-lg bg-slate-800/40 px-3 py-2"
+>
                 <div className="flex items-center gap-2">
                   {Icon && <Icon className="h-4 w-4" style={{ color }} />}
                   <span className="text-sm text-slate-200">
