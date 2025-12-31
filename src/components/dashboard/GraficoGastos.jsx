@@ -4,6 +4,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts'
+
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { gastos } from '@/lib/data'
 import { gastosPorCategoria } from '@/lib/finanzas'
@@ -16,7 +17,7 @@ export default function GraficoGastos() {
     ([categoria, monto]) => ({
       name: categoria,
       value: monto,
-      color: categoriasConfig[categoria]?.colorhex || '#94a3b8',
+      color: categoriasConfig[categoria]?.color || '#94a3b8',
     })
   )
 
@@ -38,7 +39,10 @@ export default function GraficoGastos() {
               outerRadius={80}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.color}
+                />
               ))}
             </Pie>
           </PieChart>
