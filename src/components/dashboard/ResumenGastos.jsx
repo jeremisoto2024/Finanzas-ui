@@ -17,43 +17,41 @@ export default function ResumenGastos() {
       transition={{ duration: 0.3 }}
     >
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Total gastado este mes</CardTitle>
           <BanknotesIcon className="h-5 w-5 text-emerald-400" />
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="text-xl font-semibold">
-            € {total.toFixed(2)}
-          </div>
+        <CardContent>
+          € {total.toFixed(2)}
+        </CardContent>
 
-          <div className="space-y-2">
-            {Object.entries(porCategoria).map(([categoria, monto]) => {
-              const Icon = categoriasConfig[categoria]?.icon
-              const color = categoriasConfig[categoria]?.color
+        <div className="mt-4 space-y-2">
+          {Object.entries(porCategoria).map(([categoria, monto]) => {
+            const Icon = categoriasConfig[categoria]?.icon
+            const color = categoriasConfig[categoria]?.color
 
-              return (
-                <div
-                  key={categoria}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    {Icon && (
-                      <Icon className={h-4 w-4 ${color}} />
-                    )}
-                    <span className="text-slate-300">
-                      {categoria}
-                    </span>
-                  </div>
-
-                  <span className="text-slate-400">
-                    € {monto.toFixed(2)}
+            return (
+              <div
+                key={categoria}
+                className="flex items-center justify-between text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  {Icon && (
+                    <Icon className={h-4 w-4 ${color}} />
+                  )}
+                  <span className="text-slate-300">
+                    {categoria}
                   </span>
                 </div>
-              )
-            })}
-          </div>
-        </CardContent>
+
+                <span className="text-slate-400">
+                  € {monto.toFixed(2)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       </Card>
     </motion.div>
   )
