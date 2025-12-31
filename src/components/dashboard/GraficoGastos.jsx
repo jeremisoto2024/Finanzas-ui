@@ -42,7 +42,7 @@ export default function GraficoGastos() {
             >
               {data.map((entry, index) => (
                 <Cell
-                  key={cell-${index}}
+                  key={`cell-${index}`}
                   fill={entry.color}
                 />
               ))}
