@@ -33,7 +33,7 @@ export default function ResumenGastos() {
                 className="flex items-center justify-between rounded-lg bg-slate-800/40 px-3 py-2"
               >
                 <div className="flex items-center gap-2">
-                  {Icon && <Icon className={`h-4 w-4 ${color}`} />}
+                  {Icon && <Icon className="h-4 w-4" style={{color}} />}
                   <span className="text-sm text-slate-200">
                     {categoria}
                   </span>
