@@ -28,7 +28,7 @@ export default function ResumenGastos() {
             const color = categoriasConfig[categoria]?.color || 'text-slate-400'
 
             return (
-              <div
+              <motion.div
                 key={categoria}
                 className="flex items-center justify-between rounded-lg bg-slate-800/40 px-3 py-2"
               >
@@ -42,7 +42,7 @@ export default function ResumenGastos() {
                 <span className="text-sm font-medium text-slate-400">
                   € {monto.toFixed(2)}
                 </span>
-              </div>
+              </motion.div>
             )
           })}
         </div>
