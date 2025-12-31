@@ -16,7 +16,7 @@ export default function GraficoGastos() {
     ([categoria, monto]) => ({
       name: categoria,
       value: monto,
-      color: categoriasConfig[categoria]?.hex || '#94a3b8',
+      color: categoriasConfig[categoria]?.colorhex || '#94a3b8',
     })
   )
 
