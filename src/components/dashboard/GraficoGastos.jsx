@@ -30,26 +30,22 @@ export default function GraficoGastos() {
         </CardTitle>
       </CardHeader>
 
-      <CardContent> <div className="flex justify-center items-center">
+     <CardContent>
+  <div className="flex justify-center items-center">
     <PieChart width={240} height={240}>
-                <Pie
-                  data={data}
-                  dataKey="value"
-                  innerRadius={50}
-                  outerRadius={80}
-                >
-                  {data.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                    />
-                  ))}
-                </Pie>
-              </PieChart>
-            </motion.div>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+      <Pie
+        data={data}
+        dataKey="value"
+        innerRadius={50}
+        outerRadius={90}
+      >
+        {data.map((entry, index) => (
+          <Cell
+            key={`cell-${index}`}
+            fill={entry.color}
+          />
+        ))}
+      </Pie>
+    </PieChart>
+  </div>
+</CardContent>
