@@ -24,9 +24,9 @@ export default function GraficoGastos() {
   return (
     <Card className="bg-slate-900/60 border border-slate-800">
       <CardHeader>
-        <CardTitle className="text-sm text-slate-300">
-          Gastos por categoría
-        </CardTitle>
+        <CardTitle className="text-xs uppercase tracking-wide text-slate-400">
+  Gastos por categoría
+</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-6">
