@@ -18,10 +18,14 @@ export default function ResumenGastos() {
         <BanknotesIcon className="h-5 w-5 text-emerald-400" />
       </CardHeader>
 
-      <CardContent>
-        <p className="text-3xl font-bold text-white">
-          € {total.toFixed(2)}
-        </p>
+      <motion.p
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.4, ease: 'easeOut' }}
+  className="text-3xl font-bold text-white"
+>
+  € {total.toFixed(2)}
+</motion.p>
 
         <div className="mt-6 space-y-3">
           {Object.entries(porCategoria).map(([categoria, monto], index) => {
