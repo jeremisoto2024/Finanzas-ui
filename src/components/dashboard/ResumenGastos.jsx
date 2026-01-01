@@ -12,9 +12,9 @@ export default function ResumenGastos() {
   return (
     <Card className="bg-slate-900/60 border border-slate-800">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-slate-300">
-          Total gastado este mes
-        </CardTitle>
+        <CardTitle className="text-xs uppercase tracking-wide text-slate-400">
+  Total gastado este mes
+</CardTitle>
         <BanknotesIcon className="h-5 w-5 text-emerald-400" />
       </CardHeader>
      
