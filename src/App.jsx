@@ -15,9 +15,14 @@ export default function App() {
      <ResumenGastos />
 <GraficoGastos />
         
-        <Button className="w-full">
-          Añadir gasto
-        </Button>
+        <Button className="
+  w-full
+  transition-all duration-300
+  hover:scale-[1.02]
+  active:scale-[0.98]
+">
+  Añadir gasto
+</Button>
       </motion.div>
     </Layout>
   )
