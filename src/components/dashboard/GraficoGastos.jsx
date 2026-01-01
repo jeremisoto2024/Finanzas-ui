@@ -39,9 +39,8 @@ export default function GraficoGastos() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="w-full h-full"
             >
-            <motion.div
               <PieChart>
-                <Pie
+                <Pie>
                   data={data}
                   dataKey="value"
                   innerRadius={50}
