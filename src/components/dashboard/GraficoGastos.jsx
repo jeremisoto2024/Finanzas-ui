@@ -23,7 +23,12 @@ export default function GraficoGastos() {
   )
 
   return (
-    <Card className="bg-slate-900/60 border border-slate-800">
+    <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.4, ease: 'easeOut' }}
+>
+  <Card className="bg-slate-900/60 border border-slate-800">
       <CardHeader>
         <CardTitle className="text-sm text-slate-300">
           Gastos por categoría
@@ -49,5 +54,6 @@ export default function GraficoGastos() {
     </PieChart>
   </div>
 </CardContent>
-</Card>)
+</Card>
+</motion.div>)
 }
