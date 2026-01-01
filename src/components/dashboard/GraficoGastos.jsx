@@ -33,7 +33,7 @@ export default function GraficoGastos() {
       <CardContent 
         <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <motion.div
+          <div
   initial={{ opacity: 0, scale: 0.9 }}
   animate={{ opacity: 1, scale: 1 }}
   transition={{ duration: 0.4, ease: 'easeOut' }}
