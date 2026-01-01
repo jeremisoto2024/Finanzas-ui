@@ -31,7 +31,7 @@ export default function GraficoGastos() {
       </CardHeader>
 
       <CardContent>
-        <motion.div className="h-64 w-full">
+        <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -39,6 +39,7 @@ export default function GraficoGastos() {
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="w-full h-full"
             >
+            <motion.div
               <PieChart>
                 <Pie
                   data={data}
