@@ -17,7 +17,8 @@ export default function ResumenGastos() {
         </CardTitle>
         <BanknotesIcon className="h-5 w-5 text-emerald-400" />
       </CardHeader>
-
+     
+      <CardContent>
       <motion.p
   initial={{ opacity: 0, y: 10 }}
   animate={{ opacity: 1, y: 0 }}
