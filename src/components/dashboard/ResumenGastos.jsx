@@ -38,6 +38,7 @@ export default function ResumenGastos() {
   initial={{ opacity: 0, x: -12 }}
   animate={{ opacity: 1, x: 0 }}
   transition={{ delay: index * 0.08, ease: 'easeOut' }}
+  whileHover={{ scale: 1.02 }}
   className="flex items-center justify-between rounded-lg bg-slate-800/40 px-3 py-2"
 >
                 <div className="flex items-center gap-2">
