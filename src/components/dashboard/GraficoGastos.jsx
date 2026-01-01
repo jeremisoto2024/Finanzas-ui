@@ -31,7 +31,12 @@ export default function GraficoGastos() {
 
       <CardContent className="space-y-6">
         {/* GRÁFICO */}
-        <div className="h-64 w-full">
+        <motion.div
+  className="h-64 w-full"
+  initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.4, ease: 'easeOut' }}
+>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -63,6 +68,7 @@ export default function GraficoGastos() {
             </PieChart>
           </ResponsiveContainer>
         </div>
+        </motion.div>
 
         {/* LEYENDA PERSONALIZADA */}
         <div className="space-y-2">
