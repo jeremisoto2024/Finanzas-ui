@@ -3,6 +3,7 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
+  Tooltip,
 } from 'recharts'
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -10,6 +11,7 @@ import { gastos } from '@/lib/data'
 import { gastosPorCategoria } from '@/lib/finanzas'
 import { categoriasConfig } from '@/lib/categorias'
 import { motion } from 'framer-motion'
+import { Tooltip } from 'recharts'
 
 export default function GraficoGastos() {
   const porCategoria = gastosPorCategoria(gastos)
@@ -51,6 +53,15 @@ export default function GraficoGastos() {
           />
         ))}
       </Pie>
+      <Tooltip
+  contentStyle={{
+    backgroundColor: '#0f172a',
+    border: '1px solid #1e293b',
+    borderRadius: '8px',
+    color: '#e5e7eb',
+  }}
+  formatter={(value, name) => [€ ${value.toFixed(2)}, name]}
+/>
     </PieChart>
   </div>
 </CardContent>
