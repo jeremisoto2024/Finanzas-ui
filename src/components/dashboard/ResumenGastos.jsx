@@ -42,12 +42,12 @@ export default function ResumenGastos() {
 >
                 <div className="flex items-center gap-2">
                   {Icon && <Icon className="h-4 w-4" style={{ color }} />}
-                  <span className="text-sm text-slate-200">
+                  <span className="text-sm font-medium text-slate-200">
                     {categoria}
                   </span>
                 </div>
 
-                <span className="text-sm font-medium text-slate-400">
+                <span className="text-sm tabular-nums text-slate-400">
                   € {monto.toFixed(2)}
                 </span>
               </motion.div>
