@@ -49,4 +49,5 @@ export default function GraficoGastos() {
     </PieChart>
   </div>
 </CardContent>
-</Card>
+</Card>)
+}
