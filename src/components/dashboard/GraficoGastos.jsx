@@ -47,12 +47,17 @@ export default function GraficoGastos() {
               </Pie>
 
               <Tooltip
-                formatter={(value) => [`€ ${value.toFixed(2)}`, '']}
+                formatter={(value, name) => [`€ ${value.toFixed(2)}`, name]}
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   border: '1px solid #1e293b',
                   borderRadius: '8px',
+                  }}
+                  itemStyle={{
                   color: '#e5e7eb',
+                }}
+                labelStyle={{
+                color: '#94a3b8',
                 }}
               />
             </PieChart>
