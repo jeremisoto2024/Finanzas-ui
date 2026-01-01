@@ -37,7 +37,6 @@ export default function GraficoGastos() {
   animate={{ opacity: 1, scale: 1 }}
   transition={{ duration: 0.4, ease: 'easeOut' }}
 >
-      </motion.div>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -68,7 +67,7 @@ export default function GraficoGastos() {
               />
             </PieChart>
           </ResponsiveContainer>
-        </div>
+        </motion.div>
 
         {/* LEYENDA PERSONALIZADA */}
         <div className="space-y-2">
