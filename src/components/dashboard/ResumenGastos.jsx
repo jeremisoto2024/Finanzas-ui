@@ -23,8 +23,7 @@ export default function ResumenGastos() {
   initial={{ opacity: 0, y: 10 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 0.4, ease: 'easeOut' }}
-  className="text-3xl font-bold text-white"
->
+  className="text-3xl font-semibold text-white tracking-tight">
   € {total.toFixed(2)}
 </motion.p>
 
