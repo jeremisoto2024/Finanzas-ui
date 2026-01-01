@@ -11,7 +11,6 @@ import { gastos } from '@/lib/data'
 import { gastosPorCategoria } from '@/lib/finanzas'
 import { categoriasConfig } from '@/lib/categorias'
 import { motion } from 'framer-motion'
-import { Tooltip } from 'recharts'
 
 export default function GraficoGastos() {
   const porCategoria = gastosPorCategoria(gastos)
@@ -60,7 +59,7 @@ export default function GraficoGastos() {
     borderRadius: '8px',
     color: '#e5e7eb',
   }}
-  formatter={(value, name) => [€ ${value.toFixed(2)}, name]}
+  formatter={(value, name) => [`€ ${value.toFixed(2)}`, name]}
 />
     </PieChart>
   </div>
