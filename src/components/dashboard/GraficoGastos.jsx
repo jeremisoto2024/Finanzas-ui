@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   PieChart,
   Pie,
@@ -11,7 +12,9 @@ import { gastosPorCategoria } from '@/lib/finanzas'
 import { categoriasConfig } from '@/lib/categorias'
 import { motion } from 'framer-motion'
 
+
 export default function GraficoGastos() {
+  const [activeIndex, setActiveIndex] = useState(null)
   const porCategoria = gastosPorCategoria(gastos)
 
   const data = Object.entries(porCategoria).map(([categoria, monto]) => ({
@@ -40,15 +43,24 @@ export default function GraficoGastos() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
-                dataKey="value"
-                innerRadius={50}
-                outerRadius={80}
-                isAnimationActive
-              >
+  data={data}
+  dataKey="value"
+  innerRadius={50}
+  outerRadius={80}
+  isAnimationActive
+  activeIndex={activeIndex}
+  onMouseEnter={(_, index) => setActiveIndex(index)}
+  onMouseLeave={() => setActiveIndex(null)}
+>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
+  <Cell
+    key={`cell-${index}`}
+    fill={entry.color}
+    opacity={
+      activeIndex === null || activeIndex === index ? 1 : 0.4
+    }
+  />
+))}
               </Pie>
 
               <Tooltip
