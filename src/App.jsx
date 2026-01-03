@@ -13,9 +13,10 @@ export default function App() {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md space-y-6 mx-auto"
       >
+      <DineroDisponible/>
      <ResumenGastos />
 <GraficoGastos />
-<DineroDisponible/>
+
         
         <Button className="
   w-full
