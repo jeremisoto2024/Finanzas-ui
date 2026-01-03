@@ -4,6 +4,7 @@ import ResumenGastos from "./components/dashboard/ResumenGastos"
 import GraficoGastos from "./components/dashboard/GraficoGastos"
 import { Button } from "./components/ui/button"
 import DineroDisponible from '@/components/dashboard/DineroDisponible'
+import PagosFijos from '@/components/dashboard/PagosFijos'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         className="max-w-md space-y-6 mx-auto"
       >
       <DineroDisponible/>
+      <PagosFijos/>
      <ResumenGastos />
 <GraficoGastos />
 
