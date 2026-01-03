@@ -50,9 +50,9 @@ export default function BalanceMensual() {
             )}
 
             <span
-              className={font-bold ${
+              className={`font-bold ${
                 positivo ? 'text-emerald-400' : 'text-rose-400'
-              }}
+              }`}
             >
               € {balance.toFixed(2)}
             </span>
