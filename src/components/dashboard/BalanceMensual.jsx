@@ -10,6 +10,15 @@ export default function BalanceMensual() {
   const gastosTotales = totalGastos(gastos)
   const balance = INGRESOS_MES - gastosTotales
   const positivo = balance >= 0
+  const hoy = new Date().getDate()
+const diasMes = new Date(
+  new Date().getFullYear(),
+  new Date().getMonth() + 1,
+  0
+).getDate()
+
+const promedioDiario = gastos / hoy
+const proyeccion = promedioDiario * diasMes
 
   return (
     <Card className="bg-slate-900/60 border border-slate-800">
