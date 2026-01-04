@@ -17,7 +17,7 @@ const diasMes = new Date(
   0
 ).getDate()
 
-const promedioDiario = gastos / hoy
+const promedioDiario = gastosTotales / hoy
 const proyeccion = promedioDiario * diasMes
 
   return (
@@ -67,6 +67,13 @@ const proyeccion = promedioDiario * diasMes
             </span>
           </div>
         </div>
+        <p className="text-xs text-slate-400 mt-1">
+  A este ritmo gastarías aprox.
+  <span className="font-medium text-slate-300">
+    {' '}€ {proyeccion.toFixed(0)}
+  </span>{' '}
+  este mes
+</p>
       </CardContent>
     </Card>
   )
