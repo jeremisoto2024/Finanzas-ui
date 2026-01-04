@@ -41,7 +41,13 @@ export default function PagosFijos() {
 
         <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-medium">
           <span className="text-slate-300">Total fijos</span>
-          <span className="text-slate-200">€ {total}</span>
+          <span
+  className={`font-bold ${
+    total > 700 ? 'text-rose-400' : 'text-slate-200'
+  }`}
+>
+  € {total}
+</span>
         </div>
       </CardContent>
     </Card>
