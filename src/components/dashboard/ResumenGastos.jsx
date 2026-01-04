@@ -26,6 +26,11 @@ export default function ResumenGastos() {
   className="text-3xl font-semibold text-white tracking-tight">
   € {total.toFixed(2)}
 </motion.p>
+<p className="text-xs text-slate-400 mt-1">
+  {total > 800
+    ? 'Este mes estás gastando más de lo habitual'
+    : 'Buen control de gastos 👍'}
+</p>
 
         <div className="mt-6 space-y-3">
           {Object.entries(porCategoria).map(([categoria, monto], index) => {
