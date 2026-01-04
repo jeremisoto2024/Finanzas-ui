@@ -10,9 +10,13 @@ const items = [
   { name: 'Configuración', icon: Cog6ToothIcon }
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ mobile = false }) {
   return (
-    <aside className="hidden md:flex md:w-64 flex-col border-r border-slate-800 bg-slate-950 p-4">
+    <aside
+      className={`w-64 flex-col border-r border-slate-800 bg-slate-950 p-4
+        ${mobile ? 'flex' : 'hidden md:flex'}
+        `}
+    >
       <h2 className="mb-6 text-lg font-semibold text-emerald-400">
         Finanzas
       </h2>
