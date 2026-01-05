@@ -1,0 +1,8 @@
+export default function Dashboard() {
+  return (
+    <div>
+      {/* Aquí YA tienes tus cards */}
+      {/* Resumen, gráficos, balance, etc */}
+    </div>
+  )
+}
