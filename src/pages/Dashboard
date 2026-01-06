@@ -1,4 +1,4 @@
-import BalanceMensual from '../components/dashboard/BalanceMensual'
+import { BalanceMensual } from '../components/dashboard/BalanceMensual'
 import DineroDisponible from '../components/dashboard/DineroDisponible'
 import EstadoFinanciero from '../components/dashboard/EstadoFinanciero'
 import GraficoGastos from '../components/dashboard/GraficoGastos'
