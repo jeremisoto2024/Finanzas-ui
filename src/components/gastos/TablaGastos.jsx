@@ -1,18 +1,22 @@
 import { useState, useMemo } from 'react';
 import { gastosMensuales } from '@/lib/gastos';
 import FilaGasto from './FilaGasto';
+
+// ICONOS LUCIDE REACT (modernos y limpios)
 import { 
-  FiDownload, 
-  FiFilter,
-  FiCalendar,
-  FiCreditCard,
-  FiDatabase,
-  FiTag,
-  FiTrendingDown,
-  FiBell,
-  FiChevronDown,
-  FiFileText
-} from 'react-icons/fi';
+  Download, 
+  Filter,
+  Calendar,
+  CreditCard,
+  Database,
+  Tag,
+  TrendingDown,
+  Bell,
+  ChevronDown,
+  FileText,
+  Wallet,
+  AlertCircle
+} from 'lucide-react';
 
 export default function TablaGastos() {
   const [filtroMes, setFiltroMes] = useState('');
@@ -60,7 +64,7 @@ export default function TablaGastos() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* HEADER MEJORADO */}
+      {/* HEADER CON LUCIDE ICONS */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -75,26 +79,25 @@ export default function TablaGastos() {
             </div>
           </div>
           
-          {/* BOTÓN DE EXPORTAR MEJORADO */}
+          {/* BOTÓN CON LUCIDE ICONS */}
           <button 
             onClick={exportarCSV}
-            className="group flex items-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded-lg text-sm font-medium transition-all duration-200 hover:border-slate-600 hover:shadow-lg"
+            className="group flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-blue-900/30"
           >
-            <FiDownload className="text-lg group-hover:scale-110 transition-transform" />
-            <FiFileText className="text-base" />
+            <Download className="h-5 w-5 group-hover:scale-110 transition-transform" />
+            <FileText className="h-5 w-5" />
             <span>Exportar CSV</span>
           </button>
         </div>
       </div>
 
-      {/* LAYOUT DE DOS COLUMNAS */}
+      {/* LAYOUT CON LUCIDE ICONS */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA - FILTROS */}
+        {/* COLUMNA IZQUIERDA */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
-          {/* PANEL DE FILTROS CON ICONOS MODERNOS */}
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <FiFilter className="text-blue-400 text-lg" />
+              <Filter className="h-5 w-5 text-blue-400" />
               <h2 className="text-lg font-semibold text-white">Filtros</h2>
             </div>
             
@@ -102,7 +105,7 @@ export default function TablaGastos() {
               {/* FILTRO MES */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <FiCalendar className="text-blue-400" />
+                  <Calendar className="h-4 w-4 text-blue-400" />
                   Mes
                 </label>
                 <div className="relative">
@@ -116,14 +119,14 @@ export default function TablaGastos() {
                     <option value="2025-09">Septiembre 2025</option>
                     <option value="2025-08">Agosto 2025</option>
                   </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                 </div>
               </div>
 
-              {/* FILTRO MÉTODO DE PAGO */}
+              {/* FILTRO MÉTODO */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <FiCreditCard className="text-purple-400" />
+                  <CreditCard className="h-4 w-4 text-purple-400" />
                   Método de pago
                 </label>
                 <div className="relative">
@@ -137,14 +140,14 @@ export default function TablaGastos() {
                       <option key={metodo} value={metodo}>{metodo}</option>
                     ))}
                   </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                 </div>
               </div>
 
               {/* FILTRO CUENTA */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <FiDatabase className="text-green-400" />
+                  <Database className="h-4 w-4 text-green-400" />
                   Cuenta
                 </label>
                 <div className="relative">
@@ -158,14 +161,14 @@ export default function TablaGastos() {
                       <option key={cuenta} value={cuenta}>{cuenta}</option>
                     ))}
                   </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                 </div>
               </div>
 
               {/* FILTRO CATEGORÍA */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <FiTag className="text-yellow-400" />
+                  <Tag className="h-4 w-4 text-yellow-400" />
                   Categoría
                 </label>
                 <div className="relative">
@@ -179,12 +182,12 @@ export default function TablaGastos() {
                       <option key={categoria} value={categoria}>{categoria}</option>
                     ))}
                   </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                 </div>
               </div>
             </div>
 
-            {/* RESUMEN MEJORADO */}
+            {/* RESUMEN */}
             <div className="mt-6 pt-5 border-t border-slate-800">
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
@@ -206,37 +209,37 @@ export default function TablaGastos() {
                   setFiltroCuenta('');
                   setFiltroCategoria('');
                 }}
-                className="w-full mt-4 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
+                className="w-full mt-4 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition"
               >
-                <span>Limpiar filtros</span>
+                Limpiar filtros
               </button>
             </div>
           </div>
 
-          {/* TARJETAS INFORMATIVAS CON ICONOS MODERNOS */}
+          {/* TRACKER CON LUCIDE ICONS */}
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <FiTrendingDown className="text-blue-400" />
+              <TrendingDown className="h-4 w-4 text-blue-400" />
               Análisis rápido
             </h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
                 <div className="flex items-center gap-2">
-                  <FiTag className="text-blue-400" />
+                  <Tag className="h-4 w-4 text-blue-400" />
                   <span className="text-sm text-slate-300">Categoría principal</span>
                 </div>
                 <span className="text-sm font-medium text-white">Alquiler</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                 <div className="flex items-center gap-2">
-                  <FiDatabase className="text-green-400" />
+                  <Wallet className="h-4 w-4 text-green-400" />
                   <span className="text-sm text-slate-300">Cuenta más usada</span>
                 </div>
                 <span className="text-sm font-medium text-white">BBVA</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                 <div className="flex items-center gap-2">
-                  <FiCreditCard className="text-purple-400" />
+                  <CreditCard className="h-4 w-4 text-purple-400" />
                   <span className="text-sm text-slate-300">Método favorito</span>
                 </div>
                 <span className="text-sm font-medium text-white">Transferencia</span>
@@ -248,7 +251,6 @@ export default function TablaGastos() {
         {/* COLUMNA DERECHA - TABLA */}
         <div className="lg:w-2/3 xl:w-3/4">
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 overflow-hidden">
-            {/* HEADER DE TABLA MEJORADO */}
             <div className="px-6 py-4 border-b border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -265,7 +267,6 @@ export default function TablaGastos() {
               </div>
             </div>
 
-            {/* TABLA CON DISEÑO MEJORADO */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px]">
                 <thead className="bg-slate-900">
@@ -302,7 +303,7 @@ export default function TablaGastos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <FiCreditCard className="text-slate-500 text-sm" />
+                          <CreditCard className="h-4 w-4 text-slate-500" />
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
                             {gasto.metodoPago}
                           </span>
@@ -310,7 +311,7 @@ export default function TablaGastos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <FiTag className="text-slate-500 text-sm" />
+                          <Tag className="h-4 w-4 text-slate-500" />
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
                             {gasto.categoria}
                           </span>
@@ -318,7 +319,7 @@ export default function TablaGastos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                         <div className="flex items-center gap-2">
-                          <FiDatabase className="text-slate-500 text-sm" />
+                          <Database className="h-4 w-4 text-slate-500" />
                           {gasto.cuenta}
                         </div>
                       </td>
@@ -333,16 +334,8 @@ export default function TablaGastos() {
                   ))}
                 </tbody>
               </table>
-              
-              {gastosFiltrados.length === 0 && (
-                <div className="py-12 text-center">
-                  <div className="text-slate-500 text-lg mb-2">No se encontraron gastos</div>
-                  <p className="text-sm text-slate-600">Prueba ajustando los filtros</p>
-                </div>
-              )}
             </div>
 
-            {/* FOOTER DE TABLA */}
             <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
                 <div className="text-slate-400">
@@ -350,27 +343,27 @@ export default function TablaGastos() {
                   Total: <span className="font-medium text-slate-300">€{total.toFixed(2)}</span>
                 </div>
                 <div className="text-slate-500 text-sm flex items-center gap-1">
-                  <FiBell className="text-xs" />
+                  <Bell className="h-3 w-3" />
                   <span>Actualizado recientemente</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* SUGERENCIAS CON ICONOS MODERNOS */}
+          {/* SUGERENCIAS */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-blue-900/20 border border-blue-800/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <FiTrendingDown className="text-blue-400" />
+                <TrendingDown className="h-4 w-4 text-blue-400" />
                 <h4 className="text-sm font-semibold text-blue-300">Sugerencia de ahorro</h4>
               </div>
               <p className="text-sm text-slate-300">
-                Reduce un 10% en "Diversión" este mes y ahorra ~€45
+                Reduce un 10% en "Diversión" y ahorra ~€45 este mes
               </p>
             </div>
             <div className="bg-green-900/20 border border-green-800/30 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <FiBell className="text-green-400" />
+                <AlertCircle className="h-4 w-4 text-green-400" />
                 <h4 className="text-sm font-semibold text-green-300">Próximos pagos</h4>
               </div>
               <p className="text-sm text-slate-300">
