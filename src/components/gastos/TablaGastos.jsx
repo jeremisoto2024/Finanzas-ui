@@ -1,14 +1,6 @@
 import { useState, useMemo } from 'react';
 import { gastosMensuales } from '@/lib/gastos';
 import FilaGasto from './FilaGasto';
-import { 
-  FiFilter, 
-  FiDownload, 
-  FiCalendar, 
-  FiCreditCard, 
-  FiDatabase,
-  FiTag 
-} from 'react-icons/fi';
 
 export default function TablaGastos() {
   const [filtroMes, setFiltroMes] = useState('');
@@ -16,9 +8,10 @@ export default function TablaGastos() {
   const [filtroCuenta, setFiltroCuenta] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
 
-  const metodosUnicos = [...new Set(gastosMensuales.map(g => g.metodoPago))];
-  const cuentasUnicas = [...new Set(gastosMensuales.map(g => g.cuenta))];
-  const categoriasUnicas = [...new Set(gastosMensuales.map(g => g.categoria))];
+  // Datos basados en tus capturas
+  const metodosPago = ['Apple Pay', 'Transferencia', 'Bizum', 'Efectivo', 'Tarjeta'];
+  const categorias = ['Alimentación', 'Salud e higiene', 'Transporte', 'Diversión', 'Ropa', 'Otros', 'Ahorro', 'Alquiler'];
+  const cuentas = ['BBVA', 'Efectivo', 'Bizum', 'PayPal'];
   
   const gastosFiltrados = useMemo(() => {
     return gastosMensuales.filter(gasto => {
@@ -48,159 +41,137 @@ export default function TablaGastos() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `gastos_${filtroMes || 'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `gastos_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
     
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   return (
-    <div className="space-y-6">
-      {/* ENCABEZADO MEJORADO */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-700 shadow-lg">
-        <div className="flex flex-col md:flex-row md:items-center justify-between">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      {/* HEADER MINIMALISTA */}
+      <div className="mb-8">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Gastos del mes</h1>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-red-400">€{total.toFixed(2)}</span>
-              <span className="text-slate-400">• Octubre 2025</span>
+            <h1 className="text-2xl font-bold text-gray-900">Gastos</h1>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-3xl font-semibold text-gray-900">€{total.toFixed(2)}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-gray-600">Octubre 2025</span>
             </div>
-            <p className="text-slate-400 text-sm mt-2">
-              {gastosFiltrados.length} transacciones • {gastosMensuales.length} totales
-            </p>
           </div>
-          
           <button 
             onClick={exportarCSV}
-            className="mt-4 md:mt-0 px-5 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium flex items-center gap-2 shadow-lg hover:shadow-red-900/30 transition-all"
+            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium flex items-center gap-2 transition"
           >
-            <FiDownload className="text-lg" />
+            <span>📥</span>
             Exportar CSV
           </button>
         </div>
       </div>
 
-      {/* PANEL DE FILTROS MEJORADO */}
-      <div className="bg-slate-900/80 backdrop-blur-sm rounded-2xl p-5 border border-slate-700 shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <FiFilter className="text-blue-400 text-lg" />
-          <h2 className="text-lg font-semibold text-white">Filtros</h2>
-          <span className="ml-auto px-3 py-1 bg-slate-800 text-slate-300 rounded-full text-sm">
-            {gastosFiltrados.length} resultados
-          </span>
-        </div>
-
-        {/* FILTROS EN GRID RESPONSIVE */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* FILTRO MES */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <FiCalendar className="text-blue-400" />
-              Mes
-            </label>
-            <div className="relative">
-              <select 
-                value={filtroMes}
-                onChange={(e) => setFiltroMes(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              >
-                <option value="">Todos los meses</option>
-                <option value="2025-10">Octubre 2025</option>
-                <option value="2025-09">Septiembre 2025</option>
-                <option value="2025-08">Agosto 2025</option>
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
-                ▼
-              </div>
-            </div>
-          </div>
-
-          {/* FILTRO MÉTODO */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <FiCreditCard className="text-purple-400" />
-              Método de pago
-            </label>
-            <div className="relative">
-              <select 
-                value={filtroMetodo}
-                onChange={(e) => setFiltroMetodo(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white appearance-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
-              >
-                <option value="">Todos los métodos</option>
-                {metodosUnicos.map(metodo => (
-                  <option key={metodo} value={metodo}>{metodo}</option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
-                ▼
-              </div>
-            </div>
-          </div>
-
-          {/* FILTRO CUENTA */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <FiDatabase className="text-green-400" />
-              Cuenta bancaria
-            </label>
-            <div className="relative">
-              <select 
-                value={filtroCuenta}
-                onChange={(e) => setFiltroCuenta(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white appearance-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-              >
-                <option value="">Todas las cuentas</option>
-                {cuentasUnicas.map(cuenta => (
-                  <option key={cuenta} value={cuenta}>{cuenta}</option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
-                ▼
-              </div>
-            </div>
-          </div>
-
-          {/* FILTRO CATEGORÍA */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <FiTag className="text-yellow-400" />
-              Categoría
-            </label>
-            <div className="relative">
-              <select 
-                value={filtroCategoria}
-                onChange={(e) => setFiltroCategoria(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white appearance-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
-              >
-                <option value="">Todas las categorías</option>
-                {categoriasUnicas.map(categoria => (
-                  <option key={categoria} value={categoria}>{categoria}</option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none">
-                ▼
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* TOTAL Y BOTONES DE ACCIÓN */}
-        <div className="mt-6 pt-5 border-t border-slate-700/50">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">€{total.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">Total filtrado</div>
-              </div>
-              <div className="h-8 w-px bg-slate-700 hidden sm:block"></div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-slate-300">{gastosFiltrados.length}</div>
-                <div className="text-xs text-slate-400">Transacciones</div>
-              </div>
-            </div>
+      {/* LAYOUT DE 2 COLUMNAS */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* COLUMNA IZQUIERDA - FILTROS */}
+        <div className="lg:w-1/3 xl:w-1/4">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h2>
             
-            <div className="flex gap-3">
+            <div className="space-y-4">
+              {/* FILTRO MES */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="text-gray-500">📅</span>
+                    Mes
+                  </span>
+                </label>
+                <select 
+                  value={filtroMes}
+                  onChange={(e) => setFiltroMes(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                >
+                  <option value="">Todos los meses</option>
+                  <option value="2025-10">Octubre 2025</option>
+                  <option value="2025-09">Septiembre 2025</option>
+                  <option value="2025-08">Agosto 2025</option>
+                </select>
+              </div>
+
+              {/* FILTRO MÉTODO DE PAGO */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="text-gray-500">💳</span>
+                    Método de pago
+                  </span>
+                </label>
+                <select 
+                  value={filtroMetodo}
+                  onChange={(e) => setFiltroMetodo(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                >
+                  <option value="">Todos los métodos</option>
+                  {metodosPago.map(metodo => (
+                    <option key={metodo} value={metodo}>{metodo}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* FILTRO CUENTA */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="text-gray-500">🏦</span>
+                    Cuenta
+                  </span>
+                </label>
+                <select 
+                  value={filtroCuenta}
+                  onChange={(e) => setFiltroCuenta(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                >
+                  <option value="">Todas las cuentas</option>
+                  {cuentas.map(cuenta => (
+                    <option key={cuenta} value={cuenta}>{cuenta}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* FILTRO CATEGORÍA */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="text-gray-500">🏷️</span>
+                    Categoría
+                  </span>
+                </label>
+                <select 
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                >
+                  <option value="">Todas las categorías</option>
+                  {categorias.map(categoria => (
+                    <option key={categoria} value={categoria}>{categoria}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* RESUMEN */}
+            <div className="mt-6 pt-5 border-t border-gray-200">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">Total filtrado</span>
+                  <span className="text-lg font-semibold text-gray-900">€{total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-sm">Transacciones</span>
+                  <span className="font-medium text-gray-900">{gastosFiltrados.length}</span>
+                </div>
+              </div>
+
               <button 
                 onClick={() => {
                   setFiltroMes('');
@@ -208,71 +179,140 @@ export default function TablaGastos() {
                   setFiltroCuenta('');
                   setFiltroCategoria('');
                 }}
-                className="px-4 py-2 border border-slate-700 text-slate-300 hover:bg-slate-800 rounded-lg text-sm font-medium transition"
+                className="w-full mt-4 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition"
               >
                 Limpiar filtros
               </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* TABLA MEJORADA */}
-      <div className="bg-slate-900/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700 shadow-lg">
-        <div className="px-6 py-4 border-b border-slate-700 bg-slate-900/50">
-          <h3 className="font-medium text-white">Historial de gastos</h3>
-          <p className="text-sm text-slate-400">Desliza horizontalmente para ver más columnas</p>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-900/80">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Fecha</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Concepto</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Método</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Categoría</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">Cuenta</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-300">Monto</th>
-              </tr>
-            </thead>
-            
-            <tbody className="divide-y divide-slate-800">
-              {gastosFiltrados.map((gasto) => (
-                <tr key={gasto.id} className="hover:bg-slate-800/50 transition">
-                  <td className="px-6 py-4 text-slate-300">{gasto.fecha}</td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-white">{gasto.concepto}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300">
-                      {gasto.metodoPago}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-900/30 text-blue-300">
-                      {gasto.categoria}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-300">{gasto.cuenta}</td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="font-semibold text-red-400">€{gasto.monto.toFixed(2)}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {gastosFiltrados.length === 0 && (
-            <div className="py-12 text-center">
-              <div className="text-slate-500 mb-2">No se encontraron gastos</div>
-              <p className="text-sm text-slate-600">Prueba ajustando los filtros</p>
+          {/* MINI TRACKER (basado en tu captura) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Tracker rápido</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <span className="text-sm text-blue-700">Categoría activa</span>
+                <span className="text-sm font-medium text-gray-900">Alquiler</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">Cuenta principal</span>
+                <span className="text-sm font-medium text-gray-900">BBVA</span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-        
-        <div className="px-6 py-3 border-t border-slate-700 bg-slate-900/50 text-sm text-slate-400">
-          Mostrando {gastosFiltrados.length} de {gastosMensuales.length} gastos
+
+        {/* COLUMNA DERECHA - TABLA */}
+        <div className="lg:w-2/3 xl:w-3/4">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {/* HEADER DE TABLA */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Historial de gastos</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Mostrando {gastosFiltrados.length} de {gastosMensuales.length} transacciones
+                  </p>
+                </div>
+                <div className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
+                  Desliza → para ver más columnas
+                </div>
+              </div>
+            </div>
+
+            {/* TABLA MINIMALISTA */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px]">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Concepto
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Método
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Categoría
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cuenta
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Monto
+                    </th>
+                  </tr>
+                </thead>
+                
+                <tbody className="divide-y divide-gray-200">
+                  {gastosFiltrados.map((gasto) => (
+                    <tr key={gasto.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {gasto.fecha}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{gasto.concepto}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                          {gasto.metodoPago}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                          {gasto.categoria}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {gasto.cuenta}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
+                        €{gasto.monto.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              {/* ESTADO VACÍO */}
+              {gastosFiltrados.length === 0 && (
+                <div className="py-12 text-center">
+                  <div className="text-gray-400 text-lg mb-2">No se encontraron gastos</div>
+                  <p className="text-sm text-gray-500">Prueba ajustando los filtros</p>
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER DE TABLA */}
+            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <span>
+                  {gastosFiltrados.length} transacciones • Total: €{total.toFixed(2)}
+                </span>
+                <span className="hidden sm:inline">
+                  Actualizado hoy
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* SUGERENCIAS DE AHORRO */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-blue-800 mb-2">Sugerencia de ahorro</h4>
+              <p className="text-sm text-blue-700">
+                Reduce un 10% en "Diversión" este mes y ahorra ~€45
+              </p>
+            </div>
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+              <h4 className="text-sm font-semibold text-green-800 mb-2">Próximos pagos</h4>
+              <p className="text-sm text-green-700">
+                Alquiler vence el 02/11 • €750
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
