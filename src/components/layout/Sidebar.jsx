@@ -1,19 +1,19 @@
 import {
   HomeIcon,
   ChartBarIcon,
-  Cog6ToothIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 
 const items = [
   { name: 'Dashboard', icon: HomeIcon },
   { name: 'Gastos', icon: ChartBarIcon },
-  { name: 'Configuración', icon: Cog6ToothIcon },
+  { name: 'Configuración', icon: Cog6ToothIcon }
 ]
 
 export default function Sidebar({
   mobile = false,
   activePage,
-  setActivePage,
+  setActivePage
 }) {
   return (
     <aside
@@ -27,21 +27,22 @@ export default function Sidebar({
 
       <nav className="space-y-1">
         {items.map((item) => {
-          const isActive = activePage === item.name
+          const Icon = item.icon
+          const activo = activePage === item.name
 
           return (
             <button
               key={item.name}
               onClick={() => setActivePage(item.name)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm
-                ${
-                  isActive
-                    ? 'bg-slate-800 text-white'
-                    : 'text-slate-300 hover:bg-slate-800'
-                }
+              className={`
+                flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm
+                transition
+                ${activo
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : 'text-slate-300 hover:bg-slate-800'}
               `}
             >
-              <item.icon className="h-5 w-5" />
+              <Icon className="h-5 w-5" />
               {item.name}
             </button>
           )
