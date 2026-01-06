@@ -64,13 +64,15 @@ export default function TablaGastos() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* HEADER CON LUCIDE ICONS */}
+      {/* HEADER MEJORADO - TÍTULO CAMBIADO Y TOTAL EN ROJO */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Finanzas</h1>
+            {/* CAMBIADO: "Finanzas" por "Gastos del Mes" */}
+            <h1 className="text-2xl font-bold text-white mb-1">Gastos del Mes</h1>
             <div className="flex items-center gap-3 mt-2">
-              <span className="text-3xl font-bold text-white">€{total.toFixed(2)}</span>
+              {/* CAMBIADO: Color del total a rojo */}
+              <span className="text-3xl font-bold text-red-400">€{total.toFixed(2)}</span>
               <div className="h-2 w-2 rounded-full bg-slate-600"></div>
               <span className="text-slate-400">Octubre 2025</span>
               <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
@@ -79,7 +81,7 @@ export default function TablaGastos() {
             </div>
           </div>
           
-          {/* BOTÓN CON LUCIDE ICONS */}
+          {/* BOTÓN DE EXPORTAR MEJORADO */}
           <button 
             onClick={exportarCSV}
             className="group flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-blue-900/30"
@@ -91,10 +93,11 @@ export default function TablaGastos() {
         </div>
       </div>
 
-      {/* LAYOUT CON LUCIDE ICONS */}
+      {/* LAYOUT DE DOS COLUMNAS */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA */}
+        {/* COLUMNA IZQUIERDA - FILTROS */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
+          {/* PANEL DE FILTROS */}
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-5 w-5 text-blue-400" />
@@ -123,7 +126,7 @@ export default function TablaGastos() {
                 </div>
               </div>
 
-              {/* FILTRO MÉTODO */}
+              {/* FILTRO MÉTODO DE PAGO */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <CreditCard className="h-4 w-4 text-purple-400" />
@@ -193,7 +196,8 @@ export default function TablaGastos() {
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
                   <div>
                     <div className="text-sm text-slate-400">Total filtrado</div>
-                    <div className="text-xl font-bold text-white">€{total.toFixed(2)}</div>
+                    {/* CAMBIADO: Color del total a rojo aquí también */}
+                    <div className="text-xl font-bold text-red-400">€{total.toFixed(2)}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-slate-400">Transacciones</div>
@@ -216,7 +220,7 @@ export default function TablaGastos() {
             </div>
           </div>
 
-          {/* TRACKER CON LUCIDE ICONS */}
+          {/* TARJETA DE ANÁLISIS RÁPIDO */}
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-blue-400" />
@@ -251,6 +255,7 @@ export default function TablaGastos() {
         {/* COLUMNA DERECHA - TABLA */}
         <div className="lg:w-2/3 xl:w-3/4">
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 overflow-hidden">
+            {/* HEADER DE TABLA */}
             <div className="px-6 py-4 border-b border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -267,6 +272,7 @@ export default function TablaGastos() {
               </div>
             </div>
 
+            {/* TABLA */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px]">
                 <thead className="bg-slate-900">
@@ -336,11 +342,12 @@ export default function TablaGastos() {
               </table>
             </div>
 
+            {/* FOOTER DE TABLA */}
             <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
                 <div className="text-slate-400">
                   <span className="font-medium text-slate-300">{gastosFiltrados.length}</span> transacciones • 
-                  Total: <span className="font-medium text-slate-300">€{total.toFixed(2)}</span>
+                  Total: <span className="font-medium text-red-400">€{total.toFixed(2)}</span>
                 </div>
                 <div className="text-slate-500 text-sm flex items-center gap-1">
                   <Bell className="h-3 w-3" />
