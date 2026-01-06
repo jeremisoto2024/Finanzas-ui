@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import Dashboard from '@/pages/Dashboard'
+import Gastos from '@/pages/Gastos'
+import Configuracion from '@/pages/Configuracion'
 
-export default function Layout({ children, activePage, setActivePage }) {
+export default function Layout() {
   const [menuAbierto, setMenuAbierto] = useState(false)
+  const [activePage, setActivePage] = useState('Dashboard')
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 md:flex">
       
-      {/* Sidebar desktop */}
+      {/* Sidebar desktop ✅ */}
       <Sidebar
         activePage={activePage}
         setActivePage={setActivePage}
@@ -17,14 +21,13 @@ export default function Layout({ children, activePage, setActivePage }) {
       <div className="flex-1">
         <Navbar onMenu={() => setMenuAbierto(true)} />
 
-        {/* Sidebar móvil */}
+        {/* Sidebar móvil ✅ */}
         {menuAbierto && (
           <div className="fixed inset-0 z-50 md:hidden flex">
             <div
               className="absolute inset-0 bg-black/50"
               onClick={() => setMenuAbierto(false)}
             />
-
             <div className="relative z-10 h-full w-64">
               <Sidebar
                 mobile
@@ -39,7 +42,9 @@ export default function Layout({ children, activePage, setActivePage }) {
         )}
 
         <main className="p-4 md:p-6">
-          {children}
+          {activePage === 'Dashboard' && <Dashboard />}
+          {activePage === 'Gastos' && <Gastos />}
+          {activePage === 'Configuración' && <Configuracion />}
         </main>
       </div>
     </div>
