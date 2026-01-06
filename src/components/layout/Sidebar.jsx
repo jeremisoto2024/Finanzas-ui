@@ -27,8 +27,7 @@ export default function Sidebar({
 
       <nav className="space-y-1">
         {items.map((item) => {
-          const Icon = item.icon
-          const activo = activePage === item.name
+          const isActive = activePage === item.name
 
           return (
             <button
@@ -37,12 +36,12 @@ export default function Sidebar({
               className={`
                 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm
                 transition
-                ${activo
-                  ? 'bg-emerald-500/10 text-emerald-400'
+                ${isActive
+                  ? 'bg-slate-800 text-white'
                   : 'text-slate-300 hover:bg-slate-800'}
               `}
             >
-              <Icon className="h-5 w-5" />
+              <item.icon className="h-5 w-5" />
               {item.name}
             </button>
           )
