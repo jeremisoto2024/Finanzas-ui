@@ -2,13 +2,17 @@ import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 
-export default function Layout({ children }) {
+export default function Layout({ children, activePage, setActivePage }) {
   const [menuAbierto, setMenuAbierto] = useState(false)
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 md:flex">
+      
       {/* Sidebar desktop */}
-      <Sidebar />
+      <Sidebar
+        activePage={activePage}
+        setActivePage={setActivePage}
+      />
 
       <div className="flex-1">
         <Navbar onMenu={() => setMenuAbierto(true)} />
@@ -20,8 +24,16 @@ export default function Layout({ children }) {
               className="absolute inset-0 bg-black/50"
               onClick={() => setMenuAbierto(false)}
             />
+
             <div className="relative z-10 h-full w-64">
-              <Sidebar mobile />
+              <Sidebar
+                mobile
+                activePage={activePage}
+                setActivePage={(page) => {
+                  setActivePage(page)
+                  setMenuAbierto(false)
+                }}
+              />
             </div>
           </div>
         )}
