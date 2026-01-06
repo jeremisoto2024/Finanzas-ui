@@ -1,4 +1,4 @@
-import { FiCreditCard, FiTag, FiDatabase } from 'react-icons/fi';
+import { CreditCard, Tag, Database } from 'lucide-react';
 
 export default function FilaGasto({ gasto }) {
   return (
@@ -11,7 +11,7 @@ export default function FilaGasto({ gasto }) {
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-2">
-          <FiCreditCard className="text-slate-500 text-sm" />
+          <CreditCard className="h-4 w-4 text-slate-500" />
           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
             {gasto.metodoPago}
           </span>
@@ -19,7 +19,7 @@ export default function FilaGasto({ gasto }) {
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-2">
-          <FiTag className="text-slate-500 text-sm" />
+          <Tag className="h-4 w-4 text-slate-500" />
           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
             {gasto.categoria}
           </span>
@@ -27,7 +27,7 @@ export default function FilaGasto({ gasto }) {
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
         <div className="flex items-center gap-2">
-          <FiDatabase className="text-slate-500 text-sm" />
+          <Database className="h-4 w-4 text-slate-500" />
           {gasto.cuenta}
         </div>
       </td>
