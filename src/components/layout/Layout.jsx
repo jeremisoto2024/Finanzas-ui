@@ -2,10 +2,6 @@ import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 
-import Dashboard from '../pages/Dashboard'
-import Gastos from '../pages/Gastos'
-import Configuracion from '../pages/Configuracion'
-
 export default function Layout() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [activePage, setActivePage] = useState('Dashboard')
