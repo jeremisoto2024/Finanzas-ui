@@ -1,10 +1,9 @@
-import HeaderGastos from '@/components/gastos/HeaderGastos'
+// /pages/Gastos.jsx - VERSIÓN SIMPLIFICADA
 import TablaGastos from '@/components/gastos/TablaGastos'
 
 export default function Gastos() {
   return (
-    <div className="space-y-6">
-      <HeaderGastos />
+    <div>
       <TablaGastos />
     </div>
   )
