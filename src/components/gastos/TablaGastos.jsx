@@ -9,7 +9,9 @@ export default function TablaGastos() {
           <tr>
             <th className="px-4 py-3 text-left">Fecha</th>
             <th className="px-4 py-3 text-left">Concepto</th>
+            <th className="px-4 py-3 text-left">Método</th>
             <th className="px-4 py-3 text-left">Categoría</th>
+            <th className="px-4 py-3 text-left">Cuenta</th>
             <th className="px-4 py-3 text-right">Monto</th>
           </tr>
         </thead>
