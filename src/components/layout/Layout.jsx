@@ -3,6 +3,7 @@ import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import Dashboard from '@/pages/Dashboard'
 import Gastos from '@/pages/Gastos'
+import Ingresos from '@/pages/Ingresos'
 import Configuracion from '@/pages/Configuracion'
 
 export default function Layout() {
@@ -42,10 +43,11 @@ export default function Layout() {
         )}
 
         <main className="p-4 md:p-6">
-          {activePage === 'Dashboard' && <Dashboard />}
-          {activePage === 'Gastos' && <Gastos />}
-          {activePage === 'Configuración' && <Configuracion />}
-        </main>
+  {activePage === 'Dashboard' && <Dashboard />}
+  {activePage === 'Gastos' && <Gastos />}
+  {activePage === 'Ingresos' && <Ingresos />}
+  {activePage === 'Configuración' && <Configuracion />}
+</main>
       </div>
     </div>
   )
