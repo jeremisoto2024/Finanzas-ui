@@ -5,6 +5,7 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
+  Legend,
 } from 'recharts'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { gastos } from '@/lib/data'
@@ -56,11 +57,36 @@ export default function GraficoGastos() {
   const data = Object.entries(porCategoria).map(([categoria, monto]) => ({
     name: categoria,
     value: monto,
-    color: categoriasConfig?.[categoria]?.color || '#3b82f6', // Azul por defecto
+    color: categoriasConfig?.[categoria]?.color || '#3b82f6',
     icon: categoriaIconos[categoria] || DollarSign,
   }))
 
   const total = data.reduce((acc, item) => acc + item.value, 0)
+
+  // Tooltip personalizado
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-4 min-w-[180px]">
+          <div className="flex items-center gap-3 mb-2">
+            <div 
+              className="w-4 h-4 rounded-full" 
+              style={{ backgroundColor: data.color }}
+            />
+            <p className="text-sm font-semibold text-white">{data.name}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xl font-bold text-white">€{data.value.toFixed(2)}</p>
+            <p className="text-sm text-slate-300">
+              {((data.value / total) * 100).toFixed(1)}% del total
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <Card className="bg-slate-900/80 border border-slate-800 backdrop-blur-sm">
@@ -77,7 +103,7 @@ export default function GraficoGastos() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* GRÁFICO MEJORADO */}
+        {/* GRÁFICO MEJORADO - SIN ETIQUETAS QUE SE SUPERPONEN */}
         <motion.div
           className="h-72 w-full"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -97,10 +123,9 @@ export default function GraficoGastos() {
                 activeIndex={activeIndex}
                 onMouseEnter={(_, index) => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(null)}
+                // QUITAMOS LAS ETIQUETAS DEL GRÁFICO
                 labelLine={false}
-                label={({ name, percent }) => 
-                  `${name}: ${(percent * 100).toFixed(0)}%`
-                }
+                label={null} // Esto elimina las etiquetas
               >
                 {data.map((entry, index) => (
                   <Cell
@@ -109,37 +134,43 @@ export default function GraficoGastos() {
                     opacity={activeIndex === null || activeIndex === index ? 1 : 0.4}
                     strokeWidth={activeIndex === index ? 3 : 1}
                     stroke="#1e293b"
-                    className="transition-all duration-200"
+                    className="transition-all duration-200 cursor-pointer"
                   />
                 ))}
               </Pie>
 
-              <Tooltip
-                formatter={(value) => [`€ ${value.toFixed(2)}`, 'Gasto']}
-                contentStyle={{
-                  backgroundColor: '#0f172a',
-                  border: '1px solid #334155',
-                  borderRadius: '10px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                  padding: '12px',
-                }}
-                itemStyle={{
-                  color: '#e2e8f0',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                }}
-                labelStyle={{
-                  color: '#94a3b8',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  marginBottom: '6px',
-                }}
+              {/* Tooltip personalizado */}
+              <Tooltip content={<CustomTooltip />} />
+              
+              {/* Leyenda compacta */}
+              <Legend 
+                content={() => (
+                  <div className="flex flex-wrap gap-2 justify-center mt-4">
+                    {data.slice(0, 3).map((item, index) => (
+                      <div 
+                        key={index}
+                        className="flex items-center gap-1 px-2 py-1 bg-slate-800/50 rounded-md"
+                      >
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-xs text-slate-300">{item.name}</span>
+                      </div>
+                    ))}
+                    {data.length > 3 && (
+                      <div className="px-2 py-1 bg-slate-800/50 rounded-md text-xs text-slate-400">
+                        +{data.length - 3} más
+                      </div>
+                    )}
+                  </div>
+                )}
               />
             </PieChart>
           </ResponsiveContainer>
         </motion.div>
 
-        {/* LEYENDA MEJORADA */}
+        {/* LEYENDA MEJORADA - MÁS COMPACTA */}
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-300">Detalle por categoría</h3>
@@ -148,7 +179,7 @@ export default function GraficoGastos() {
             </span>
           </div>
           
-          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2">
             {data
               .sort((a, b) => b.value - a.value)
               .map((item, index) => {
@@ -158,54 +189,52 @@ export default function GraficoGastos() {
                 return (
                   <motion.div
                     key={item.name}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
                       activeIndex === index 
-                        ? 'bg-slate-800 border-l-4' 
+                        ? 'bg-slate-800 border-l-2' 
                         : 'bg-slate-800/30 hover:bg-slate-800/50'
                     }`}
                     style={{ 
                       borderLeftColor: activeIndex === index ? item.color : 'transparent',
-                      borderLeftWidth: '4px'
+                      borderLeftWidth: '2px'
                     }}
                     onMouseEnter={() => setActiveIndex(index)}
                     onMouseLeave={() => setActiveIndex(null)}
                   >
-                    <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       <div 
-                        className="p-2 rounded-lg flex items-center justify-center"
+                        className="p-1.5 rounded-md flex-shrink-0"
                         style={{ 
                           backgroundColor: `${item.color}20`,
-                          border: `1px solid ${item.color}30`
                         }}
                       >
-                        <Icon className="h-4 w-4" style={{ color: item.color }} />
+                        <Icon className="h-3 w-3" style={{ color: item.color }} />
                       </div>
-                      <div className="flex-1">
-                        <span className="text-sm font-medium text-white block">
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-white truncate block">
                           {item.name}
                         </span>
                         <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
                           <div 
                             className="h-1.5 rounded-full"
                             style={{ 
-                              width: `${porcentaje}%`,
+                              width: `${Math.min(porcentaje, 100)}%`,
                               backgroundColor: item.color,
-                              maxWidth: '100%'
                             }}
                           ></div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right min-w-[80px]">
-                      <div className="text-sm font-semibold text-slate-300">
-                        €{item.value.toFixed(2)}
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <div className="text-xs font-semibold text-slate-300">
+                        €{item.value.toFixed(0)}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {porcentaje}% • {((item.value / total) * 100).toFixed(0)} de 100
+                        {porcentaje}%
                       </div>
                     </div>
                   </motion.div>
@@ -213,20 +242,20 @@ export default function GraficoGastos() {
               })}
           </div>
 
-          {/* RESUMEN */}
-          <div className="pt-4 border-t border-slate-800">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-slate-400">
-                Categoría con más gasto: 
-                <span className="font-medium text-white ml-2">
+          {/* RESUMEN COMPACTO */}
+          <div className="pt-3 border-t border-slate-800">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-2 bg-slate-800/30 rounded-lg">
+                <div className="text-xs text-slate-400">Mayor gasto</div>
+                <div className="text-sm font-medium text-white truncate">
                   {data.length > 0 ? data.sort((a, b) => b.value - a.value)[0].name : 'N/A'}
-                </span>
+                </div>
               </div>
-              <div className="text-sm text-slate-400">
-                Promedio: 
-                <span className="font-medium text-slate-300 ml-2">
-                  €{(total / data.length).toFixed(2)}
-                </span>
+              <div className="text-center p-2 bg-slate-800/30 rounded-lg">
+                <div className="text-xs text-slate-400">Promedio/cat</div>
+                <div className="text-sm font-medium text-slate-300">
+                  €{(total / data.length).toFixed(0)}
+                </div>
               </div>
             </div>
           </div>
