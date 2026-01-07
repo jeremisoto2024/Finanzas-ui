@@ -5,6 +5,42 @@ import { totalGastos, gastosPorCategoria } from '@/lib/finanzas'
 import { categoriasConfig } from '@/lib/categorias'
 import { motion } from 'framer-motion'
 
+// Misma paleta de colores del gráfico
+const coloresPorCategoria = {
+  'Alquiler': '#3b82f6',       // AZUL para Alquiler
+  'Alimentación': '#10b981',   // VERDE para Alimentación
+  'Transporte': '#f59e0b',     // AMARILLO/ÁMBAR para Transporte
+  'Entretenimiento': '#8b5cf6', // VIOLETA para Entretenimiento
+  'Salud': '#ef4444',          // ROJO para Salud
+  'Ropa': '#ec4899',           // ROSA para Ropa
+  'Regalos': '#14b8a6',        // TURQUESA para Regalos
+  'Ahorro': '#84cc16',         // VERDE LIMA para Ahorro
+  'Café': '#f97316',           // NARANJA para Café
+  'Restaurante': '#6366f1',    // ÍNDIGO para Restaurante
+  'Internet': '#06b6d4',       // CIAN para Internet
+  'Teléfono': '#8b5cf6',       // VIOLETA para Teléfono
+  'Luz': '#fbbf24',            // AMARILLO para Luz
+  'Otros': '#94a3b8',          // GRIS para Otros
+}
+
+// Mismo mapeo de iconos del gráfico
+const categoriaIconos = {
+  'Alquiler': Wallet,
+  'Alimentación': PieChart,
+  'Transporte': TrendingDown,
+  'Entretenimiento': Target,
+  'Salud': Wallet,
+  'Ropa': Wallet,
+  'Regalos': Wallet,
+  'Ahorro': TrendingDown,
+  'Café': Wallet,
+  'Restaurante': PieChart,
+  'Internet': Wallet,
+  'Teléfono': Wallet,
+  'Luz': Wallet,
+  'Otros': PieChart,
+}
+
 export default function ResumenGastos() {
   const total = totalGastos(gastos)
   const porCategoria = gastosPorCategoria(gastos)
@@ -63,7 +99,7 @@ export default function ResumenGastos() {
                 <div 
                   className="w-3 h-3 rounded-full"
                   style={{ 
-                    backgroundColor: categoriasConfig?.[categoriaMayorGasto.categoria]?.color || '#94a3b8'
+                    backgroundColor: coloresPorCategoria[categoriaMayorGasto.categoria] || '#94a3b8'
                   }}
                 ></div>
                 <span className="text-sm text-slate-300">{categoriaMayorGasto.categoria}</span>
@@ -93,8 +129,9 @@ export default function ResumenGastos() {
             {Object.entries(porCategoria)
               .sort(([, montoA], [, montoB]) => montoB - montoA)
               .map(([categoria, monto], index) => {
-                const Icon = categoriasConfig?.[categoria]?.icon || PieChart
-                const color = categoriasConfig?.[categoria]?.color || '#94a3b8'
+                // Usar los mismos iconos y colores del gráfico
+                const Icon = categoriaIconos[categoria] || PieChart
+                const color = coloresPorCategoria[categoria] || '#94a3b8'
                 const porcentaje = total > 0 ? (monto / total) * 100 : 0
 
                 return (
