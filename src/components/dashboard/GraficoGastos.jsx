@@ -32,7 +32,7 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 
-// Configuración de iconos por categoría (si no tienes categoriasConfig)
+// Configuración de iconos por categoría
 const categoriaIconos = {
   'Alquiler': Home,
   'Alimentación': ShoppingCart,
@@ -50,18 +50,54 @@ const categoriaIconos = {
   'Otros': MoreHorizontal
 }
 
+// COLORES ESPECÍFICOS PARA CADA CATEGORÍA (para evitar que se inviertan)
+const coloresPorCategoria = {
+  'Alquiler': '#3b82f6',       // AZUL para Alquiler
+  'Alimentación': '#10b981',   // VERDE para Alimentación
+  'Transporte': '#f59e0b',     // AMARILLO/ÁMBAR para Transporte
+  'Entretenimiento': '#8b5cf6', // VIOLETA para Entretenimiento
+  'Salud': '#ef4444',          // ROJO para Salud
+  'Ropa': '#ec4899',           // ROSA para Ropa
+  'Regalos': '#14b8a6',        // TURQUESA para Regalos
+  'Ahorro': '#84cc16',         // VERDE LIMA para Ahorro
+  'Café': '#f97316',           // NARANJA para Café
+  'Restaurante': '#6366f1',    // ÍNDIGO para Restaurante
+  'Internet': '#06b6d4',       // CIAN para Internet
+  'Teléfono': '#8b5cf6',       // VIOLETA para Teléfono
+  'Luz': '#fbbf24',            // AMARILLO para Luz
+  'Otros': '#94a3b8',          // GRIS para Otros
+}
+
+// Colores por defecto si no hay configuración
+const coloresDefault = [
+  '#3b82f6', // Azul - Alquiler
+  '#10b981', // Verde - Alimentación
+  '#f59e0b', // Ámbar - Transporte
+  '#8b5cf6', // Violeta - Entretenimiento
+  '#ef4444', // Rojo - Salud
+  '#ec4899', // Rosa - Ropa
+  '#14b8a6', // Turquesa - Regalos
+  '#84cc16', // Verde lima - Ahorro
+  '#f97316', // Naranja - Café
+  '#6366f1', // Índigo - Restaurante
+]
+
 export default function GraficoGastos() {
   const [activeIndex, setActiveIndex] = useState(null)
   const porCategoria = gastosPorCategoria(gastos)
 
-  const data = Object.entries(porCategoria).map(([categoria, monto]) => ({
-    name: categoria,
-    value: monto,
-    color: categoriasConfig?.[categoria]?.color || '#3b82f6',
-    icon: categoriaIconos[categoria] || DollarSign,
-  }))
+  // Ordenar los datos por monto (de mayor a menor) para consistencia
+  const dataOrdenada = Object.entries(porCategoria)
+    .sort(([, montoA], [, montoB]) => montoB - montoA)
+    .map(([categoria, monto], index) => ({
+      name: categoria,
+      value: monto,
+      // Usar color específico por categoría, si no existe, usar color por defecto basado en índice
+      color: coloresPorCategoria[categoria] || coloresDefault[index % coloresDefault.length],
+      icon: categoriaIconos[categoria] || DollarSign,
+    }))
 
-  const total = data.reduce((acc, item) => acc + item.value, 0)
+  const total = dataOrdenada.reduce((acc, item) => acc + item.value, 0)
 
   // Tooltip personalizado
   const CustomTooltip = ({ active, payload }) => {
@@ -103,7 +139,7 @@ export default function GraficoGastos() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* GRÁFICO MEJORADO - SIN ETIQUETAS QUE SE SUPERPONEN */}
+        {/* GRÁFICO CON COLORES CORREGIDOS */}
         <motion.div
           className="h-72 w-full"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -113,7 +149,7 @@ export default function GraficoGastos() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={dataOrdenada}
                 dataKey="value"
                 innerRadius={60}
                 outerRadius={90}
@@ -123,11 +159,10 @@ export default function GraficoGastos() {
                 activeIndex={activeIndex}
                 onMouseEnter={(_, index) => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(null)}
-                // QUITAMOS LAS ETIQUETAS DEL GRÁFICO
                 labelLine={false}
-                label={null} // Esto elimina las etiquetas
+                label={null}
               >
-                {data.map((entry, index) => (
+                {dataOrdenada.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
@@ -139,14 +174,13 @@ export default function GraficoGastos() {
                 ))}
               </Pie>
 
-              {/* Tooltip personalizado */}
               <Tooltip content={<CustomTooltip />} />
               
-              {/* Leyenda compacta */}
+              {/* Leyenda con colores específicos */}
               <Legend 
                 content={() => (
                   <div className="flex flex-wrap gap-2 justify-center mt-4">
-                    {data.slice(0, 3).map((item, index) => (
+                    {dataOrdenada.slice(0, 3).map((item, index) => (
                       <div 
                         key={index}
                         className="flex items-center gap-1 px-2 py-1 bg-slate-800/50 rounded-md"
@@ -158,9 +192,9 @@ export default function GraficoGastos() {
                         <span className="text-xs text-slate-300">{item.name}</span>
                       </div>
                     ))}
-                    {data.length > 3 && (
+                    {dataOrdenada.length > 3 && (
                       <div className="px-2 py-1 bg-slate-800/50 rounded-md text-xs text-slate-400">
-                        +{data.length - 3} más
+                        +{dataOrdenada.length - 3} más
                       </div>
                     )}
                   </div>
@@ -170,91 +204,97 @@ export default function GraficoGastos() {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* LEYENDA MEJORADA - MÁS COMPACTA */}
+        {/* LEYENDA MEJORADA - CON COLORES CORRECTOS */}
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-300">Detalle por categoría</h3>
             <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
-              {data.length} categorías
+              {dataOrdenada.length} categorías
             </span>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2">
-            {data
-              .sort((a, b) => b.value - a.value)
-              .map((item, index) => {
-                const Icon = item.icon
-                const porcentaje = ((item.value / total) * 100).toFixed(1)
+            {dataOrdenada.map((item, index) => {
+              const Icon = item.icon
+              const porcentaje = ((item.value / total) * 100).toFixed(1)
 
-                return (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
-                      activeIndex === index 
-                        ? 'bg-slate-800 border-l-2' 
-                        : 'bg-slate-800/30 hover:bg-slate-800/50'
-                    }`}
-                    style={{ 
-                      borderLeftColor: activeIndex === index ? item.color : 'transparent',
-                      borderLeftWidth: '2px'
-                    }}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(null)}
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div 
-                        className="p-1.5 rounded-md flex-shrink-0"
-                        style={{ 
-                          backgroundColor: `${item.color}20`,
-                        }}
-                      >
-                        <Icon className="h-3 w-3" style={{ color: item.color }} />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-xs font-medium text-white truncate block">
-                          {item.name}
-                        </span>
-                        <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
-                          <div 
-                            className="h-1.5 rounded-full"
-                            style={{ 
-                              width: `${Math.min(porcentaje, 100)}%`,
-                              backgroundColor: item.color,
-                            }}
-                          ></div>
-                        </div>
+              return (
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                    activeIndex === index 
+                      ? 'bg-slate-800 border-l-2' 
+                      : 'bg-slate-800/30 hover:bg-slate-800/50'
+                  }`}
+                  style={{ 
+                    borderLeftColor: activeIndex === index ? item.color : 'transparent',
+                    borderLeftWidth: '2px'
+                  }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div 
+                      className="p-1.5 rounded-md flex-shrink-0"
+                      style={{ 
+                        backgroundColor: `${item.color}20`,
+                      }}
+                    >
+                      <Icon className="h-3 w-3" style={{ color: item.color }} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-medium text-white truncate block">
+                        {item.name}
+                      </span>
+                      <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
+                        <div 
+                          className="h-1.5 rounded-full"
+                          style={{ 
+                            width: `${Math.min(porcentaje, 100)}%`,
+                            backgroundColor: item.color,
+                          }}
+                        ></div>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="text-right flex-shrink-0 ml-2">
-                      <div className="text-xs font-semibold text-slate-300">
-                        €{item.value.toFixed(0)}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        {porcentaje}%
-                      </div>
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <div className="text-xs font-semibold text-slate-300">
+                      €{item.value.toFixed(0)}
                     </div>
-                  </motion.div>
-                )
-              })}
+                    <div className="text-xs text-slate-500">
+                      {porcentaje}%
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
 
-          {/* RESUMEN COMPACTO */}
+          {/* RESUMEN CON COLORES CLAROS */}
           <div className="pt-3 border-t border-slate-800">
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center p-2 bg-slate-800/30 rounded-lg">
                 <div className="text-xs text-slate-400">Mayor gasto</div>
-                <div className="text-sm font-medium text-white truncate">
-                  {data.length > 0 ? data.sort((a, b) => b.value - a.value)[0].name : 'N/A'}
-                </div>
+                {dataOrdenada.length > 0 && (
+                  <div className="flex items-center justify-center gap-1">
+                    <div 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: dataOrdenada[0].color }}
+                    />
+                    <div className="text-sm font-medium text-white truncate">
+                      {dataOrdenada[0].name}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="text-center p-2 bg-slate-800/30 rounded-lg">
                 <div className="text-xs text-slate-400">Promedio/cat</div>
                 <div className="text-sm font-medium text-slate-300">
-                  €{(total / data.length).toFixed(0)}
+                  €{(total / dataOrdenada.length).toFixed(0)}
                 </div>
               </div>
             </div>
