@@ -1,11 +1,49 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Wallet, TrendingDown, PieChart, Target } from 'lucide-react'
 import { gastos } from '@/lib/data'
 import { totalGastos, gastosPorCategoria } from '@/lib/finanzas'
-import { categoriasConfig } from '@/lib/categorias'
 import { motion } from 'framer-motion'
 
-// Misma paleta de colores del gráfico
+// ICONOS LUCIDE REACT MODERNOS - Sincronizados con GraficoGastos.jsx
+import { 
+  Home,
+  ShoppingCart,
+  Car,
+  Film,
+  Heart,
+  Shirt,
+  Gift,
+  TrendingUp,
+  Coffee,
+  Utensils,
+  Wifi,
+  Phone,
+  Zap,
+  DollarSign,
+  MoreHorizontal,
+  TrendingDown,
+  Target,
+  PieChart
+} from 'lucide-react'
+
+// Configuración de iconos por categoría - Sincronizado con GraficoGastos.jsx
+const categoriaIconos = {
+  'Alquiler': Home,
+  'Alimentación': ShoppingCart,
+  'Transporte': Car,
+  'Entretenimiento': Film,
+  'Salud': Heart,
+  'Ropa': Shirt,
+  'Regalos': Gift,
+  'Ahorro': TrendingUp,
+  'Café': Coffee,
+  'Restaurante': Utensils,
+  'Internet': Wifi,
+  'Teléfono': Phone,
+  'Luz': Zap,
+  'Otros': MoreHorizontal
+}
+
+// COLORES ESPECÍFICOS PARA CADA CATEGORÍA - Sincronizado con GraficoGastos.jsx
 const coloresPorCategoria = {
   'Alquiler': '#3b82f6',       // AZUL para Alquiler
   'Alimentación': '#10b981',   // VERDE para Alimentación
@@ -21,24 +59,6 @@ const coloresPorCategoria = {
   'Teléfono': '#8b5cf6',       // VIOLETA para Teléfono
   'Luz': '#fbbf24',            // AMARILLO para Luz
   'Otros': '#94a3b8',          // GRIS para Otros
-}
-
-// Mismo mapeo de iconos del gráfico
-const categoriaIconos = {
-  'Alquiler': Wallet,
-  'Alimentación': PieChart,
-  'Transporte': TrendingDown,
-  'Entretenimiento': Target,
-  'Salud': Wallet,
-  'Ropa': Wallet,
-  'Regalos': Wallet,
-  'Ahorro': TrendingDown,
-  'Café': Wallet,
-  'Restaurante': PieChart,
-  'Internet': Wallet,
-  'Teléfono': Wallet,
-  'Luz': Wallet,
-  'Otros': PieChart,
 }
 
 export default function ResumenGastos() {
@@ -116,7 +136,7 @@ export default function ResumenGastos() {
           </div>
         )}
 
-        {/* LISTA DE CATEGORÍAS */}
+        {/* LISTA DE CATEGORÍAS - CON ICONOS SINCRONIZADOS */}
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-300">Gastos por categoría</h3>
@@ -129,8 +149,8 @@ export default function ResumenGastos() {
             {Object.entries(porCategoria)
               .sort(([, montoA], [, montoB]) => montoB - montoA)
               .map(([categoria, monto], index) => {
-                // Usar los mismos iconos y colores del gráfico
-                const Icon = categoriaIconos[categoria] || PieChart
+                // Usar iconos sincronizados con GraficoGastos.jsx
+                const Icon = categoriaIconos[categoria] || DollarSign
                 const color = coloresPorCategoria[categoria] || '#94a3b8'
                 const porcentaje = total > 0 ? (monto / total) * 100 : 0
 
