@@ -24,6 +24,6 @@ export const gastosMensuales = [
     categoria: 'Otros',
     metodoPago: 'Tarjeta',
     cuenta: 'BBVA',
-    monto: 12
+    monto: 12.12
   }
 ]
