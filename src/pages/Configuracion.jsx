@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import CuotasDetalle from '@/components/configuracion/CuotasDetalle'
 import { cuotas } from '@/lib/cuotas'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
