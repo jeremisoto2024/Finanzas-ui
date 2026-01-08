@@ -1,12 +1,14 @@
 import {
   HomeIcon,
   ChartBarIcon,
+  ArrowUpCircleIcon,
   Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 
 const items = [
   { name: 'Dashboard', icon: HomeIcon },
   { name: 'Gastos', icon: ChartBarIcon },
+  { name: 'Ingresos', icon: ArrowUpCircleIcon },
   { name: 'Configuración', icon: Cog6ToothIcon }
 ]
 
