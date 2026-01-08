@@ -21,6 +21,7 @@ export default function Configuracion() {
 
         <CardContent className="space-y-4">
           {cuotas.map((item) => {
+  const [abierto, setAbierto] = useState(false)
             const pagadas = item.cuotas.filter(c => c.pagada).length
             const totalCuotas = item.cuotasTotales
             const pendiente = item.total -
