@@ -1,10 +1,20 @@
 import { useState } from 'react'
 import CuotasDetalle from '@/components/configuracion/CuotasDetalle'
 import { cuotas } from '@/lib/cuotas'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent
+} from '@/components/ui/card'
+import {
+  CheckCircleIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline'
 
 export default function Configuracion() {
+  const [abiertoId, setAbiertoId] = useState(null)
+
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-semibold text-slate-200">
@@ -21,20 +31,25 @@ export default function Configuracion() {
 
         <CardContent className="space-y-4">
           {cuotas.map((item) => {
-  const [abierto, setAbierto] = useState(false)
             const pagadas = item.cuotas.filter(c => c.pagada).length
             const totalCuotas = item.cuotasTotales
-            const pendiente = item.total -
-              item.cuotas
-                .filter(c => c.pagada)
-                .reduce((acc, c) => acc + c.monto, 0)
+
+            const montoPagado = item.cuotas
+              .filter(c => c.pagada)
+              .reduce((acc, c) => acc + c.monto, 0)
+
+            const pendiente = item.total - montoPagado
+            const abierta = abiertoId === item.id
 
             return (
               <div
                 key={item.id}
-                className="rounded-lg border border-slate-800 p-4 space-y-2"
+                onClick={() =>
+                  setAbiertoId(abierta ? null : item.id)
+                }
+                className="cursor-pointer rounded-lg border border-slate-800 p-4 space-y-2 hover:bg-slate-900/40 transition"
               >
-                {/* Título */}
+                {/* TÍTULO */}
                 <div className="flex justify-between items-center">
                   <span className="font-medium text-slate-200">
                     {item.concepto}
@@ -45,7 +60,7 @@ export default function Configuracion() {
                   </span>
                 </div>
 
-                {/* Progreso */}
+                {/* PROGRESO */}
                 <div className="h-2 w-full rounded bg-slate-800 overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 transition-all"
@@ -55,7 +70,7 @@ export default function Configuracion() {
                   />
                 </div>
 
-                {/* Info */}
+                {/* INFO */}
                 <div className="flex justify-between text-xs text-slate-400">
                   <span>
                     Pendiente: € {pendiente.toFixed(2)}
@@ -75,6 +90,11 @@ export default function Configuracion() {
                     )}
                   </span>
                 </div>
+
+                {/* DETALLE CUOTAS */}
+                {abierta && (
+                  <CuotasDetalle cuotas={item.cuotas} />
+                )}
               </div>
             )
           })}
