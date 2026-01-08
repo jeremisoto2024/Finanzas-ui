@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocalStorage } from '@/componets/hooks/useLocalStorage'
+import { useLocalStorage } from '@/components/hooks/useLocalStorage'
 import { 
   Settings, 
   Plus,
