@@ -1,10 +1,82 @@
+import { cuotas } from '@/lib/cuotas'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
+
 export default function Configuracion() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Configuración</h1>
-      <p className="text-slate-400">
-        Preferencias, exportaciones y ajustes.
-      </p>
+    <div className="space-y-6">
+      <h1 className="text-lg font-semibold text-slate-200">
+        Configuración
+      </h1>
+
+      {/* BLOQUE CUOTAS */}
+      <Card className="bg-slate-900/60 border border-slate-800">
+        <CardHeader>
+          <CardTitle className="text-sm text-slate-300">
+            Compras en cuotas
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {cuotas.map((item) => {
+            const pagadas = item.cuotas.filter(c => c.pagada).length
+            const totalCuotas = item.cuotasTotales
+            const pendiente = item.total -
+              item.cuotas
+                .filter(c => c.pagada)
+                .reduce((acc, c) => acc + c.monto, 0)
+
+            return (
+              <div
+                key={item.id}
+                className="rounded-lg border border-slate-800 p-4 space-y-2"
+              >
+                {/* Título */}
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-slate-200">
+                    {item.concepto}
+                  </span>
+
+                  <span className="text-xs text-slate-400">
+                    {pagadas} / {totalCuotas} cuotas
+                  </span>
+                </div>
+
+                {/* Progreso */}
+                <div className="h-2 w-full rounded bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 transition-all"
+                    style={{
+                      width: `${(pagadas / totalCuotas) * 100}%`
+                    }}
+                  />
+                </div>
+
+                {/* Info */}
+                <div className="flex justify-between text-xs text-slate-400">
+                  <span>
+                    Pendiente: € {pendiente.toFixed(2)}
+                  </span>
+
+                  <span className="flex items-center gap-1">
+                    {pagadas === totalCuotas ? (
+                      <>
+                        <CheckCircleIcon className="h-4 w-4 text-emerald-400" />
+                        Finalizado
+                      </>
+                    ) : (
+                      <>
+                        <ClockIcon className="h-4 w-4 text-slate-400" />
+                        En curso
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </CardContent>
+      </Card>
     </div>
   )
 }
