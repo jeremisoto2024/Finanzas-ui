@@ -26,7 +26,7 @@ export default function TablaGastos() {
 
   const metodosPago = ['Apple Pay', 'Transferencia', 'Bizum', 'Efectivo', 'Tarjeta'];
   const categorias = ['Alimentación', 'Salud e higiene', 'Transporte', 'Diversión', 'Ropa', 'Otros', 'Ahorro', 'Alquiler'];
-  const cuentas = ['BBVA', 'Efectivo', 'Bizum', 'PayPal'];
+  const cuentas = ['BBVA', 'Efectivo'];
   
   const gastosFiltrados = useMemo(() => {
     return gastosMensuales.filter(gasto => {
