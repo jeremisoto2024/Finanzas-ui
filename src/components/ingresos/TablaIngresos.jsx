@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
-import { ingresosMensuales } from '@/lib/ingresos';
 import FilaIngreso from './FilaIngreso';
-
+import { useEffect } from 'react'
 // ICONOS LUCIDE REACT para ingresos (paleta verde)
 import { 
   Download, 
@@ -26,12 +25,33 @@ import {
   Coins
 } from 'lucide-react';
 
+useEffect(() => {
+  const cargarIngresos = async () => {
+    try {
+      const res = await fetch('/api/ingresos')
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error)
+
+      setIngresosMensuales(data)
+    } catch (err) {
+      setError('Error cargando ingresos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  cargarIngresos()
+}, [])
 export default function TablaIngresos() {
   const [filtroMes, setFiltroMes] = useState('');
   const [filtroMetodo, setFiltroMetodo] = useState('');
   const [filtroCuenta, setFiltroCuenta] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
-
+  const [ingresosMensuales, setIngresosMensuales] = useState([])
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState(null)
+  
   // Datos basados en tus imágenes
   const categoriasIngresos = ['Sueldo', 'Propina', 'Ventas', 'Transferencia', 'Préstamo', 'Extras', 'Trabajo', 'Extra', 'Salario', 'Freelance'];
   
@@ -49,6 +69,14 @@ export default function TablaIngresos() {
       const cumpleCuenta = !filtroCuenta || ingreso.cuenta === filtroCuenta;
       const cumpleCategoria = !filtroCategoria || ingreso.categoria === filtroCategoria;
       
+      
+      if (loading) {
+  return <div className="p-6 text-slate-300">Cargando ingresos…</div>
+}
+
+if (error) {
+  return <div className="p-6 text-red-400">{error}</div>
+}
       return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
     });
   }, [filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
