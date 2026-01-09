@@ -25,7 +25,7 @@ export default function TablaGastos() {
   const [filtroCategoria, setFiltroCategoria] = useState('');
 
   const metodosPago = ['Apple Pay', 'Transferencia', 'Bizum', 'Efectivo', 'Tarjeta'];
-  const categorias = ['Alimentación', 'Salud e higiene', 'Transporte', 'Diversión', 'Ropa', 'Otros', 'Ahorro', 'Alquiler'];
+  const categorias = ['Alimentación', 'Salud e higiene', 'Transporte', 'Diversión', 'Ropa', 'Otros', 'Ahorro'];
   const cuentas = ['BBVA', 'Efectivo'];
   
   const gastosFiltrados = useMemo(() => {
