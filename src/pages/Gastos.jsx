@@ -16,6 +16,7 @@ export default function Gastos() {
     return <p className="text-slate-400">Cargando gastos...</p>
   }
 
-  return 
+  return (
       <TablaGastos gastos={gastos} />
+      )
 }
