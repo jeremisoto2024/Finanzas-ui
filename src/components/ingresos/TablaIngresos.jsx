@@ -33,11 +33,11 @@ export default function TablaIngresos() {
   const [filtroCategoria, setFiltroCategoria] = useState('');
 
   // Datos basados en tus imágenes
-  const categoriasIngresos = ['Sueldo', 'Propina', 'Ventas', 'Transferencia', 'Préstamo', 'Extras', 'Trabajo', 'Extra', 'Salario', 'Freelance'];
+  const categoriasIngresos = ['Sueldo', 'Propina', 'Ventas', 'Transferencia', 'Préstamo', 'Extras', 'Extra'];
   
-  const metodosRecepcion = ['Efectivo', 'Transferencia', 'Bizum', 'PayPal', 'Tarjeta', 'Apple Pay'];
+  const metodosRecepcion = ['Efectivo', 'Transferencia', 'Bizum', 'Tarjeta', 'Apple Pay'];
   
-  const cuentasIngresos = ['BBVA', 'Revolut', 'Efectivo', 'PayPal', 'Bizum'];
+  const cuentasIngresos = ['BBVA', 'Efectivo'];
   
   const ingresosFiltrados = useMemo(() => {
     return ingresosMensuales.filter(ingreso => {
