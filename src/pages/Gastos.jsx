@@ -16,10 +16,6 @@ export default function Gastos() {
     return <p className="text-slate-400">Cargando gastos...</p>
   }
 
-  return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Gastos</h1>
+  return 
       <TablaGastos gastos={gastos} />
-    </div>
-  )
 }
