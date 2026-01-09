@@ -33,7 +33,7 @@ export default function TablaIngresos() {
   const [filtroCategoria, setFiltroCategoria] = useState('');
 
   // Datos basados en tus imágenes
-  const categoriasIngresos = ['Sueldo', 'Propina', 'Ventas', 'Transferencia', 'Préstamo', 'Extras', 'Extra'];
+  const categoriasIngresos = ['Sueldo', 'Propina', 'Ventas', 'Transferencia', 'Préstamo', 'Extras'];
   
   const metodosRecepcion = ['Efectivo', 'Transferencia', 'Bizum', 'Tarjeta', 'Apple Pay'];
   
