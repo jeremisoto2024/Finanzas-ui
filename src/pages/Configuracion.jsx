@@ -311,7 +311,7 @@ export default function Configuracion() {
             </div>
             <div className="text-center p-3 bg-slate-900/50 border border-slate-800 rounded-xl">
               <div className="text-xs text-slate-400">Cuotas/mes</div>
-              <div className="text-lg font-bold text-emerald-400">
+              <div className="text-lg font-bold text-red-400">
                 €{totalCuotasMensuales.toFixed(2)}
               </div>
             </div>
