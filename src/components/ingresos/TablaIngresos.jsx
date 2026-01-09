@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ingresosMensuales } from '@/lib/ingresos';
 import FilaIngreso from './FilaIngreso';
 
 // ICONOS LUCIDE REACT para ingresos (paleta verde)
@@ -25,42 +26,21 @@ import {
   Coins
 } from 'lucide-react';
 
-export default function TablaIngresos({ ingresos = [] }) {
+export default function TablaIngresos() {
   const [filtroMes, setFiltroMes] = useState('');
   const [filtroMetodo, setFiltroMetodo] = useState('');
   const [filtroCuenta, setFiltroCuenta] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
 
-  // Extraer categorías, métodos y cuentas únicos de los datos reales
-  const categoriasIngresos = useMemo(() => {
-    return [...new Set(ingresos.map(i => i.categoria).filter(Boolean))];
-  }, [ingresos]);
+  // Datos basados en tus imágenes
+  const categoriasIngresos = ['Sueldo', 'Propina', 'Ventas', 'Transferencia', 'Préstamo', 'Extras', 'Trabajo', 'Extra', 'Salario', 'Freelance'];
   
-  const metodosRecepcion = useMemo(() => {
-    return [...new Set(ingresos.map(i => i.metodo).filter(Boolean))];
-  }, [ingresos]);
+  const metodosRecepcion = ['Efectivo', 'Transferencia', 'Bizum', 'PayPal', 'Tarjeta', 'Apple Pay'];
   
-  const cuentasIngresos = useMemo(() => {
-    return [...new Set(ingresos.map(i => i.cuenta).filter(Boolean))];
-  }, [ingresos]);
+  const cuentasIngresos = ['BBVA', 'Revolut', 'Efectivo', 'PayPal', 'Bizum'];
   
-  // Generar meses disponibles a partir de los datos
-  const mesesDisponibles = useMemo(() => {
-    const mesesSet = new Set();
-    ingresos.forEach(ingreso => {
-      if (ingreso.fecha) {
-        const fecha = new Date(ingreso.fecha);
-        const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-        mesesSet.add(mes);
-      }
-    });
-    return Array.from(mesesSet).sort().reverse();
-  }, [ingresos]);
-
   const ingresosFiltrados = useMemo(() => {
-    return ingresos.filter(ingreso => {
-      if (!ingreso.fecha) return false;
-      
+    return ingresosMensuales.filter(ingreso => {
       const fechaIngreso = new Date(ingreso.fecha);
       const mesIngreso = `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}`;
       
@@ -71,53 +51,44 @@ export default function TablaIngresos({ ingresos = [] }) {
       
       return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
     });
-  }, [ingresos, filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
+  }, [filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
 
-  const total = ingresosFiltrados.reduce((sum, ingreso) => sum + (ingreso.monto || 0), 0);
+  const total = ingresosFiltrados.reduce((sum, ingreso) => sum + ingreso.monto, 0);
 
   // Calcular categoría principal
   const categoriaPrincipal = useMemo(() => {
     const categorias = ingresosFiltrados.reduce((acc, ingreso) => {
-      if (ingreso.categoria) {
-        acc[ingreso.categoria] = (acc[ingreso.categoria] || 0) + (ingreso.monto || 0);
-      }
+      acc[ingreso.categoria] = (acc[ingreso.categoria] || 0) + ingreso.monto;
       return acc;
     }, {});
     
-    const categoriasOrdenadas = Object.entries(categorias).sort((a, b) => b[1] - a[1]);
-    return categoriasOrdenadas[0]?.[0] || 'N/A';
+    return Object.entries(categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
   }, [ingresosFiltrados]);
 
   // Calcular cuenta más usada
   const cuentaMasUsada = useMemo(() => {
     const cuentas = ingresosFiltrados.reduce((acc, ingreso) => {
-      if (ingreso.cuenta) {
-        acc[ingreso.cuenta] = (acc[ingreso.cuenta] || 0) + 1;
-      }
+      acc[ingreso.cuenta] = (acc[ingreso.cuenta] || 0) + 1;
       return acc;
     }, {});
     
-    const cuentasOrdenadas = Object.entries(cuentas).sort((a, b) => b[1] - a[1]);
-    return cuentasOrdenadas[0]?.[0] || 'N/A';
+    return Object.entries(cuentas).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
   }, [ingresosFiltrados]);
 
   // Calcular método más común
   const metodoMasComun = useMemo(() => {
     const metodos = ingresosFiltrados.reduce((acc, ingreso) => {
-      if (ingreso.metodo) {
-        acc[ingreso.metodo] = (acc[ingreso.metodo] || 0) + 1;
-      }
+      acc[ingreso.metodo] = (acc[ingreso.metodo] || 0) + 1;
       return acc;
     }, {});
     
-    const metodosOrdenados = Object.entries(metodos).sort((a, b) => b[1] - a[1]);
-    return metodosOrdenados[0]?.[0] || 'N/A';
+    return Object.entries(metodos).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
   }, [ingresosFiltrados]);
 
   const exportarCSV = () => {
     const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto'];
     const filas = ingresosFiltrados.map(i => 
-      [i.fecha, i.concepto || '', i.metodo || '', i.categoria || '', i.cuenta || '', i.monto || 0].join(',')
+      [i.fecha, i.concepto, i.metodo, i.categoria, i.cuenta, i.monto].join(',')
     );
     
     const csv = [headers.join(','), ...filas].join('\n');
@@ -142,9 +113,7 @@ export default function TablaIngresos({ ingresos = [] }) {
             <div className="flex items-center gap-3 mt-2">
               <span className="text-3xl font-bold text-emerald-400">€{total.toFixed(2)}</span>
               <div className="h-2 w-2 rounded-full bg-slate-600"></div>
-              <span className="text-slate-400">{
-                new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
-              }</span>
+              <span className="text-slate-400">Octubre 2025</span>
               <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
                 {ingresosFiltrados.length} transacciones
               </span>
@@ -154,14 +123,9 @@ export default function TablaIngresos({ ingresos = [] }) {
           {/* BOTÓN DE EXPORTAR */}
           <button 
             onClick={exportarCSV}
-            disabled={ingresosFiltrados.length === 0}
-            className={`group flex items-center gap-3 px-5 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-              ingresosFiltrados.length === 0
-                ? 'bg-slate-800 text-slate-400 cursor-not-allowed'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow-lg hover:shadow-emerald-900/30'
-            }`}
+            className="group flex items-center gap-3 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-emerald-900/30"
           >
-            <Download className={`h-5 w-5 ${ingresosFiltrados.length > 0 ? 'group-hover:scale-110 transition-transform' : ''}`} />
+            <Download className="h-5 w-5 group-hover:scale-110 transition-transform" />
             <FileText className="h-5 w-5" />
             <span>Exportar CSV</span>
           </button>
@@ -193,15 +157,9 @@ export default function TablaIngresos({ ingresos = [] }) {
                     className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition appearance-none"
                   >
                     <option value="">Todos los meses</option>
-                    {mesesDisponibles.map(mes => {
-                      const [year, month] = mes.split('-');
-                      const nombreMes = new Date(year, month - 1).toLocaleDateString('es-ES', { month: 'long' });
-                      return (
-                        <option key={mes} value={mes}>
-                          {nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} {year}
-                        </option>
-                      );
-                    })}
+                    <option value="2025-10">Octubre 2025</option>
+                    <option value="2025-09">Septiembre 2025</option>
+                    <option value="2025-08">Agosto 2025</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                 </div>
@@ -341,7 +299,7 @@ export default function TablaIngresos({ ingresos = [] }) {
                 <div>
                   <h2 className="text-lg font-semibold text-white">Historial de ingresos</h2>
                   <p className="text-sm text-slate-400 mt-1">
-                    Mostrando {ingresosFiltrados.length} de {ingresos.length} transacciones
+                    Mostrando {ingresosFiltrados.length} de {ingresosMensuales.length} transacciones
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-lg">
@@ -379,19 +337,9 @@ export default function TablaIngresos({ ingresos = [] }) {
                 </thead>
                 
                 <tbody className="divide-y divide-slate-800">
-                  {ingresosFiltrados.length > 0 ? (
-                    ingresosFiltrados.map((ingreso) => (
-                      <FilaIngreso key={ingreso.id} ingreso={ingreso} />
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
-                        {ingresos.length === 0 
-                          ? 'No hay datos de ingresos disponibles' 
-                          : 'No hay resultados para los filtros seleccionados'}
-                      </td>
-                    </tr>
-                  )}
+                  {ingresosFiltrados.map((ingreso) => (
+                    <FilaIngreso key={ingreso.id} ingreso={ingreso} />
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -412,28 +360,26 @@ export default function TablaIngresos({ ingresos = [] }) {
           </div>
 
           {/* SUGERENCIAS */}
-          {ingresosFiltrados.length > 0 && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-emerald-900/20 border border-emerald-800/30 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-emerald-400" />
-                  <h4 className="text-sm font-semibold text-emerald-300">Potencial de crecimiento</h4>
-                </div>
-                <p className="text-sm text-slate-300">
-                  Invierte en más proyectos freelance para aumentar ingresos en un 25%
-                </p>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-emerald-900/20 border border-emerald-800/30 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-4 w-4 text-emerald-400" />
+                <h4 className="text-sm font-semibold text-emerald-300">Potencial de crecimiento</h4>
               </div>
-              <div className="bg-blue-900/20 border border-blue-800/30 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="h-4 w-4 text-blue-400" />
-                  <h4 className="text-sm font-semibold text-blue-300">Próximos ingresos</h4>
-                </div>
-                <p className="text-sm text-slate-300">
-                  Próximo salario estimado • €{Math.round(total * 1.2).toFixed(0)}
-                </p>
-              </div>
+              <p className="text-sm text-slate-300">
+                Invierte en más proyectos freelance para aumentar ingresos en un 25%
+              </p>
             </div>
-          )}
+            <div className="bg-blue-900/20 border border-blue-800/30 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-blue-400" />
+                <h4 className="text-sm font-semibold text-blue-300">Próximos ingresos</h4>
+              </div>
+              <p className="text-sm text-slate-300">
+                Salario estimado para el 01/11 • €1,800
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
