@@ -1,179 +1,241 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { TrendingUp, TrendingDown, Wallet, CreditCard, Target, Calendar } from 'lucide-react'
-import { gastos } from '@/lib/data'
-import { totalGastos } from '@/lib/finanzas'
+// components/BalanceMensual.jsx
+import React, { useState, useEffect } from 'react'
+import { TrendingUp, TrendingDown, RefreshCw, AlertCircle, DollarSign } from 'lucide-react'
 
-// datos simulados (luego Notion)
-const INGRESOS_MES = 1800
+function BalanceMensual() {
+  const [ingresos, setIngresos] = useState([])
+  const [gastos, setGastos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [mes, setMes] = useState(new Date().getMonth())
+  const [ano, setAno] = useState(new Date().getFullYear())
 
-export default function BalanceMensual() {
-  const gastosTotales = totalGastos(gastos)
-  const balance = INGRESOS_MES - gastosTotales
-  const positivo = balance >= 0
-  const porcentajeGastado = (gastosTotales / INGRESOS_MES) * 100
-  
-  const hoy = new Date().getDate()
-  const diasMes = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth() + 1,
-    0
-  ).getDate()
-  
-  const promedioDiario = gastosTotales / hoy
-  const proyeccion = promedioDiario * diasMes
-  const porcentajeProyeccion = (proyeccion / INGRESOS_MES) * 100
+  // Obtener ingresos desde la API
+  const fetchIngresos = async () => {
+    try {
+      const res = await fetch('/api/ingresos')
+      if (!res.ok) throw new Error('Error cargando ingresos')
+      const data = await res.json()
+      setIngresos(data)
+    } catch (err) {
+      console.error('Error fetching ingresos:', err)
+      setError(err.message)
+    }
+  }
+
+  // Obtener gastos desde la API
+  const fetchGastos = async () => {
+    try {
+      const res = await fetch('/api/gastos')
+      if (!res.ok) throw new Error('Error cargando gastos')
+      const data = await res.json()
+      setGastos(data)
+    } catch (err) {
+      console.error('Error fetching gastos:', err)
+      setError(err.message)
+    }
+  }
+
+  // Cargar todos los datos
+  const fetchData = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await Promise.all([fetchIngresos(), fetchGastos()])
+    } catch (err) {
+      setError('Error cargando datos financieros')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [mes, ano])
+
+  // Calcular totales
+  const calcularTotales = () => {
+    const ingresosDelMes = ingresos.filter(item => {
+      if (!item.fecha) return false
+      const fecha = new Date(item.fecha)
+      return fecha.getMonth() === mes && fecha.getFullYear() === ano
+    })
+
+    const gastosDelMes = gastos.filter(item => {
+      if (!item.fecha) return false
+      const fecha = new Date(item.fecha)
+      return fecha.getMonth() === mes && fecha.getFullYear() === ano
+    })
+
+    const totalIngresos = ingresosDelMes.reduce((sum, item) => sum + (item.monto || 0), 0)
+    const totalGastos = gastosDelMes.reduce((sum, item) => sum + (item.monto || 0), 0)
+    const balance = totalIngresos - totalGastos
+
+    return {
+      totalIngresos,
+      totalGastos,
+      balance,
+      ingresosDelMes,
+      gastosDelMes
+    }
+  }
+
+  const { totalIngresos, totalGastos, balance, ingresosDelMes, gastosDelMes } = calcularTotales()
+
+  if (loading) {
+    return (
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <div className="flex items-center justify-center gap-3">
+          <RefreshCw className="h-5 w-5 text-slate-400 animate-spin" />
+          <span className="text-slate-400">Cargando balance...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900/20 border border-red-800/30 rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <AlertCircle className="h-5 w-5 text-red-400" />
+          <span className="text-red-300">Error: {error}</span>
+        </div>
+        <button
+          onClick={fetchData}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <Card className="bg-slate-900/80 border border-slate-800 backdrop-blur-sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-            <div className="p-2 bg-blue-900/30 rounded-lg">
-              <Wallet className="h-5 w-5 text-blue-400" />
-            </div>
-            Balance Mensual
-          </CardTitle>
-          <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-900 px-2 py-1 rounded-lg">
-            <Calendar className="h-3 w-3" />
-            <span>Día {hoy} de {diasMes}</span>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-5">
-        {/* BARRA DE PROGRESO GASTOS/INGRESOS */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-slate-300">Gasto vs Ingreso</span>
-            <span className="font-medium text-slate-300">{porcentajeGastado.toFixed(1)}%</span>
-          </div>
-          <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-            <div 
-              className="h-full rounded-full transition-all duration-500"
-              style={{ 
-                width: `${Math.min(porcentajeGastado, 100)}%`,
-                background: porcentajeGastado > 80 
-                  ? 'linear-gradient(90deg, #ef4444, #f87171)' 
-                  : porcentajeGastado > 60
-                  ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                  : 'linear-gradient(90deg, #10b981, #34d399)'
-              }}
-            ></div>
-          </div>
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>€0</span>
-            <span>Meta: €{INGRESOS_MES}</span>
-          </div>
-        </div>
-
-        {/* INGRESOS */}
-        <div className="flex items-center justify-between p-3 bg-emerald-900/20 rounded-lg border border-emerald-800/30">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-900/30 rounded-lg">
-              <TrendingUp className="h-4 w-4 text-emerald-400" />
-            </div>
-            <div>
-              <span className="text-sm text-slate-300">Ingresos</span>
-              <div className="text-xs text-slate-500">Salario mensual</div>
-            </div>
-          </div>
-          <span className="text-lg font-bold text-emerald-400">
-            €{INGRESOS_MES.toFixed(2)}
-          </span>
-        </div>
-
-        {/* GASTOS */}
-        <div className="flex items-center justify-between p-3 bg-rose-900/20 rounded-lg border border-rose-800/30">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-900/30 rounded-lg">
-              <TrendingDown className="h-4 w-4 text-rose-400" />
-            </div>
-            <div>
-              <span className="text-sm text-slate-300">Gastos</span>
-              <div className="text-xs text-slate-500">Acumulado</div>
-            </div>
-          </div>
-          <span className="text-lg font-bold text-rose-400">
-            €{gastosTotales.toFixed(2)}
-          </span>
-        </div>
-
-        {/* BALANCE */}
-        <div className={`p-4 rounded-lg border ${positivo ? 'bg-emerald-900/20 border-emerald-800/30' : 'bg-rose-900/20 border-rose-800/30'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {positivo ? (
-                <div className="p-2 bg-emerald-900/30 rounded-lg">
-                  <TrendingUp className="h-4 w-4 text-emerald-400" />
-                </div>
-              ) : (
-                <div className="p-2 bg-rose-900/30 rounded-lg">
-                  <TrendingDown className="h-4 w-4 text-rose-400" />
-                </div>
-              )}
-              <div>
-                <span className="text-sm font-medium text-slate-300">Balance</span>
-                <div className="text-xs text-slate-500">
-                  {positivo ? 'Superávit' : 'Déficit'} mensual
-                </div>
-              </div>
-            </div>
-            <span className={`text-2xl font-bold ${positivo ? 'text-emerald-400' : 'text-rose-400'}`}>
-              €{balance.toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        {/* PROYECCIÓN */}
-        <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-medium text-slate-300">Proyección del mes</span>
-          </div>
-          <p className="text-xs text-slate-400 mb-2">
-            Basado en tu gasto promedio diario de €{promedioDiario.toFixed(2)}
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-white">Balance Mensual</h2>
+          <p className="text-slate-400 text-sm">
+            {new Date(ano, mes).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
           </p>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-400">Gasto proyectado:</span>
-              <span className={`font-semibold ${porcentajeProyeccion > 100 ? 'text-rose-400' : 'text-slate-300'}`}>
-                €{proyeccion.toFixed(0)}
-              </span>
+        </div>
+        
+        <div className="flex gap-2">
+          <select
+            value={mes}
+            onChange={(e) => setMes(parseInt(e.target.value))}
+            className="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1 text-sm"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {new Date(2000, i).toLocaleDateString('es-ES', { month: 'long' })}
+              </option>
+            ))}
+          </select>
+          
+          <select
+            value={ano}
+            onChange={(e) => setAno(parseInt(e.target.value))}
+            className="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1 text-sm"
+          >
+            {Array.from({ length: 5 }, (_, i) => {
+              const year = new Date().getFullYear() - 2 + i
+              return (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              )
+            })}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Ingresos */}
+        <div className="bg-emerald-900/20 border border-emerald-800/30 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-emerald-300 text-sm font-medium">Ingresos</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                €{totalIngresos.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
             </div>
-            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full rounded-full"
-                style={{ 
-                  width: `${Math.min(porcentajeProyeccion, 100)}%`,
-                  background: porcentajeProyeccion > 100 
-                    ? 'linear-gradient(90deg, #ef4444, #f87171)' 
-                    : 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                }}
-              ></div>
-            </div>
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>{porcentajeProyeccion.toFixed(1)}% del presupuesto</span>
-              <span className={porcentajeProyeccion > 100 ? 'text-rose-400' : 'text-slate-400'}>
-                {porcentajeProyeccion > 100 ? 'Sobre presupuesto' : 'Dentro del presupuesto'}
-              </span>
+            <div className="p-2 bg-emerald-900/30 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
             </div>
           </div>
+          <p className="text-emerald-400 text-sm">
+            {ingresosDelMes.length} transacciones
+          </p>
         </div>
 
-        {/* RESUMEN RÁPIDO */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
-          <div className="text-center p-2 bg-slate-800/30 rounded-lg">
-            <div className="text-xs text-slate-400">Día {hoy}</div>
-            <div className="text-sm font-medium text-white">€{promedioDiario.toFixed(0)}/día</div>
-          </div>
-          <div className="text-center p-2 bg-slate-800/30 rounded-lg">
-            <div className="text-xs text-slate-400">Restante</div>
-            <div className="text-sm font-medium text-slate-300">
-              {diasMes - hoy} días
+        {/* Gastos */}
+        <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-red-300 text-sm font-medium">Gastos</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                €{totalGastos.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="p-2 bg-red-900/30 rounded-lg">
+              <TrendingDown className="h-5 w-5 text-red-400" />
             </div>
           </div>
+          <p className="text-red-400 text-sm">
+            {gastosDelMes.length} transacciones
+          </p>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Balance */}
+        <div className={`${
+          balance >= 0 
+            ? 'bg-emerald-900/20 border-emerald-800/30' 
+            : 'bg-red-900/20 border-red-800/30'
+        } border rounded-lg p-5`}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-slate-300 text-sm font-medium">Balance</p>
+              <p className={`text-2xl font-bold mt-1 ${
+                balance >= 0 ? 'text-emerald-400' : 'text-red-400'
+              }`}>
+                €{balance.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className={`p-2 rounded-lg ${
+              balance >= 0 ? 'bg-emerald-900/30' : 'bg-red-900/30'
+            }`}>
+              <DollarSign className={`h-5 w-5 ${
+                balance >= 0 ? 'text-emerald-400' : 'text-red-400'
+              }`} />
+            </div>
+          </div>
+          <p className={`text-sm ${
+            balance >= 0 ? 'text-emerald-400' : 'text-red-400'
+          }`}>
+            {balance >= 0 ? 'Positivo' : 'Negativo'} este mes
+          </p>
+        </div>
+      </div>
+
+      {/* Botón de refresco */}
+      <div className="mt-6 flex justify-between items-center pt-5 border-t border-slate-800">
+        <div className="text-slate-400 text-sm">
+          Última actualización: {new Date().toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </div>
+        <button
+          onClick={fetchData}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Actualizar
+        </button>
+      </div>
+    </div>
   )
 }
+
+export default BalanceMensual
