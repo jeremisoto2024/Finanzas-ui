@@ -128,11 +128,11 @@ export default function PagosFijos() {
               </span>
             </div>
             <div className="text-right">
-              <span className={`text-lg font-bold ${total > 700 ? 'text-red-400' : 'text-green-400'}`}>
+              <span className={`text-lg font-bold ${total > 0 ? 'text-red-400' : 'text-green-400'}`}>
                 €{total.toFixed(2)}
               </span>
               <div className="text-xs text-slate-500">
-                {total > 700 ? 'Alto' : 'Moderado'} gasto fijo
+                {total > 0 ? 'Alto' : 'Moderado'} gasto fijo
               </div>
             </div>
           </div>
