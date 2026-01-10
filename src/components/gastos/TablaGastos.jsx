@@ -76,49 +76,90 @@ export default function TablaGastos() {
         setError(err.message);
         console.error('Error fetching datos:', err);
         
-        // Datos de ejemplo como fallback
+        // Datos de ejemplo MEJORADOS con historial real
         setGastosMensuales([
-          { id: 1, fecha: '2025-01-01', concepto: 'Alquiler', metodo: 'Transferencia', categoria: 'Vivienda', cuenta: 'BBVA', monto: 850 },
-          { id: 2, fecha: '2025-01-05', concepto: 'Supermercado', metodo: 'Tarjeta', categoria: 'Alimentación', cuenta: 'Santander', monto: 120 },
-          { id: 3, fecha: '2025-01-10', concepto: 'Gasolina', metodo: 'Tarjeta', categoria: 'Transporte', cuenta: 'Santander', monto: 60 },
-          { id: 4, fecha: '2025-01-12', concepto: 'Netflix', metodo: 'Tarjeta', categoria: 'Entretenimiento', cuenta: 'BBVA', monto: 15 },
-          { id: 5, fecha: '2025-01-15', concepto: 'Restaurante', metodo: 'Tarjeta', categoria: 'Comida Fuera', cuenta: 'Santander', monto: 45 },
-          { id: 6, fecha: '2025-01-18', concepto: 'Gimnasio', metodo: 'Transferencia', categoria: 'Salud', cuenta: 'BBVA', monto: 30 },
-          { id: 7, fecha: '2025-01-20', concepto: 'Compras Online', metodo: 'Tarjeta', categoria: 'Compras', cuenta: 'Revolut', monto: 85 },
+          { id: 1, fecha: '2026-01-02', concepto: 'Mercado', metodo: 'App', categoria: 'Alimentación', cuenta: 'Móvil', monto: 50 },
+          { id: 2, fecha: '2026-01-03', concepto: 'Mami', metodo: 'Bizum', categoria: 'Familia', cuenta: 'Bizum', monto: 20 },
+          { id: 3, fecha: '2026-01-05', concepto: 'Refresco', metodo: 'App', categoria: 'Alimentación', cuenta: 'Móvil', monto: 2 },
         ]);
         
         setPagosFijos([
-          { id: '1', nombre: 'Netflix', monto: 12.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true, fechaInicio: '2025-02-01' },
-          { id: '2', nombre: 'Gimnasio', monto: 45.00, metodo: 'Transferencia', categoria: 'Salud', frecuencia: 'mensual', activo: true, fechaInicio: '2025-02-01' },
-          { id: '3', nombre: 'Spotify', monto: 9.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true, fechaInicio: '2025-02-01' }
+          { id: '1', nombre: 'Alquiler', monto: 750.00, metodo: 'Transferencia', categoria: 'Vivienda', frecuencia: 'mensual', activo: true, fechaInicio: '2026-02-01' }
         ]);
         
+        // DATOS REALES BASADOS EN TUS IMÁGENES
         setComprasCuotas([
           { 
             id: '1', 
-            concepto: 'iPhone 15 Pro', 
-            montoTotal: 1199.00, 
-            cuotasTotales: 12,
-            cuotasPagadas: 3,
-            montoPrimeraCuota: 150.00,
-            montoUltimaCuota: 49.00,
-            fechaInicio: '2024-12-01', // Empezó en diciembre
+            concepto: 'Aliexpress 1', 
+            montoTotal: 33.74,
+            cuotasTotales: 4,
+            cuotasPagadas: 3, // 3 de 4 pagadas
+            montoPrimeraCuota: 10.00,
+            montoUltimaCuota: 7.46,
+            fechaInicio: '2025-11-01', // Empezó en noviembre
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
             activo: true,
-            frecuenciaPago: 'mensual'
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 10.00, pagada: true, fecha: '2025-11-01' },
+              { numero: 2, monto: 8.64, pagada: true, fecha: '2025-12-01' },
+              { numero: 3, monto: 7.64, pagada: true, fecha: '2026-01-01' },
+              { numero: 4, monto: 7.46, pagada: false, fecha: '2026-02-01' }
+            ]
           },
           { 
             id: '2', 
-            concepto: 'Sofá nuevo', 
-            montoTotal: 800.00, 
-            cuotasTotales: 6,
-            cuotasPagadas: 2,
-            fechaInicio: '2025-01-01',
+            concepto: 'Shein', 
+            montoTotal: 50.74,
+            cuotasTotales: 4,
+            cuotasPagadas: 1, // 1 de 4 pagadas
+            fechaInicio: '2026-01-01',
             metodo: 'Tarjeta',
-            categoria: 'Hogar',
+            categoria: 'Otros',
             activo: true,
-            frecuenciaPago: 'mensual'
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 12.69, pagada: true, fecha: '2026-01-01' },
+              { numero: 2, monto: 12.69, pagada: false, fecha: '2026-02-01' },
+              { numero: 3, monto: 12.68, pagada: false, fecha: '2026-03-01' },
+              { numero: 4, monto: 12.68, pagada: false, fecha: '2026-04-01' }
+            ]
+          },
+          { 
+            id: '3', 
+            concepto: 'Aliexpress 3', 
+            montoTotal: 49.95,
+            cuotasTotales: 3,
+            cuotasPagadas: 1, // 1 de 3 pagadas
+            fechaInicio: '2026-01-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 16.65, pagada: true, fecha: '2026-01-01' },
+              { numero: 2, monto: 16.65, pagada: false, fecha: '2026-02-01' },
+              { numero: 3, monto: 16.65, pagada: false, fecha: '2026-03-01' }
+            ]
+          },
+          { 
+            id: '4', 
+            concepto: 'Aliexpress 2', 
+            montoTotal: 33.11,
+            cuotasTotales: 3,
+            cuotasPagadas: 1, // 1 de 3 pagadas
+            fechaInicio: '2026-01-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 11.04, pagada: true, fecha: '2026-01-01' },
+              { numero: 2, monto: 11.04, pagada: false, fecha: '2026-02-01' },
+              { numero: 3, monto: 11.03, pagada: false, fecha: '2026-03-01' }
+            ]
           }
         ]);
       } finally {
@@ -131,22 +172,19 @@ export default function TablaGastos() {
 
   // ========== FUNCIONES DE TRANSFORMACIÓN CORREGIDAS ==========
 
-  // 1. Transformar pagos fijos en gastos (SOLO para el mes filtrado o próximo)
+  // 1. Transformar pagos fijos en gastos
   const transformarPagosFijosAGastos = useMemo(() => {
     return pagosFijos.map(pago => {
-      // Obtener el día del mes del pago
-      const fechaInicio = new Date(pago.fechaInicio || '2025-02-01');
+      const fechaInicio = new Date(pago.fechaInicio || '2026-02-01');
       const diaPago = fechaInicio.getDate();
       
       let fechaGasto;
       if (filtroMes) {
-        // Construir fecha en el mes filtrado
         const [year, month] = filtroMes.split('-');
         fechaGasto = new Date(year, month - 1, diaPago);
       } else {
-        // Si no hay filtro, usar el próximo pago desde hoy
         const hoy = new Date();
-        const proximoPago = new Date(hoy.getFullYear(), hoy.getMonth(), diaPago);
+        let proximoPago = new Date(hoy.getFullYear(), hoy.getMonth(), diaPago);
         if (proximoPago < hoy) {
           proximoPago.setMonth(proximoPago.getMonth() + 1);
         }
@@ -156,8 +194,8 @@ export default function TablaGastos() {
       const fechaStr = fechaGasto.toISOString().split('T')[0];
       const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
       
-      // NO incluir enero 2025
-      if (mesGasto === '2025-01') return null;
+      // NO incluir enero 2026 si ya está pagado
+      if (mesGasto === '2026-01') return null;
       
       return {
         id: `pago-fijo-${pago.id}`,
@@ -174,65 +212,69 @@ export default function TablaGastos() {
     }).filter(Boolean);
   }, [pagosFijos, filtroMes]);
 
-  // 2. Transformar cuotas en gastos - SOLO LA PRÓXIMA CUOTA DE CADA COMPRA
+  // 2. Transformar cuotas en gastos - USANDO EL HISTORIAL REAL
   const transformarCuotasAGastos = useMemo(() => {
     const gastosCuotas = [];
     
     comprasCuotas.forEach(compra => {
-      // Calcular cuál es la próxima cuota a pagar
-      const proximaCuotaNumero = compra.cuotasPagadas + 1;
-      
-      // Si ya pagó todas las cuotas, no mostrar nada
-      if (proximaCuotaNumero > compra.cuotasTotales) return;
-      
-      // Calcular monto de la próxima cuota
-      let montoCuota;
-      if (compra.montoPrimeraCuota && proximaCuotaNumero === 1) {
-        montoCuota = compra.montoPrimeraCuota;
-      } else if (compra.montoUltimaCuota && proximaCuotaNumero === compra.cuotasTotales) {
-        montoCuota = compra.montoUltimaCuota;
-      } else {
-        // Calcular monto promedio para cuotas intermedias
-        const montoRestante = compra.montoTotal - 
-          (compra.montoPrimeraCuota || 0) - 
-          (compra.montoUltimaCuota || 0);
-        const cuotasIntermedias = compra.cuotasTotales - 
-          (compra.montoPrimeraCuota ? 1 : 0) - 
-          (compra.montoUltimaCuota ? 1 : 0);
-        
-        if (cuotasIntermedias > 0) {
-          montoCuota = montoRestante / cuotasIntermedias;
-        } else {
-          montoCuota = compra.montoTotal / compra.cuotasTotales;
-        }
+      // 1. VERIFICAR SI HAY HISTORIAL DE CUOTAS
+      if (!compra.historialCuotas || compra.historialCuotas.length === 0) {
+        console.warn(`Compra ${compra.concepto} no tiene historial de cuotas`);
+        return;
       }
       
-      // Calcular fecha de la próxima cuota
-      const fechaInicio = new Date(compra.fechaInicio);
-      const fechaCuota = new Date(fechaInicio);
-      fechaCuota.setMonth(fechaInicio.getMonth() + (proximaCuotaNumero - 1));
+      // 2. ENCONTRAR LA PRÓXIMA CUOTA NO PAGADA
+      const proximaCuota = compra.historialCuotas.find(cuota => !cuota.pagada);
       
-      const fechaStr = fechaCuota.toISOString().split('T')[0];
+      // Si no hay cuotas pendientes, no mostrar nada
+      if (!proximaCuota) {
+        console.log(`Compra ${compra.concepto}: Todas las cuotas están pagadas`);
+        return;
+      }
+      
+      // 3. VERIFICAR QUE LA FECHA SEA VÁLIDA
+      if (!proximaCuota.fecha) {
+        console.warn(`Cuota ${proximaCuota.numero} de ${compra.concepto} no tiene fecha`);
+        return;
+      }
+      
+      const fechaCuota = new Date(proximaCuota.fecha);
+      if (isNaN(fechaCuota.getTime())) {
+        console.warn(`Fecha inválida en cuota ${proximaCuota.numero} de ${compra.concepto}`);
+        return;
+      }
+      
+      const fechaStr = proximaCuota.fecha;
       const mesCuota = `${fechaCuota.getFullYear()}-${String(fechaCuota.getMonth() + 1).padStart(2, '0')}`;
       
-      // NO incluir enero 2025
-      if (mesCuota === '2025-01') return;
+      // 4. EXCLUIR ENERO 2026 SI YA ESTÁ CUBIERTO
+      if (mesCuota === '2026-01') {
+        console.log(`Cuota de ${compra.concepto} excluida por ser enero 2026`);
+        return;
+      }
       
-      // Si hay filtro de mes, verificar coincidencia
+      // 5. APLICAR FILTRO DE MES SI EXISTE
       if (filtroMes && mesCuota !== filtroMes) return;
       
+      // 6. CALCULAR CUOTAS RESTANTES
+      const cuotasPagadas = compra.cuotasPagadas || compra.historialCuotas.filter(c => c.pagada).length;
+      const cuotasRestantes = compra.cuotasTotales - cuotasPagadas;
+      
       gastosCuotas.push({
-        id: `cuota-${compra.id}-${proximaCuotaNumero}`,
+        id: `cuota-${compra.id}-${proximaCuota.numero}`,
         fecha: fechaStr,
-        concepto: `${compra.concepto} (Cuota ${proximaCuotaNumero}/${compra.cuotasTotales})`,
+        concepto: `${compra.concepto} (Cuota ${proximaCuota.numero}/${compra.cuotasTotales})`,
         metodo: compra.metodo,
         categoria: compra.categoria,
         cuenta: 'Financiación',
-        monto: parseFloat(montoCuota.toFixed(2)),
+        monto: parseFloat(proximaCuota.monto.toFixed(2)),
         origen: 'cuota',
-        cuotaNumero: proximaCuotaNumero,
+        cuotaNumero: proximaCuota.numero,
         totalCuotas: compra.cuotasTotales,
-        esFuturo: true
+        cuotasPagadas: cuotasPagadas,
+        cuotasRestantes: cuotasRestantes,
+        esFuturo: true,
+        progreso: `${cuotasPagadas}/${compra.cuotasTotales}`
       });
     });
     
@@ -307,12 +349,12 @@ export default function TablaGastos() {
 
   // ========== COMBINAR Y FILTRAR DATOS ==========
 
-  // Combinar TODOS los gastos (sin enero 2025 para pagos fijos/cuotas)
+  // Combinar TODOS los gastos (sin enero 2026 para pagos fijos/cuotas)
   const todosLosGastos = useMemo(() => {
     const gastosCombinados = [...gastosMensuales];
     
-    // Solo agregar pagos fijos/cuotas si NO es enero 2025
-    if (!filtroMes || filtroMes !== '2025-01') {
+    // Solo agregar pagos fijos/cuotas si NO es enero 2026
+    if (!filtroMes || filtroMes !== '2026-01') {
       gastosCombinados.push(...transformarPagosFijosAGastos);
       gastosCombinados.push(...transformarCuotasAGastos);
     }
@@ -367,9 +409,32 @@ export default function TablaGastos() {
     return stats;
   }, [gastosFiltrados]);
 
-  // 3. Exportar CSV
+  // 3. Resumen de cuotas pendientes
+  const resumenCuotas = useMemo(() => {
+    const cuotas = transformarCuotasAGastos;
+    const totalCuotas = cuotas.length;
+    const totalMonto = cuotas.reduce((sum, c) => sum + c.monto, 0);
+    const cuotasPorCategoria = {};
+    
+    cuotas.forEach(cuota => {
+      if (!cuotasPorCategoria[cuota.categoria]) {
+        cuotasPorCategoria[cuota.categoria] = { count: 0, total: 0 };
+      }
+      cuotasPorCategoria[cuota.categoria].count++;
+      cuotasPorCategoria[cuota.categoria].total += cuota.monto;
+    });
+    
+    return {
+      totalCuotas,
+      totalMonto,
+      cuotasPorCategoria,
+      cuotas
+    };
+  }, [transformarCuotasAGastos]);
+
+  // 4. Exportar CSV
   const exportarCSV = () => {
-    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Origen'];
+    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Origen', 'Progreso'];
     const filas = gastosFiltrados.map(g => [
       g.fecha, 
       g.concepto, 
@@ -377,7 +442,8 @@ export default function TablaGastos() {
       g.categoria, 
       g.cuenta, 
       g.monto, 
-      g.origen || 'normal'
+      g.origen || 'normal',
+      g.progreso || ''
     ].join(','));
     
     const csv = [headers.join(','), ...filas].join('\n');
@@ -465,16 +531,16 @@ export default function TablaGastos() {
             </div>
             
             {/* NOTA IMPORTANTE */}
-            {filtroMes === '2025-01' && (
+            {filtroMes === '2026-01' && (
               <div className="mt-3 text-sm text-amber-400 bg-amber-900/20 px-3 py-2 rounded-lg">
-                ⓘ Los pagos fijos y cuotas de enero 2025 ya están cubiertos
+                ⓘ Los pagos fijos y cuotas de enero 2026 ya están cubiertos
               </div>
             )}
             
-            {/* NOTA SOBRE CUOTAS */}
-            {estadisticasPorTipo.cuota.count > 0 && (
+            {/* RESUMEN DE CUOTAS */}
+            {resumenCuotas.totalCuotas > 0 && (
               <div className="mt-2 text-sm text-purple-400">
-                💡 Mostrando solo la próxima cuota de cada compra a plazos
+                📊 {resumenCuotas.totalCuotas} cuotas pendientes (Total: €{resumenCuotas.totalMonto.toFixed(2)})
               </div>
             )}
           </div>
@@ -493,7 +559,7 @@ export default function TablaGastos() {
 
       {/* LAYOUT DE DOS COLUMNAS */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA - FILTROS */}
+        {/* COLUMNA IZQUIERDA - FILTROS Y RESUMEN */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
           {/* PANEL DE FILTROS */}
           <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-5">
@@ -519,7 +585,7 @@ export default function TablaGastos() {
                     {obtenerMesesDisponibles.map((mes) => (
                       <option key={mes} value={mes}>
                         {formatearMesTexto(mes)}
-                        {mes === '2025-01' && ' (sin pagos fijos)'}
+                        {mes === '2026-01' && ' (sin pagos fijos)'}
                       </option>
                     ))}
                   </select>
@@ -543,6 +609,7 @@ export default function TablaGastos() {
                     <option value="Tarjeta">Tarjeta</option>
                     <option value="Transferencia">Transferencia</option>
                     <option value="Bizum">Bizum</option>
+                    <option value="App">App</option>
                     <option value="Efectivo">Efectivo</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -569,7 +636,7 @@ export default function TablaGastos() {
                     <option value="Salud">Salud</option>
                     <option value="Tecnología">Tecnología</option>
                     <option value="Hogar">Hogar</option>
-                    <option value="Educación">Educación</option>
+                    <option value="Familia">Familia</option>
                     <option value="Otros">Otros</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -603,48 +670,35 @@ export default function TablaGastos() {
             </div>
           </div>
 
-          {/* TARJETA DE ANÁLISIS */}
-          <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-5">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-red-400" />
-              Análisis por tipo
-            </h3>
-            <div className="space-y-3">
-              {Object.entries(estadisticasPorTipo).map(([tipo, data]) => {
-                if (data.count === 0) return null;
+          {/* RESUMEN DE CUOTAS PENDIENTES */}
+          {resumenCuotas.totalCuotas > 0 && (
+            <div className="bg-purple-900/20 border border-purple-800/30 rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-purple-400" />
+                Cuotas pendientes
+              </h3>
+              <div className="space-y-3">
+                <div className="text-center p-3 bg-purple-900/30 rounded-lg">
+                  <div className="text-xs text-purple-300 mb-1">Total cuotas</div>
+                  <div className="text-xl font-bold text-purple-400">{resumenCuotas.totalCuotas}</div>
+                  <div className="text-xs text-purple-500 mt-1">€{resumenCuotas.totalMonto.toFixed(2)}</div>
+                </div>
                 
-                return (
-                  <div key={tipo} className={`p-3 rounded-lg border ${
-                    tipo === 'normal' ? 'bg-slate-800/50 border-slate-700' :
-                    tipo === 'pago_fijo' ? 'bg-amber-900/20 border-amber-800/30' :
-                    'bg-purple-900/20 border-purple-800/30'
-                  }`}>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        {tipo === 'normal' && <Receipt className="h-4 w-4 text-slate-400" />}
-                        {tipo === 'pago_fijo' && <Repeat className="h-4 w-4 text-amber-400" />}
-                        {tipo === 'cuota' && <Calculator className="h-4 w-4 text-purple-400" />}
-                        <span className="text-sm text-slate-300">{data.label}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-medium text-white">{data.count}</span>
-                        <div className={`text-xs ${
-                          tipo === 'normal' ? 'text-slate-400' :
-                          tipo === 'pago_fijo' ? 'text-amber-400' :
-                          'text-purple-400'
-                        }`}>
-                          €{data.total.toFixed(2)}
-                        </div>
-                      </div>
+                {Object.entries(resumenCuotas.cuotasPorCategoria).map(([categoria, data]) => (
+                  <div key={categoria} className="flex justify-between items-center text-sm">
+                    <span className="text-slate-300">{categoria}</span>
+                    <div className="text-right">
+                      <span className="text-purple-400">{data.count} cuotas</span>
+                      <div className="text-xs text-purple-500">€{data.total.toFixed(2)}</div>
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* COLUMNA DERECHA - TABLA */}
+        {/* COLUMNA DERECHA - TABLA DETALLADA */}
         <div className="lg:w-2/3 xl:w-3/4">
           <div className="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden">
             {/* HEADER DE TABLA */}
@@ -656,13 +710,13 @@ export default function TablaGastos() {
                   </h2>
                   <p className="text-sm text-slate-400 mt-1">
                     Mostrando {gastosFiltrados.length} transacciones
-                    {estadisticasPorTipo.cuota.count > 0 && ' (una cuota por compra)'}
+                    {resumenCuotas.totalCuotas > 0 && ` (${resumenCuotas.totalCuotas} cuotas pendientes)`}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* TABLA */}
+            {/* TABLA DETALLADA */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-slate-900">
@@ -696,7 +750,7 @@ export default function TablaGastos() {
                           <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
                           <p>No hay gastos para mostrar</p>
                           <p className="text-sm text-slate-600 mt-1">
-                            {filtroMes === '2025-01' 
+                            {filtroMes === '2026-01' 
                               ? 'Los pagos fijos y cuotas de enero ya están cubiertos'
                               : 'Cambia los filtros o agrega nuevos gastos'
                             }
@@ -706,23 +760,26 @@ export default function TablaGastos() {
                     </tr>
                   ) : (
                     gastosFiltrados.map((gasto) => {
-                      let origenColor, origenBg, origenIcon;
+                      let origenColor, origenBg, origenIcon, origenTooltip = '';
                       
                       switch (gasto.origen) {
                         case 'pago_fijo':
                           origenColor = 'text-amber-400';
                           origenBg = 'bg-amber-900/30';
                           origenIcon = <Repeat className="h-3 w-3" />;
+                          origenTooltip = 'Pago recurrente mensual';
                           break;
                         case 'cuota':
                           origenColor = 'text-purple-400';
                           origenBg = 'bg-purple-900/30';
                           origenIcon = <Calculator className="h-3 w-3" />;
+                          origenTooltip = `Cuota ${gasto.cuotaNumero} de ${gasto.totalCuotas} (${gasto.cuotasPagadas || 0} pagadas)`;
                           break;
                         default:
                           origenColor = 'text-slate-400';
                           origenBg = 'bg-slate-800';
                           origenIcon = <Receipt className="h-3 w-3" />;
+                          origenTooltip = 'Gasto normal';
                       }
                       
                       return (
@@ -733,8 +790,9 @@ export default function TablaGastos() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-white">{gasto.concepto}</div>
                             {gasto.cuotaNumero && (
-                              <div className="text-xs text-slate-500">
+                              <div className="text-xs text-purple-500">
                                 Cuota {gasto.cuotaNumero}/{gasto.totalCuotas}
+                                {gasto.progreso && ` · ${gasto.progreso} pagadas`}
                               </div>
                             )}
                             {gasto.frecuencia && (
@@ -754,7 +812,10 @@ export default function TablaGastos() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${origenBg} ${origenColor}`}>
+                            <span 
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${origenBg} ${origenColor}`}
+                              title={origenTooltip}
+                            >
                               {origenIcon}
                               {gasto.origen === 'pago_fijo' ? 'Pago Fijo' : 
                                gasto.origen === 'cuota' ? 'Cuota' : 'Normal'}
@@ -772,6 +833,15 @@ export default function TablaGastos() {
                 </tbody>
               </table>
             </div>
+            
+            {/* FOOTER CON INFORMACIÓN DETALLADA */}
+            {resumenCuotas.totalCuotas > 0 && (
+              <div className="px-6 py-3 border-t border-slate-800 bg-purple-900/10">
+                <div className="text-xs text-purple-300">
+                  💡 Se muestran solo las próximas cuotas pendientes. Cuotas ya pagadas no se incluyen.
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
