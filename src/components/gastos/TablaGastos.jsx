@@ -41,8 +41,16 @@ export default function TablaGastos() {
   const [pagosFijos, setPagosFijos] = useState([]);
   const [comprasCuotas, setComprasCuotas] = useState([]);
 
-  // Estados de filtros
-  const [filtroMes, setFiltroMes] = useState('');
+  // Obtener mes actual por defecto
+  const obtenerMesActual = () => {
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    return `${año}-${mes}`;
+  };
+
+  // Estados de filtros - POR DEFECTO MES ACTUAL
+  const [filtroMes, setFiltroMes] = useState(obtenerMesActual());
   const [filtroMetodo, setFiltroMetodo] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
 
@@ -94,10 +102,10 @@ export default function TablaGastos() {
             concepto: 'Aliexpress 1', 
             montoTotal: 33.74,
             cuotasTotales: 4,
-            cuotasPagadas: 3, // 3 de 4 pagadas
+            cuotasPagadas: 3,
             montoPrimeraCuota: 10.00,
             montoUltimaCuota: 7.46,
-            fechaInicio: '2025-11-01', // Empezó en noviembre
+            fechaInicio: '2025-11-01',
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
             activo: true,
@@ -114,7 +122,7 @@ export default function TablaGastos() {
             concepto: 'Shein', 
             montoTotal: 50.74,
             cuotasTotales: 4,
-            cuotasPagadas: 1, // 1 de 4 pagadas
+            cuotasPagadas: 1,
             fechaInicio: '2026-01-01',
             metodo: 'Tarjeta',
             categoria: 'Otros',
@@ -132,7 +140,7 @@ export default function TablaGastos() {
             concepto: 'Aliexpress 3', 
             montoTotal: 49.95,
             cuotasTotales: 3,
-            cuotasPagadas: 1, // 1 de 3 pagadas
+            cuotasPagadas: 1,
             fechaInicio: '2026-01-01',
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
@@ -149,7 +157,7 @@ export default function TablaGastos() {
             concepto: 'Aliexpress 2', 
             montoTotal: 33.11,
             cuotasTotales: 3,
-            cuotasPagadas: 1, // 1 de 3 pagadas
+            cuotasPagadas: 1,
             fechaInicio: '2026-01-01',
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
@@ -172,27 +180,23 @@ export default function TablaGastos() {
 
   // ========== FUNCIONES DE TRANSFORMACIÓN CORREGIDAS ==========
 
-  // 1. Transformar pagos fijos en gastos
+  // 1. Transformar pagos fijos en gastos - SOLO PARA EL MES SELECCIONADO
   const transformarPagosFijosAGastos = useMemo(() => {
+    if (!filtroMes) return []; // Si no hay mes seleccionado, no mostrar nada
+    
     return pagosFijos.map(pago => {
       const fechaInicio = new Date(pago.fechaInicio || '2026-02-01');
       const diaPago = fechaInicio.getDate();
       
-      let fechaGasto;
-      if (filtroMes) {
-        const [year, month] = filtroMes.split('-');
-        fechaGasto = new Date(year, month - 1, diaPago);
-      } else {
-        const hoy = new Date();
-        let proximoPago = new Date(hoy.getFullYear(), hoy.getMonth(), diaPago);
-        if (proximoPago < hoy) {
-          proximoPago.setMonth(proximoPago.getMonth() + 1);
-        }
-        fechaGasto = proximoPago;
-      }
+      // Crear fecha para el mes del filtro
+      const [year, month] = filtroMes.split('-');
+      const fechaGasto = new Date(year, month - 1, diaPago);
+      
+      // Verificar que el gasto sea en el mes correcto
+      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+      if (mesGasto !== filtroMes) return null;
       
       const fechaStr = fechaGasto.toISOString().split('T')[0];
-      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
       
       // NO incluir enero 2026 si ya está pagado
       if (mesGasto === '2026-01') return null;
@@ -212,14 +216,13 @@ export default function TablaGastos() {
     }).filter(Boolean);
   }, [pagosFijos, filtroMes]);
 
-  // 2. Transformar cuotas en gastos - USANDO EL HISTORIAL REAL
+  // 2. Transformar cuotas en gastos - SOLO PARA EL MES SELECCIONADO
   const transformarCuotasAGastos = useMemo(() => {
     const gastosCuotas = [];
     
     comprasCuotas.forEach(compra => {
       // 1. VERIFICAR SI HAY HISTORIAL DE CUOTAS
       if (!compra.historialCuotas || compra.historialCuotas.length === 0) {
-        console.warn(`Compra ${compra.concepto} no tiene historial de cuotas`);
         return;
       }
       
@@ -227,34 +230,22 @@ export default function TablaGastos() {
       const proximaCuota = compra.historialCuotas.find(cuota => !cuota.pagada);
       
       // Si no hay cuotas pendientes, no mostrar nada
-      if (!proximaCuota) {
-        console.log(`Compra ${compra.concepto}: Todas las cuotas están pagadas`);
-        return;
-      }
+      if (!proximaCuota) return;
       
       // 3. VERIFICAR QUE LA FECHA SEA VÁLIDA
-      if (!proximaCuota.fecha) {
-        console.warn(`Cuota ${proximaCuota.numero} de ${compra.concepto} no tiene fecha`);
-        return;
-      }
+      if (!proximaCuota.fecha) return;
       
       const fechaCuota = new Date(proximaCuota.fecha);
-      if (isNaN(fechaCuota.getTime())) {
-        console.warn(`Fecha inválida en cuota ${proximaCuota.numero} de ${compra.concepto}`);
-        return;
-      }
+      if (isNaN(fechaCuota.getTime())) return;
       
       const fechaStr = proximaCuota.fecha;
       const mesCuota = `${fechaCuota.getFullYear()}-${String(fechaCuota.getMonth() + 1).padStart(2, '0')}`;
       
-      // 4. EXCLUIR ENERO 2026 SI YA ESTÁ CUBIERTO
-      if (mesCuota === '2026-01') {
-        console.log(`Cuota de ${compra.concepto} excluida por ser enero 2026`);
-        return;
-      }
-      
-      // 5. APLICAR FILTRO DE MES SI EXISTE
+      // 4. APLICAR FILTRO DE MES - SOLO MOSTRAR CUOTAS DEL MES SELECCIONADO
       if (filtroMes && mesCuota !== filtroMes) return;
+      
+      // 5. EXCLUIR ENERO 2026 SI YA ESTÁ CUBIERTO
+      if (mesCuota === '2026-01') return;
       
       // 6. CALCULAR CUOTAS RESTANTES
       const cuotasPagadas = compra.cuotasPagadas || compra.historialCuotas.filter(c => c.pagada).length;
@@ -302,43 +293,51 @@ export default function TablaGastos() {
       }
     });
     
-    // Agregar meses de pagos fijos
-    transformarPagosFijosAGastos.forEach(gasto => {
-      if (gasto.fecha) {
+    // Agregar meses de pagos fijos (del historial)
+    pagosFijos.forEach(pago => {
+      if (pago.fechaInicio) {
         try {
-          const fecha = new Date(gasto.fecha);
+          const fecha = new Date(pago.fechaInicio);
           const año = fecha.getFullYear();
           const mes = fecha.getMonth() + 1;
-          const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
-          mesesSet.add(mesFormateado);
+          // Agregar los próximos 6 meses de pagos fijos
+          for (let i = 0; i < 6; i++) {
+            const fechaProxima = new Date(año, mes - 1 + i, fecha.getDate());
+            const mesFormateado = `${fechaProxima.getFullYear()}-${String(fechaProxima.getMonth() + 1).padStart(2, '0')}`;
+            mesesSet.add(mesFormateado);
+          }
         } catch (error) {
-          console.error('Error procesando fecha pago fijo:', gasto.fecha, error);
+          console.error('Error procesando fecha pago fijo:', pago.fechaInicio, error);
         }
       }
     });
     
-    // Agregar meses de cuotas
-    transformarCuotasAGastos.forEach(gasto => {
-      if (gasto.fecha) {
-        try {
-          const fecha = new Date(gasto.fecha);
-          const año = fecha.getFullYear();
-          const mes = fecha.getMonth() + 1;
-          const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
-          mesesSet.add(mesFormateado);
-        } catch (error) {
-          console.error('Error procesando fecha cuota:', gasto.fecha, error);
-        }
+    // Agregar meses de cuotas (del historial)
+    comprasCuotas.forEach(compra => {
+      if (compra.historialCuotas) {
+        compra.historialCuotas.forEach(cuota => {
+          if (cuota.fecha) {
+            try {
+              const fecha = new Date(cuota.fecha);
+              const año = fecha.getFullYear();
+              const mes = fecha.getMonth() + 1;
+              const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
+              mesesSet.add(mesFormateado);
+            } catch (error) {
+              console.error('Error procesando fecha cuota:', cuota.fecha, error);
+            }
+          }
+        });
       }
     });
     
     const mesesArray = Array.from(mesesSet);
     return mesesArray.sort((a, b) => b.localeCompare(a));
-  }, [gastosMensuales, transformarPagosFijosAGastos, transformarCuotasAGastos]);
+  }, [gastosMensuales, pagosFijos, comprasCuotas]);
 
   // 4. Función para formatear mes a texto
   const formatearMesTexto = (mesFormato) => {
-    if (!mesFormato) return '';
+    if (!mesFormato) return 'Seleccionar mes';
     const [año, mes] = mesFormato.split('-');
     const fecha = new Date(año, parseInt(mes) - 1);
     return fecha.toLocaleDateString('es-ES', { 
@@ -349,11 +348,25 @@ export default function TablaGastos() {
 
   // ========== COMBINAR Y FILTRAR DATOS ==========
 
-  // Combinar TODOS los gastos (sin enero 2026 para pagos fijos/cuotas)
+  // Combinar TODOS los gastos para el MES SELECCIONADO
   const todosLosGastos = useMemo(() => {
-    const gastosCombinados = [...gastosMensuales];
+    const gastosCombinados = [];
     
-    // Solo agregar pagos fijos/cuotas si NO es enero 2026
+    // Agregar gastos normales del mes seleccionado
+    gastosMensuales.forEach(gasto => {
+      if (gasto.fecha) {
+        const fechaGasto = new Date(gasto.fecha);
+        const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+        if (mesGasto === filtroMes) {
+          gastosCombinados.push({
+            ...gasto,
+            origen: 'normal'
+          });
+        }
+      }
+    });
+    
+    // Agregar pagos fijos y cuotas (excluyendo enero 2026)
     if (!filtroMes || filtroMes !== '2026-01') {
       gastosCombinados.push(...transformarPagosFijosAGastos);
       gastosCombinados.push(...transformarCuotasAGastos);
@@ -362,23 +375,15 @@ export default function TablaGastos() {
     return gastosCombinados;
   }, [gastosMensuales, transformarPagosFijosAGastos, transformarCuotasAGastos, filtroMes]);
 
-  // Filtrar gastos combinados
+  // Filtrar gastos combinados por método y categoría
   const gastosFiltrados = useMemo(() => {
     return todosLosGastos.filter(gasto => {
-      if (!gasto.fecha) return false;
-      
-      const fechaGasto = new Date(gasto.fecha);
-      if (isNaN(fechaGasto.getTime())) return false;
-      
-      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
-      
-      const cumpleMes = !filtroMes || mesGasto === filtroMes;
       const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
       const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
       
-      return cumpleMes && cumpleMetodo && cumpleCategoria;
+      return cumpleMetodo && cumpleCategoria;
     });
-  }, [todosLosGastos, filtroMes, filtroMetodo, filtroCategoria]);
+  }, [todosLosGastos, filtroMetodo, filtroCategoria]);
 
   // ========== CÁLCULOS ==========
 
@@ -409,7 +414,7 @@ export default function TablaGastos() {
     return stats;
   }, [gastosFiltrados]);
 
-  // 3. Resumen de cuotas pendientes
+  // 3. Resumen de cuotas pendientes para el mes seleccionado
   const resumenCuotas = useMemo(() => {
     const cuotas = transformarCuotasAGastos;
     const totalCuotas = cuotas.length;
@@ -452,7 +457,7 @@ export default function TablaGastos() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `gastos_${filtroMes || 'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `gastos_${filtroMes || 'actual'}_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
     
     setTimeout(() => URL.revokeObjectURL(url), 100);
@@ -505,7 +510,7 @@ export default function TablaGastos() {
               <span className="text-3xl font-bold text-red-400">€{total.toFixed(2)}</span>
               <div className="h-2 w-2 rounded-full bg-slate-600"></div>
               <span className="text-slate-400">
-                {filtroMes ? formatearMesTexto(filtroMes) : 'Próximos gastos'}
+                {formatearMesTexto(filtroMes)}
               </span>
               <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
                 {gastosFiltrados.length} transacciones
@@ -540,7 +545,7 @@ export default function TablaGastos() {
             {/* RESUMEN DE CUOTAS */}
             {resumenCuotas.totalCuotas > 0 && (
               <div className="mt-2 text-sm text-purple-400">
-                📊 {resumenCuotas.totalCuotas} cuotas pendientes (Total: €{resumenCuotas.totalMonto.toFixed(2)})
+                📊 {resumenCuotas.totalCuotas} cuotas pendientes este mes (Total: €{resumenCuotas.totalMonto.toFixed(2)})
               </div>
             )}
           </div>
@@ -581,7 +586,6 @@ export default function TablaGastos() {
                     onChange={(e) => setFiltroMes(e.target.value)}
                     className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                   >
-                    <option value="">Próximos gastos</option>
                     {obtenerMesesDisponibles.map((mes) => (
                       <option key={mes} value={mes}>
                         {formatearMesTexto(mes)}
@@ -648,7 +652,7 @@ export default function TablaGastos() {
             <div className="mt-6 pt-5 border-t border-slate-800">
               <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg mb-4">
                 <div>
-                  <div className="text-sm text-slate-400">Total filtrado</div>
+                  <div className="text-sm text-slate-400">Total {formatearMesTexto(filtroMes).toLowerCase()}</div>
                   <div className="text-xl font-bold text-red-400">€{total.toFixed(2)}</div>
                 </div>
                 <div className="text-right">
@@ -659,7 +663,6 @@ export default function TablaGastos() {
 
               <button 
                 onClick={() => {
-                  setFiltroMes('');
                   setFiltroMetodo('');
                   setFiltroCategoria('');
                 }}
@@ -675,7 +678,7 @@ export default function TablaGastos() {
             <div className="bg-purple-900/20 border border-purple-800/30 rounded-xl p-5">
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                 <Calculator className="h-4 w-4 text-purple-400" />
-                Cuotas pendientes
+                Cuotas este mes
               </h3>
               <div className="space-y-3">
                 <div className="text-center p-3 bg-purple-900/30 rounded-lg">
@@ -706,12 +709,18 @@ export default function TablaGastos() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-white">
-                    {filtroMes ? `Gastos de ${formatearMesTexto(filtroMes)}` : 'Próximos gastos'}
+                    Gastos de {formatearMesTexto(filtroMes)}
                   </h2>
                   <p className="text-sm text-slate-400 mt-1">
                     Mostrando {gastosFiltrados.length} transacciones
                     {resumenCuotas.totalCuotas > 0 && ` (${resumenCuotas.totalCuotas} cuotas pendientes)`}
                   </p>
+                </div>
+                <div className="text-sm text-slate-400">
+                  {filtroMes === '2026-01' 
+                    ? 'Los pagos fijos y cuotas de enero ya están cubiertos'
+                    : 'Solo se muestran gastos de este mes'
+                  }
                 </div>
               </div>
             </div>
@@ -748,11 +757,11 @@ export default function TablaGastos() {
                       <td colSpan="6" className="px-6 py-8 text-center">
                         <div className="text-slate-500">
                           <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                          <p>No hay gastos para mostrar</p>
+                          <p>No hay gastos para mostrar en {formatearMesTexto(filtroMes)}</p>
                           <p className="text-sm text-slate-600 mt-1">
                             {filtroMes === '2026-01' 
                               ? 'Los pagos fijos y cuotas de enero ya están cubiertos'
-                              : 'Cambia los filtros o agrega nuevos gastos'
+                              : 'Cambia los filtros o selecciona otro mes'
                             }
                           </p>
                         </div>
@@ -833,15 +842,6 @@ export default function TablaGastos() {
                 </tbody>
               </table>
             </div>
-            
-            {/* FOOTER CON INFORMACIÓN DETALLADA */}
-            {resumenCuotas.totalCuotas > 0 && (
-              <div className="px-6 py-3 border-t border-slate-800 bg-purple-900/10">
-                <div className="text-xs text-purple-300">
-                  💡 Se muestran solo las próximas cuotas pendientes. Cuotas ya pagadas no se incluyen.
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
