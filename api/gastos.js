@@ -1,46 +1,36 @@
 import { Client } from '@notionhq/client'
 
-const notion = new Client({
-  auth: process.env.NOTION_TOKEN,
-})
-
 export default async function handler(req, res) {
   try {
-    const response = await notion.databases.query({
-      database_id: process.env.NOTION_EXPENSES_DB,
-      sorts: [
-        {
-          property: 'Fecha del gasto',
-          direction: 'descending',
-        },
-      ],
+    const notion = new Client({
+      auth: process.env.NOTION_TOKEN,
     })
 
-    const gastos = response.results.map(page => ({
-      id: page.id,
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_EXPENSES_DB,
+    })
 
-      nombre:
-        page.properties.Nombre.title[0]?.plain_text || '',
+    const gastos = response.results.map(page => {
+      // Usar la fecha de creación (created_time) como fecha del gasto
+      const fechaFormateada = page.created_time ? 
+        page.created_time.split('T')[0] : 
+        null
 
-      cantidad:
-        page.properties.Cantidad.number || 0,
-
-      fecha:
-        page.properties['Fecha del gasto'].date?.start || null,
-
-      metodo:
-        page.properties['Método de pago'].select?.name || '',
-
-      categoria:
-        page.properties.Categoría.select?.name || '',
-
-      cuenta:
-        page.properties.Cuenta.select?.name || '',
-    }))
+      return {
+        id: page.id,
+        concepto: page.properties.Nombre?.title?.[0]?.plain_text || '',
+        monto: page.properties.Cantidad?.number || 0,
+        fecha: fechaFormateada,
+        categoria: page.properties.Categoría?.select?.name || '',
+        metodo: page.properties['Método de pago']?.select?.name || '',
+        cuenta: page.properties.Cuenta?.select?.name || '',
+      }
+    })
 
     res.status(200).json(gastos)
+    
   } catch (error) {
-    console.error(error)
+    console.error('Error en API de gastos:', error)
     res.status(500).json({ error: 'Error cargando gastos' })
   }
 }
