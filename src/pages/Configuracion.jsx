@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useLocalStorage } from '@/components/hooks/useLocalStorage'
+import { useState, useEffect } from 'react'
 import { 
   Settings, 
   Plus,
@@ -44,46 +43,11 @@ import {
 } from 'lucide-react'
 
 export default function Configuracion() {
-  // Estados con localStorage
-  const [pagosFijos, setPagosFijos] = useLocalStorage('pagosFijos', [
-    { id: 1, nombre: 'Netflix', monto: 12.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true },
-    { id: 2, nombre: 'Gimnasio', monto: 45.00, metodo: 'Transferencia', categoria: 'Salud', frecuencia: 'mensual', activo: true },
-    { id: 3, nombre: 'Alquiler', monto: 750.00, metodo: 'Transferencia', categoria: 'Alquiler', frecuencia: 'mensual', activo: true },
-    { id: 4, nombre: 'Internet', monto: 39.99, metodo: 'Tarjeta', categoria: 'Servicios', frecuencia: 'mensual', activo: true },
-    { id: 5, nombre: 'Teléfono', monto: 25.00, metodo: 'Tarjeta', categoria: 'Telefonía', frecuencia: 'mensual', activo: true },
-    { id: 6, nombre: 'Spotify', monto: 9.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true }
-  ])
-
-  const [comprasCuotas, setComprasCuotas] = useLocalStorage('comprasCuotas', [
-    { 
-      id: 1, 
-      concepto: 'iPhone 15 Pro', 
-      montoTotal: 1199.00, 
-      cuotasTotales: 12,
-      cuotasPagadas: 3,
-      montoPrimeraCuota: 150.00,
-      montoUltimaCuota: 49.00,
-      tipoCuotas: 'decreciente',
-      fechaInicio: '2025-09-01',
-      metodo: 'Tarjeta',
-      categoria: 'Tecnología',
-      activo: true,
-      historialCuotas: [
-        { numero: 1, monto: 150.00, pagada: true, fecha: '2025-09-01' },
-        { numero: 2, monto: 140.00, pagada: true, fecha: '2025-10-01' },
-        { numero: 3, monto: 130.00, pagada: true, fecha: '2025-11-01' },
-        { numero: 4, monto: 120.00, pagada: false, fecha: '2025-12-01' },
-        { numero: 5, monto: 110.00, pagada: false, fecha: '2026-01-01' },
-        { numero: 6, monto: 100.00, pagada: false, fecha: '2026-02-01' },
-        { numero: 7, monto: 90.00, pagada: false, fecha: '2026-03-01' },
-        { numero: 8, monto: 80.00, pagada: false, fecha: '2026-04-01' },
-        { numero: 9, monto: 70.00, pagada: false, fecha: '2026-05-01' },
-        { numero: 10, monto: 60.00, pagada: false, fecha: '2026-06-01' },
-        { numero: 11, monto: 50.00, pagada: false, fecha: '2026-07-01' },
-        { numero: 12, monto: 49.00, pagada: false, fecha: '2026-08-01' }
-      ]
-    }
-  ])
+  // Estados para Notion
+  const [pagosFijos, setPagosFijos] = useState([])
+  const [comprasCuotas, setComprasCuotas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   // Estados para acordeones
   const [acordeonesAbiertos, setAcordeonesAbiertos] = useState({
@@ -120,33 +84,155 @@ export default function Configuracion() {
     frecuenciaPago: 'mensual'
   })
 
-  // Funciones de gestión
-  const guardarPagoFijo = () => {
-    if (!pagoFijo.nombre || !pagoFijo.monto) return
-    
-    const nuevoPago = {
-      ...pagoFijo,
-      id: Date.now(),
-      monto: parseFloat(pagoFijo.monto),
-      activo: true
+  // ========== CARGAR DATOS DESDE NOTION ==========
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        setLoading(true)
+        
+        // Cargar pagos fijos
+        const resPagos = await fetch('/api/pagos-fijos')
+        if (!resPagos.ok) throw new Error('Error cargando pagos fijos')
+        const pagosData = await resPagos.json()
+        setPagosFijos(pagosData)
+
+        // Cargar compras a cuotas
+        const resCuotas = await fetch('/api/compras-cuotas')
+        if (!resCuotas.ok) throw new Error('Error cargando compras a cuotas')
+        const cuotasData = await resCuotas.json()
+        setComprasCuotas(cuotasData)
+
+      } catch (err) {
+        setError(err.message)
+        console.error('Error cargando datos:', err)
+        
+        // Datos de ejemplo como fallback
+        setPagosFijos([
+          { id: '1', nombre: 'Netflix', monto: 12.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true, fechaInicio: '2025-10-01' },
+          { id: '2', nombre: 'Gimnasio', monto: 45.00, metodo: 'Transferencia', categoria: 'Salud', frecuencia: 'mensual', activo: true, fechaInicio: '2025-10-01' },
+          { id: '3', nombre: 'Alquiler', monto: 750.00, metodo: 'Transferencia', categoria: 'Alquiler', frecuencia: 'mensual', activo: true, fechaInicio: '2025-10-01' }
+        ])
+        
+        setComprasCuotas([
+          { 
+            id: '1', 
+            concepto: 'iPhone 15 Pro', 
+            montoTotal: 1199.00, 
+            cuotasTotales: 12,
+            cuotasPagadas: 3,
+            montoPrimeraCuota: 150.00,
+            montoUltimaCuota: 49.00,
+            tipoCuotas: 'decreciente',
+            fechaInicio: '2025-09-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 150.00, pagada: true, fecha: '2025-09-01' },
+              { numero: 2, monto: 140.00, pagada: true, fecha: '2025-10-01' },
+              { numero: 3, monto: 130.00, pagada: true, fecha: '2025-11-01' },
+              { numero: 4, monto: 120.00, pagada: false, fecha: '2025-12-01' },
+              { numero: 5, monto: 110.00, pagada: false, fecha: '2026-01-01' }
+            ]
+          }
+        ])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    cargarDatos()
+  }, [])
+
+  // ========== FUNCIONES PARA PAGOS FIJOS ==========
+
+  const guardarPagoFijo = async () => {
+    if (!pagoFijo.nombre || !pagoFijo.monto) {
+      alert('Por favor, completa el nombre y monto del pago fijo')
+      return
     }
     
-    setPagosFijos([...pagosFijos, nuevoPago])
-    
-    setPagoFijo({
-      nombre: '',
-      monto: '',
-      metodo: 'Tarjeta',
-      categoria: 'Servicios',
-      frecuencia: 'mensual',
-      fechaInicio: new Date().toISOString().split('T')[0],
-      notificacion: true
-    })
-    setMostrarFormPagoFijo(false)
+    try {
+      const res = await fetch('/api/pagos-fijos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pagoFijo)
+      })
+      
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Error al guardar pago fijo')
+      }
+      
+      const nuevoPago = await res.json()
+      setPagosFijos([...pagosFijos, nuevoPago])
+      
+      // Resetear formulario
+      setPagoFijo({
+        nombre: '',
+        monto: '',
+        metodo: 'Tarjeta',
+        categoria: 'Servicios',
+        frecuencia: 'mensual',
+        fechaInicio: new Date().toISOString().split('T')[0],
+        notificacion: true
+      })
+      setMostrarFormPagoFijo(false)
+      
+      alert('Pago fijo creado exitosamente')
+    } catch (err) {
+      console.error('Error guardando pago fijo:', err)
+      alert(`Error al guardar pago fijo: ${err.message}`)
+    }
   }
 
-  const guardarCompraCuotas = () => {
-    if (!compraCuotas.concepto || !compraCuotas.montoTotal) return
+  const toggleActivoPagoFijo = async (id, activoActual) => {
+    try {
+      const res = await fetch('/api/pagos-fijos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, activo: !activoActual })
+      })
+      
+      if (res.ok) {
+        setPagosFijos(pagosFijos.map(pago => 
+          pago.id === id ? { ...pago, activo: !activoActual } : pago
+        ))
+      }
+    } catch (error) {
+      console.error('Error actualizando pago fijo:', error)
+      alert('Error al actualizar el estado del pago fijo')
+    }
+  }
+
+  const eliminarPagoFijo = async (id, nombre) => {
+    if (!confirm(`¿Eliminar "${nombre}"?`)) return
+    
+    try {
+      const res = await fetch('/api/pagos-fijos', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      
+      if (res.ok) {
+        setPagosFijos(pagosFijos.filter(p => p.id !== id))
+        alert('Pago fijo eliminado exitosamente')
+      }
+    } catch (error) {
+      console.error('Error eliminando pago fijo:', error)
+      alert('Error al eliminar el pago fijo')
+    }
+  }
+
+  // ========== FUNCIONES PARA COMPRAS A CUOTAS ==========
+
+  const guardarCompraCuotas = async () => {
+    if (!compraCuotas.concepto || !compraCuotas.montoTotal) {
+      alert('Por favor, completa el concepto y monto total')
+      return
+    }
     
     const cuotasTotales = parseInt(compraCuotas.cuotasTotales) || 12
     const cuotasPagadas = parseInt(compraCuotas.cuotasPagadas) || 0
@@ -185,74 +271,134 @@ export default function Configuracion() {
       montoRestante -= montoCuota
     }
     
-    const nuevaCompra = {
-      ...compraCuotas,
-      id: Date.now(),
-      montoTotal,
-      cuotasTotales,
-      cuotasPagadas,
-      montoPrimeraCuota,
-      montoUltimaCuota,
-      activo: true,
-      historialCuotas
+    try {
+      const res = await fetch('/api/compras-cuotas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...compraCuotas,
+          montoTotal,
+          cuotasTotales,
+          cuotasPagadas,
+          montoPrimeraCuota,
+          montoUltimaCuota,
+          historialCuotas
+        })
+      })
+      
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Error al guardar compra a cuotas')
+      }
+      
+      const nuevaCompra = await res.json()
+      setComprasCuotas([...comprasCuotas, nuevaCompra])
+      
+      // Resetear formulario
+      setCompraCuotas({
+        concepto: '',
+        montoTotal: '',
+        cuotasTotales: '12',
+        cuotasPagadas: '0',
+        montoPrimeraCuota: '',
+        montoUltimaCuota: '',
+        fechaInicio: new Date().toISOString().split('T')[0],
+        metodo: 'Tarjeta',
+        categoria: 'Tecnología',
+        frecuenciaPago: 'mensual'
+      })
+      setMostrarFormCuotas(false)
+      
+      alert('Compra a cuotas creada exitosamente')
+    } catch (err) {
+      console.error('Error guardando compra a cuotas:', err)
+      alert(`Error al guardar compra a cuotas: ${err.message}`)
     }
-    
-    setComprasCuotas([...comprasCuotas, nuevaCompra])
-    
-    setCompraCuotas({
-      concepto: '',
-      montoTotal: '',
-      cuotasTotales: '12',
-      cuotasPagadas: '0',
-      montoPrimeraCuota: '',
-      montoUltimaCuota: '',
-      fechaInicio: new Date().toISOString().split('T')[0],
-      metodo: 'Tarjeta',
-      categoria: 'Tecnología',
-      frecuenciaPago: 'mensual'
-    })
-    setMostrarFormCuotas(false)
   }
 
-  // Marcar cuota como pagada
-  const marcarCuotaPagada = (compraId, cuotaNumero) => {
-    setComprasCuotas(comprasCuotas.map(compra => {
-      if (compra.id === compraId) {
-        const historialActualizado = compra.historialCuotas.map(cuota => {
-          if (cuota.numero === cuotaNumero && !cuota.pagada) {
-            return { ...cuota, pagada: true }
-          }
-          return cuota
-        })
-        
-        const nuevasCuotasPagadas = historialActualizado.filter(c => c.pagada).length
-        
-        return {
-          ...compra,
+  const marcarCuotaPagada = async (compraId, cuotaNumero) => {
+    try {
+      const compra = comprasCuotas.find(c => c.id === compraId)
+      if (!compra) return
+      
+      const historialActualizado = compra.historialCuotas.map(cuota => {
+        if (cuota.numero === cuotaNumero && !cuota.pagada) {
+          return { ...cuota, pagada: true }
+        }
+        return cuota
+      })
+      
+      const nuevasCuotasPagadas = historialActualizado.filter(c => c.pagada).length
+      
+      const res = await fetch('/api/compras-cuotas', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: compraId,
           cuotasPagadas: nuevasCuotasPagadas,
           historialCuotas: historialActualizado
-        }
+        })
+      })
+      
+      if (res.ok) {
+        setComprasCuotas(comprasCuotas.map(compra => {
+          if (compra.id === compraId) {
+            return {
+              ...compra,
+              cuotasPagadas: nuevasCuotasPagadas,
+              historialCuotas: historialActualizado
+            }
+          }
+          return compra
+        }))
+        alert('Cuota marcada como pagada')
       }
-      return compra
-    }))
-  }
-
-  // Eliminar compra a cuotas
-  const eliminarCompraCuotas = (id) => {
-    if (confirm('¿Eliminar esta compra a cuotas?')) {
-      const nuevasCompras = comprasCuotas.filter(c => c.id !== id)
-      setComprasCuotas(nuevasCompras)
+    } catch (error) {
+      console.error('Error marcando cuota como pagada:', error)
+      alert('Error al marcar la cuota como pagada')
     }
   }
 
-  // Función para resetear datos (útil para desarrollo)
-  const resetearDatos = () => {
-    if (confirm('¿Estás seguro de querer resetear todos los datos? Esto eliminará todo lo que has configurado.')) {
-      localStorage.removeItem('pagosFijos')
-      localStorage.removeItem('comprasCuotas')
-      window.location.reload()
+  const toggleActivoCompraCuotas = async (id, activoActual) => {
+    try {
+      const res = await fetch('/api/compras-cuotas', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, activo: !activoActual })
+      })
+      
+      if (res.ok) {
+        setComprasCuotas(comprasCuotas.map(compra => 
+          compra.id === id ? { ...compra, activo: !activoActual } : compra
+        ))
+      }
+    } catch (error) {
+      console.error('Error actualizando compra a cuotas:', error)
+      alert('Error al actualizar el estado de la compra a cuotas')
     }
   }
+
+  const eliminarCompraCuotas = async (id, concepto) => {
+    if (!confirm(`¿Eliminar "${concepto}"?`)) return
+    
+    try {
+      const res = await fetch('/api/compras-cuotas', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      
+      if (res.ok) {
+        setComprasCuotas(comprasCuotas.filter(c => c.id !== id))
+        alert('Compra a cuotas eliminada exitosamente')
+      }
+    } catch (error) {
+      console.error('Error eliminando compra a cuotas:', error)
+      alert('Error al eliminar la compra a cuotas')
+    }
+  }
+
+  // ========== CÁLCULOS ==========
 
   // Calcular estadísticas
   const totalPagosMensuales = pagosFijos
@@ -264,14 +410,62 @@ export default function Configuracion() {
   const totalCuotasMensuales = comprasCuotas
     .filter(c => c.activo)
     .reduce((sum, c) => {
-      const proximaCuota = c.historialCuotas.find(cuota => !cuota.pagada)
+      const proximaCuota = c.historialCuotas?.find(cuota => !cuota.pagada)
       return sum + (proximaCuota ? proximaCuota.monto : 0)
     }, 0)
 
-  const totalCuotasPagadas = comprasCuotas.reduce((sum, c) => sum + c.cuotasPagadas, 0)
-  const totalCuotasTotales = comprasCuotas.reduce((sum, c) => sum + c.cuotasTotales, 0)
+  const totalCuotasPagadas = comprasCuotas.reduce((sum, c) => sum + (c.cuotasPagadas || 0), 0)
+  const totalCuotasTotales = comprasCuotas.reduce((sum, c) => sum + (c.cuotasTotales || 0), 0)
   const porcentajeCuotasPagadas = totalCuotasTotales > 0 ? (totalCuotasPagadas / totalCuotasTotales) * 100 : 0
 
+  // Función para resetear datos (ahora solo para datos locales)
+  const resetearDatos = () => {
+    if (confirm('¿Estás seguro de querer resetear todos los datos locales? Esto eliminará los datos cargados en memoria pero no los de Notion.')) {
+      setPagosFijos([])
+      setComprasCuotas([])
+      window.location.reload()
+    }
+  }
+
+  // ========== ESTADOS DE CARGA ==========
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-12 w-12 text-blue-400 animate-spin mx-auto mb-4" />
+          <p className="text-slate-400 text-lg">Cargando configuración desde Notion...</p>
+          <p className="text-slate-500 text-sm mt-2">Conectando con tu base de datos</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 p-6">
+        <div className="max-w-2xl mx-auto mt-20">
+          <div className="bg-red-900/20 border border-red-800/30 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-8 w-8 text-red-400" />
+              <h2 className="text-xl font-bold text-white">Error al cargar configuración</h2>
+            </div>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <p className="text-slate-400 text-sm mb-6">
+              Mostrando datos de ejemplo. Asegúrate de que tus endpoints API estén configurados correctamente.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ========== RENDER ==========
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
       {/* HEADER */}
@@ -285,7 +479,7 @@ export default function Configuracion() {
               <h1 className="text-2xl font-bold text-white">Gestión Financiera</h1>
             </div>
             <p className="text-slate-400 mt-2">
-              Controla tus pagos fijos y compras a cuotas
+              Controla tus pagos fijos y compras a cuotas (almacenado en Notion)
             </p>
           </div>
           
@@ -319,15 +513,15 @@ export default function Configuracion() {
         </div>
       </div>
 
-      {/* BOTÓN DE RESET (solo para desarrollo) */}
+      {/* BOTÓN DE RESET (solo para datos locales) */}
       <div className="mb-4 flex justify-end">
         <button
           onClick={resetearDatos}
           className="flex items-center gap-2 px-3 py-2 text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-lg transition"
-          title="Resetear todos los datos"
+          title="Resetear datos locales en memoria"
         >
           <RefreshCw className="h-3 w-3" />
-          Resetear datos
+          Resetear datos locales
         </button>
       </div>
 
@@ -350,7 +544,7 @@ export default function Configuracion() {
         </button>
       </div>
 
-      {/* FORMULARIO PARA PAGO FIJO */}
+      {/* FORMULARIO PARA PAGO FIJO (igual, pero ahora usa guardarPagoFijo async) */}
       {mostrarFormPagoFijo && (
         <div className="mb-6 bg-slate-900/80 border border-slate-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
@@ -365,6 +559,7 @@ export default function Configuracion() {
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Los inputs siguen igual... */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Nombre *
@@ -489,7 +684,7 @@ export default function Configuracion() {
         </div>
       )}
 
-      {/* FORMULARIO PARA COMPRAS A CUOTAS */}
+      {/* FORMULARIO PARA COMPRAS A CUOTAS (igual, pero ahora usa guardarCompraCuotas async) */}
       {mostrarFormCuotas && (
         <div className="mb-6 bg-slate-900/80 border border-slate-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
@@ -517,6 +712,7 @@ export default function Configuracion() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Los inputs siguen igual... */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Concepto *
@@ -790,12 +986,7 @@ export default function Configuracion() {
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => {
-                                const nuevosPagos = pagosFijos.map(p => 
-                                  p.id === pago.id ? { ...p, activo: !p.activo } : p
-                                )
-                                setPagosFijos(nuevosPagos)
-                              }}
+                              onClick={() => toggleActivoPagoFijo(pago.id, pago.activo)}
                               className={`p-1.5 rounded-lg transition ${
                                 pago.activo
                                   ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50'
@@ -807,12 +998,7 @@ export default function Configuracion() {
                             </button>
                             
                             <button
-                              onClick={() => {
-                                if (confirm(`¿Eliminar "${pago.nombre}"?`)) {
-                                  const nuevosPagos = pagosFijos.filter(p => p.id !== pago.id)
-                                  setPagosFijos(nuevosPagos)
-                                }
-                              }}
+                              onClick={() => eliminarPagoFijo(pago.id, pago.nombre)}
                               className="p-1.5 rounded-lg bg-red-900/30 text-red-400 hover:bg-red-900/50 transition"
                               title="Eliminar"
                             >
@@ -905,9 +1091,9 @@ export default function Configuracion() {
             ) : (
               <div className="space-y-4">
                 {comprasCuotas.map((compra) => {
-                  const porcentaje = (compra.cuotasPagadas / compra.cuotasTotales) * 100
+                  const porcentaje = compra.cuotasTotales > 0 ? (compra.cuotasPagadas / compra.cuotasTotales) * 100 : 0
                   const cuotasRestantes = compra.cuotasTotales - compra.cuotasPagadas
-                  const proximaCuota = compra.historialCuotas.find(cuota => !cuota.pagada)
+                  const proximaCuota = compra.historialCuotas?.find(cuota => !cuota.pagada)
                   
                   return (
                     <div key={compra.id} className="p-4 bg-slate-800/30 rounded-lg border border-slate-700">
@@ -924,7 +1110,7 @@ export default function Configuracion() {
                                 <span>•</span>
                                 <span>{compra.metodo}</span>
                                 <span>•</span>
-                                <span>{compra.frecuenciaPago}</span>
+                                <span>{compra.frecuenciaPago || 'mensual'}</span>
                               </div>
                             </div>
                           </div>
@@ -973,12 +1159,7 @@ export default function Configuracion() {
 
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={() => {
-                                const nuevasCompras = comprasCuotas.map(c => 
-                                  c.id === compra.id ? { ...c, activo: !c.activo } : c
-                                )
-                                setComprasCuotas(nuevasCompras)
-                              }}
+                              onClick={() => toggleActivoCompraCuotas(compra.id, compra.activo)}
                               className={`p-1.5 rounded-lg transition ${
                                 compra.activo
                                   ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50'
@@ -990,7 +1171,7 @@ export default function Configuracion() {
                             </button>
                             
                             <button
-                              onClick={() => eliminarCompraCuotas(compra.id)}
+                              onClick={() => eliminarCompraCuotas(compra.id, compra.concepto)}
                               className="p-1.5 rounded-lg bg-red-900/30 text-red-400 hover:bg-red-900/50 transition"
                               title="Eliminar"
                             >
