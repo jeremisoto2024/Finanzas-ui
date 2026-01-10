@@ -1,379 +1,256 @@
-import { useState, useMemo, useEffect } from 'react';
-
-// ICONOS LUCIDE REACT (modernos y limpios)
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
-  Download, 
-  Filter,
-  Calendar,
-  CreditCard,
-  Database,
-  Tag,
-  TrendingDown,
-  Bell,
-  ChevronDown,
-  FileText,
-  Wallet,
-  AlertCircle,
-  RefreshCw,
-  Lightbulb,
-  Clock,
-  TrendingUp
+  Download, Filter, Calendar, CreditCard, Database, Tag, 
+  TrendingDown, Bell, ChevronDown, FileText, Wallet, 
+  AlertCircle, RefreshCw, Lightbulb, Clock, TrendingUp 
 } from 'lucide-react';
 
+const formatCurrency = (amount) => `€${Number(amount).toFixed(2)}`;
+
+const formatMonth = (yearMonth) => {
+  if (!yearMonth) return 'Todos los meses';
+  const [year, month] = yearMonth.split('-');
+  return new Date(year, month - 1).toLocaleDateString('es-ES', {
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const CATEGORIAS_FIJAS_EXCLUIDAS_AHORRO = ['Vivienda', 'Alquiler', 'Hipoteca', 'Salud', 'Seguros', 'Transporte'];
+
+// Componente reutilizable para selects con icono
+const FilterSelect = ({ icon: Icon, label, value, onChange, options, defaultText }) => (
+  <div>
+    <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
+      <Icon className="h-4 w-4 text-blue-400" />
+      {label}
+    </label>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg 
+                 text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 
+                 transition appearance-none cursor-pointer"
+      >
+        <option value="">{defaultText}</option>
+        {options.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+    </div>
+  </div>
+);
+
 export default function TablaGastos() {
-  // Estados para los datos de Notion
-  const [gastosMensuales, setGastosMensuales] = useState([]);
+  const [gastos, setGastos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados de filtros existentes
-  const [filtroMes, setFiltroMes] = useState('');
-  const [filtroMetodo, setFiltroMetodo] = useState('');
-  const [filtroCuenta, setFiltroCuenta] = useState('');
-  const [filtroCategoria, setFiltroCategoria] = useState('');
+  // Filtros
+  const [filtros, setFiltros] = useState({
+    mes: '',
+    metodo: '',
+    cuenta: '',
+    categoria: ''
+  });
 
-  // Fetch de datos desde Notion API
+  const updateFiltro = useCallback((key) => (value) => {
+    setFiltros(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const resetFiltros = useCallback(() => {
+    setFiltros({
+      mes: '',
+      metodo: '',
+      cuenta: '',
+      categoria: ''
+    });
+  }, []);
+
+  // Carga de datos
   useEffect(() => {
-    const fetchGastos = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch('/api/gastos');
-        if (!res.ok) throw new Error('Error cargando gastos');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setGastosMensuales(data);
+        setGastos(data || []);
       } catch (err) {
+        console.error('Error cargando gastos:', err);
         setError(err.message);
-        console.error('Error fetching gastos:', err);
-        
-        // Datos de ejemplo como fallback
-        setGastosMensuales([
-          { 
-            id: 1, 
-            fecha: '2025-10-01', 
-            concepto: 'Alquiler', 
-            metodo: 'Transferencia', 
-            categoria: 'Vivienda', 
-            cuenta: 'BBVA', 
-            monto: 850 
-          },
-          { 
-            id: 2, 
-            fecha: '2025-09-15', 
-            concepto: 'Supermercado', 
-            metodo: 'Tarjeta', 
-            categoria: 'Alimentación', 
-            cuenta: 'Santander', 
-            monto: 120 
-          },
-          { 
-            id: 3, 
-            fecha: '2025-08-05', 
-            concepto: 'Gasolina', 
-            metodo: 'Tarjeta', 
-            categoria: 'Transporte', 
-            cuenta: 'Santander', 
-            monto: 60 
-          },
+
+        // Fallback
+        setGastos([
+          { id: 'demo1', fecha: '2025-10-01', concepto: 'Alquiler', metodo: 'Transferencia', categoria: 'Vivienda', cuenta: 'BBVA', monto: 850 },
+          { id: 'demo2', fecha: '2025-09-28', concepto: 'Mercadona', metodo: 'Tarjeta', categoria: 'Alimentación', cuenta: 'Santander', monto: 142.35 },
+          { id: 'demo3', fecha: '2025-09-15', concepto: 'Netflix', metodo: 'Domiciliación', categoria: 'Entretenimiento', cuenta: 'BBVA', monto: 12.99 },
         ]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchGastos();
+    fetchData();
   }, []);
 
-  // ========== FUNCIONES PARA DATOS DINÁMICOS ==========
+  // Datos derivados - memoizados
+  const datosDerivados = useMemo(() => {
+    const meses = new Set();
+    const metodos = new Set();
+    const cuentas = new Set();
+    const categorias = new Set();
 
-  // 1. Obtener meses únicos de los datos
-  const obtenerMesesDisponibles = useMemo(() => {
-    const mesesSet = new Set();
-    
-    gastosMensuales.forEach(gasto => {
-      if (gasto.fecha) {
-        try {
-          const fecha = new Date(gasto.fecha);
-          if (!isNaN(fecha.getTime())) {
-            const año = fecha.getFullYear();
-            const mes = fecha.getMonth() + 1;
-            const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
-            mesesSet.add(mesFormateado);
-          }
-        } catch (error) {
-          console.error('Error procesando fecha:', gasto.fecha, error);
+    gastos.forEach(g => {
+      if (!g.fecha) return;
+
+      try {
+        const fecha = new Date(g.fecha);
+        if (!isNaN(fecha)) {
+          const ym = `\( {fecha.getFullYear()}- \){String(fecha.getMonth() + 1).padStart(2, '0')}`;
+          meses.add(ym);
         }
-      }
+      } catch {}
+
+      if (g.metodo) metodos.add(g.metodo);
+      if (g.cuenta) cuentas.add(g.cuenta);
+      if (g.categoria) categorias.add(g.categoria);
     });
-    
-    // Convertir a array y ordenar descendente (más reciente primero)
-    const mesesArray = Array.from(mesesSet);
-    return mesesArray.sort((a, b) => b.localeCompare(a));
-  }, [gastosMensuales]);
 
-  // 2. Obtener métodos de pago únicos
-  const metodosPagoDisponibles = useMemo(() => {
-    const metodosSet = new Set();
-    gastosMensuales.forEach(gasto => {
-      if (gasto.metodo) metodosSet.add(gasto.metodo);
-    });
-    return Array.from(metodosSet).sort();
-  }, [gastosMensuales]);
+    return {
+      mesesOrdenados: [...meses].sort().reverse(),
+      metodos: [...metodos].sort(),
+      cuentas: [...cuentas].sort(),
+      categorias: [...categorias].sort()
+    };
+  }, [gastos]);
 
-  // 3. Obtener cuentas únicas
-  const cuentasDisponibles = useMemo(() => {
-    const cuentasSet = new Set();
-    gastosMensuales.forEach(gasto => {
-      if (gasto.cuenta) cuentasSet.add(gasto.cuenta);
-    });
-    return Array.from(cuentasSet).sort();
-  }, [gastosMensuales]);
-
-  // 4. Obtener categorías únicas
-  const categoriasDisponibles = useMemo(() => {
-    const categoriasSet = new Set();
-    gastosMensuales.forEach(gasto => {
-      if (gasto.categoria) categoriasSet.add(gasto.categoria);
-    });
-    return Array.from(categoriasSet).sort();
-  }, [gastosMensuales]);
-
-  // 5. Función para formatear mes a texto
-  const formatearMesTexto = (mesFormato) => {
-    if (!mesFormato) return '';
-    const [año, mes] = mesFormato.split('-');
-    const fecha = new Date(año, parseInt(mes) - 1);
-    return fecha.toLocaleDateString('es-ES', { 
-      month: 'long', 
-      year: 'numeric' 
-    });
-  };
-
-  // 6. Obtener mes actual en formato YYYY-MM
-  const mesActual = useMemo(() => {
-    const ahora = new Date();
-    return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
-  }, []);
-
-  // ========== FILTRADO DE DATOS ==========
+  // Gastos filtrados
   const gastosFiltrados = useMemo(() => {
-    return gastosMensuales.filter(gasto => {
-      if (gasto.fecha) {
-        const fechaGasto = new Date(gasto.fecha);
-        const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
-        
-        const cumpleMes = !filtroMes || mesGasto === filtroMes;
-        const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
-        const cumpleCuenta = !filtroCuenta || gasto.cuenta === filtroCuenta;
-        const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
-        
-        return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
-      }
-      return false;
+    return gastos.filter(g => {
+      if (!g.fecha) return false;
+
+      const fecha = new Date(g.fecha);
+      const mesGasto = `\( {fecha.getFullYear()}- \){String(fecha.getMonth() + 1).padStart(2, '0')}`;
+
+      return (
+        (!filtros.mes || mesGasto === filtros.mes) &&
+        (!filtros.metodo || g.metodo === filtros.metodo) &&
+        (!filtros.cuenta || g.cuenta === filtros.cuenta) &&
+        (!filtros.categoria || g.categoria === filtros.categoria)
+      );
     });
-  }, [gastosMensuales, filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
+  }, [gastos, filtros]);
 
-  // ========== CÁLCULOS PRINCIPALES ==========
-
-  // 1. Total
-  const total = gastosFiltrados.reduce((sum, gasto) => sum + gasto.monto, 0);
-
-  // 2. Calcular estadísticas por categoría
-  const estadisticasCategorias = useMemo(() => {
-    const categorias = {};
-    
-    gastosFiltrados.forEach(gasto => {
-      if (!categorias[gasto.categoria]) {
-        categorias[gasto.categoria] = {
-          total: 0,
-          count: 0,
-          promedio: 0
-        };
-      }
-      categorias[gasto.categoria].total += gasto.monto;
-      categorias[gasto.categoria].count += 1;
-    });
-    
-    // Calcular promedio
-    Object.keys(categorias).forEach(categoria => {
-      categorias[categoria].promedio = categorias[categoria].total / categorias[categoria].count;
-    });
-    
-    return categorias;
-  }, [gastosFiltrados]);
-
-  // 3. Calcular categoría principal (mayor gasto)
-  const categoriaPrincipal = useMemo(() => {
-    const categorias = Object.entries(estadisticasCategorias);
-    if (categorias.length === 0) return { nombre: 'N/A', monto: 0 };
-    
-    const [nombre, datos] = categorias.sort((a, b) => b[1].total - a[1].total)[0];
-    return { nombre, monto: datos.total };
-  }, [estadisticasCategorias]);
-
-  // 4. Calcular cuenta más usada
-  const cuentaMasUsada = useMemo(() => {
-    const cuentas = gastosFiltrados.reduce((acc, gasto) => {
-      acc[gasto.cuenta] = (acc[gasto.cuenta] || 0) + 1;
-      return acc;
-    }, {});
-    
-    const cuenta = Object.entries(cuentas).sort((a, b) => b[1] - a[1])[0];
-    return cuenta ? cuenta[0] : 'N/A';
-  }, [gastosFiltrados]);
-
-  // 5. Calcular método más común
-  const metodoMasComun = useMemo(() => {
-    const metodos = gastosFiltrados.reduce((acc, gasto) => {
-      acc[gasto.metodo] = (acc[gasto.metodo] || 0) + 1;
-      return acc;
-    }, {});
-    
-    const metodo = Object.entries(metodos).sort((a, b) => b[1] - a[1])[0];
-    return metodo ? metodo[0] : 'N/A';
-  }, [gastosFiltrados]);
-
-  // 6. Sugerencia de ahorro inteligente
-  const sugerenciaAhorro = useMemo(() => {
-    if (Object.keys(estadisticasCategorias).length === 0) {
-      return { categoria: null, ahorroPotencial: 0, mensaje: '' };
-    }
-    
-    // Encontrar categoría con mayor gasto (excluyendo necesidades básicas)
-    const categoriasExcluidas = ['Vivienda', 'Salud', 'Transporte'];
-    const categoriasElegibles = Object.entries(estadisticasCategorias)
-      .filter(([nombre]) => !categoriasExcluidas.includes(nombre))
-      .sort((a, b) => b[1].total - a[1].total);
-    
-    if (categoriasElegibles.length === 0) {
-      // Si solo hay categorías excluidas, usar la principal de todos modos
-      const [nombre, datos] = Object.entries(estadisticasCategorias)
-        .sort((a, b) => b[1].total - a[1].total)[0];
-      const ahorroPotencial = datos.total * 0.15;
+  // Estadísticas principales
+  const stats = useMemo(() => {
+    if (gastosFiltrados.length === 0) {
       return {
-        categoria: nombre,
-        ahorroPotencial,
-        mensaje: `Reduce un 15% en ${nombre} y ahorra ~€${ahorroPotencial.toFixed(0)} este mes`
+        total: 0,
+        porCategoria: {},
+        categoriaMayor: { nombre: '-', monto: 0 },
+        cuentaMasUsada: '-',
+        metodoMasUsado: '-',
+        promedioPorTransaccion: 0
       };
     }
-    
-    const [nombre, datos] = categoriasElegibles[0];
-    const ahorroPotencial = datos.total * 0.20;
+
+    const porCategoria = {};
+    const porCuenta = {};
+    const porMetodo = {};
+
+    let total = 0;
+
+    gastosFiltrados.forEach(g => {
+      total += g.monto || 0;
+
+      // Categoría
+      porCategoria[g.categoria] = (porCategoria[g.categoria] || 0) + (g.monto || 0);
+
+      // Cuenta
+      porCuenta[g.cuenta] = (porCuenta[g.cuenta] || 0) + 1;
+
+      // Método
+      porMetodo[g.metodo] = (porMetodo[g.metodo] || 0) + 1;
+    });
+
+    const categoriaMayor = Object.entries(porCategoria)
+      .sort(([,a], [,b]) => b - a)[0] || ['', 0];
+
+    const cuentaMasUsada = Object.entries(porCuenta)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || '-';
+
+    const metodoMasUsado = Object.entries(porMetodo)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || '-';
+
+    return {
+      total,
+      porCategoria,
+      categoriaMayor: { nombre: categoriaMayor[0], monto: categoriaMayor[1] },
+      cuentaMasUsada,
+      metodoMasUsado,
+      promedioPorTransaccion: total / gastosFiltrados.length
+    };
+  }, [gastosFiltrados]);
+
+  // Sugerencia de ahorro (versión mejorada)
+  const sugerenciaAhorro = useMemo(() => {
+    const candidatas = Object.entries(stats.porCategoria)
+      .filter(([cat]) => !CATEGORIAS_FIJAS_EXCLUIDAS_AHORRO.includes(cat))
+      .sort(([,a], [,b]) => b - a);
+
+    if (candidatas.length === 0) {
+      const mayor = Object.entries(stats.porCategoria).sort(([,a], [,b]) => b - a)[0];
+      if (!mayor) return { mensaje: 'Sin datos suficientes' };
+      
+      const ahorro = mayor[1] * 0.10;
+      return {
+        categoria: mayor[0],
+        ahorroPotencial: ahorro,
+        mensaje: `Intenta ahorrar un 10% en \( {mayor[0]} → ~ \){formatCurrency(ahorro)}`
+      };
+    }
+
+    const [cat, monto] = candidatas[0];
+    const ahorro = monto * 0.20;
     
     return {
-      categoria: nombre,
-      ahorroPotencial,
-      mensaje: `Reduce un 20% en ${nombre} y ahorra ~€${ahorroPotencial.toFixed(0)} este mes`
+      categoria: cat,
+      ahorroPotencial: ahorro,
+      mensaje: `Puedes intentar reducir un 20% en \( {cat} → ~ \){formatCurrency(ahorro)}`
     };
-  }, [estadisticasCategorias]);
+  }, [stats.porCategoria]);
 
-  // 7. Próximos pagos (basado en gastos recurrentes del mes actual)
-  const proximosPagos = useMemo(() => {
-    // Filtrar gastos del mes actual
-    const gastosMesActual = gastosMensuales.filter(gasto => {
-      if (!gasto.fecha) return false;
-      const fecha = new Date(gasto.fecha);
-      const mesGasto = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-      return mesGasto === mesActual;
-    });
-    
-    if (gastosMesActual.length === 0) return [];
-    
-    // Identificar gastos que podrían repetirse (mismo concepto, similar monto)
-    const conceptosRecurrentes = {};
-    
-    gastosMesActual.forEach(gasto => {
-      if (!conceptosRecurrentes[gasto.concepto]) {
-        conceptosRecurrentes[gasto.concepto] = {
-          monto: gasto.monto,
-          count: 1,
-          ultimaFecha: gasto.fecha
-        };
-      } else {
-        conceptosRecurrentes[gasto.concepto].count += 1;
-        conceptosRecurrentes[gasto.concepto].monto = Math.max(
-          conceptosRecurrentes[gasto.concepto].monto, 
-          gasto.monto
-        );
-      }
-    });
-    
-    // Seleccionar los 2 más probables
-    const recurrentes = Object.entries(conceptosRecurrentes)
-      .filter(([_, datos]) => datos.count >= 1) // Al menos aparece una vez este mes
-      .sort((a, b) => b[1].monto - a[1].monto) // Ordenar por monto
-      .slice(0, 2); // Tomar los 2 primeros
-    
-    return recurrentes.map(([concepto, datos]) => ({
-      concepto,
-      monto: datos.monto,
-      frecuencia: datos.count > 1 ? 'Recurrente' : 'Posible'
-    }));
-  }, [gastosMensuales, mesActual]);
-
-  // 8. Tendencias (comparativa con meses anteriores)
-  const tendenciaMensual = useMemo(() => {
-    if (obtenerMesesDisponibles.length < 2) return { cambio: 0, mensaje: 'Datos insuficientes' };
-    
-    const meses = obtenerMesesDisponibles.slice(0, 2); // Últimos 2 meses
-    const totalesPorMes = {};
-    
-    // Calcular total por mes
-    gastosMensuales.forEach(gasto => {
-      if (gasto.fecha) {
-        const fecha = new Date(gasto.fecha);
-        const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-        
-        if (meses.includes(mes)) {
-          totalesPorMes[mes] = (totalesPorMes[mes] || 0) + gasto.monto;
-        }
-      }
-    });
-    
-    // Comparar los dos meses
-    const [mesActualKey, mesAnteriorKey] = meses;
-    const actual = totalesPorMes[mesActualKey] || 0;
-    const anterior = totalesPorMes[mesAnteriorKey] || 0;
-    
-    if (anterior === 0) return { cambio: 0, mensaje: 'Sin datos previos' };
-    
-    const cambio = ((actual - anterior) / anterior) * 100;
-    
-    return {
-      cambio,
-      mensaje: cambio > 0 
-        ? `↑ Aumento del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}`
-        : cambio < 0
-        ? `↓ Disminución del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}`
-        : 'Sin cambios'
-    };
-  }, [gastosMensuales, obtenerMesesDisponibles]);
-
-  // 9. Exportar CSV
-  const exportarCSV = () => {
+  // Exportar
+  const exportarCSV = useCallback(() => {
     const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto'];
-    const filas = gastosFiltrados.map(g => 
-      [g.fecha, g.concepto, g.metodo, g.categoria, g.cuenta, g.monto].join(',')
-    );
-    
-    const csv = [headers.join(','), ...filas].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const rows = gastosFiltrados.map(g => [
+      g.fecha,
+      `"${(g.concepto || '').replace(/"/g, '""')}"`,
+      g.metodo || '',
+      g.categoria || '',
+      g.cuenta || '',
+      g.monto
+    ].join(','));
+
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `gastos_${filtroMes || 'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `gastos_\( {filtros.mes || 'todos'}_ \){new Date().toISOString().slice(0,10)}.csv`;
     link.click();
-    
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-  };
+    URL.revokeObjectURL(url);
+  }, [gastosFiltrados, filtros.mes]);
 
-  // ========== ESTADOS DE CARGA Y ERROR ==========
+  // Render loading / error
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-12 w-12 text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-slate-400 text-lg">Cargando gastos desde Notion...</p>
-          <p className="text-slate-500 text-sm mt-2">Conectando con tu base de datos</p>
+        <div className="text-center space-y-4">
+          <RefreshCw className="h-12 w-12 text-blue-400 animate-spin mx-auto" />
+          <p className="text-slate-300 text-lg">Cargando tus gastos...</p>
         </div>
       </div>
     );
@@ -381,347 +258,211 @@ export default function TablaGastos() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 p-6">
-        <div className="max-w-2xl mx-auto mt-20">
-          <div className="bg-red-900/20 border border-red-800/30 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="h-8 w-8 text-red-400" />
-              <h2 className="text-xl font-bold text-white">Error al cargar gastos</h2>
-            </div>
-            <p className="text-slate-300 mb-4">{error}</p>
-            <p className="text-slate-400 text-sm mb-6">
-              Mostrando datos de ejemplo. Asegúrate de que tu endpoint /api/gastos esté configurado correctamente.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
-            >
-              Reintentar
-            </button>
-          </div>
+      <div className="min-h-screen bg-slate-950 p-6 flex items-center justify-center">
+        <div className="max-w-lg w-full bg-slate-900 border border-red-800/40 rounded-xl p-8 text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-white mb-4">Algo salió mal</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <p className="text-slate-500 text-sm mb-8">
+            Mostrando datos de demostración
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
   }
 
+  // Render principal
   return (
-    <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* HEADER MEJORADO */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+    <div className="min-h-screen bg-slate-950 p-4 sm:p-6 pb-12">
+      {/* Header */}
+      <header className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Gastos del Mes</h1>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="text-3xl font-bold text-red-400">€{total.toFixed(2)}</span>
-              <div className="h-2 w-2 rounded-full bg-slate-600"></div>
-              <span className="text-slate-400">
-                {filtroMes ? formatearMesTexto(filtroMes) : 'Todos los meses'}
-              </span>
-              <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
-                {gastosFiltrados.length} transacciones
-              </span>
-            </div>
-            {/* TENDENCIA */}
-            {tendenciaMensual.cambio !== 0 && (
-              <div className={`mt-2 text-sm ${
-                tendenciaMensual.cambio > 0 ? 'text-red-400' : 'text-green-400'
-              }`}>
-                {tendenciaMensual.mensaje}
+            <h1 className="text-3xl font-bold text-white mb-2">Mis Gastos</h1>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="text-4xl font-black text-red-400 tracking-tight">
+                {formatCurrency(stats.total)}
               </div>
-            )}
+              <div className="text-xl text-slate-400">
+                {formatMonth(filtros.mes)}
+              </div>
+              <div className="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300">
+                {gastosFiltrados.length} movimientos
+              </div>
+            </div>
           </div>
-          
-          {/* BOTÓN DE EXPORTAR */}
-          <button 
+
+          <button
             onClick={exportarCSV}
-            className="group flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-blue-900/30"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 
+                     hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-medium 
+                     transition-all shadow-lg shadow-blue-900/20 hover:shadow-xl hover:shadow-blue-900/30"
           >
-            <Download className="h-5 w-5 group-hover:scale-110 transition-transform" />
-            <FileText className="h-5 w-5" />
-            <span>Exportar CSV</span>
+            <Download size={18} />
+            Exportar CSV
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* LAYOUT DE DOS COLUMNAS */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA - FILTROS */}
-        <div className="lg:w-1/3 xl:w-1/4 space-y-6">
-          {/* PANEL DE FILTROS */}
-          <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="h-5 w-5 text-blue-400" />
+      <div className="grid lg:grid-cols-12 gap-6">
+        {/* Panel lateral filtros + estadísticas rápidas */}
+        <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
+          {/* Filtros */}
+          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-800 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-5">
+              <Filter className="text-blue-400" />
               <h2 className="text-lg font-semibold text-white">Filtros</h2>
             </div>
-            
+
             <div className="space-y-4">
-              {/* FILTRO MES - DINÁMICO */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <Calendar className="h-4 w-4 text-blue-400" />
-                  Mes
-                </label>
-                <div className="relative">
-                  <select 
-                    value={filtroMes}
-                    onChange={(e) => setFiltroMes(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none"
-                  >
-                    <option value="">Todos los meses</option>
-                    {obtenerMesesDisponibles.map((mes) => (
-                      <option key={mes} value={mes}>
-                        {formatearMesTexto(mes)}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+              <FilterSelect
+                icon={Calendar}
+                label="Mes"
+                value={filtros.mes}
+                onChange={updateFiltro('mes')}
+                options={datosDerivados.mesesOrdenados}
+                defaultText="Todos los meses"
+              />
 
-              {/* FILTRO MÉTODO - DINÁMICO */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <CreditCard className="h-4 w-4 text-purple-400" />
-                  Método de pago
-                </label>
-                <div className="relative">
-                  <select 
-                    value={filtroMetodo}
-                    onChange={(e) => setFiltroMetodo(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none"
-                  >
-                    <option value="">Todos los métodos</option>
-                    {metodosPagoDisponibles.map(metodo => (
-                      <option key={metodo} value={metodo}>{metodo}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+              <FilterSelect
+                icon={CreditCard}
+                label="Método"
+                value={filtros.metodo}
+                onChange={updateFiltro('metodo')}
+                options={datosDerivados.metodos}
+                defaultText="Todos los métodos"
+              />
 
-              {/* FILTRO CUENTA - DINÁMICO */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <Database className="h-4 w-4 text-green-400" />
-                  Cuenta
-                </label>
-                <div className="relative">
-                  <select 
-                    value={filtroCuenta}
-                    onChange={(e) => setFiltroCuenta(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none"
-                  >
-                    <option value="">Todas las cuentas</option>
-                    {cuentasDisponibles.map(cuenta => (
-                      <option key={cuenta} value={cuenta}>{cuenta}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+              <FilterSelect
+                icon={Database}
+                label="Cuenta"
+                value={filtros.cuenta}
+                onChange={updateFiltro('cuenta')}
+                options={datosDerivados.cuentas}
+                defaultText="Todas las cuentas"
+              />
 
-              {/* FILTRO CATEGORÍA - DINÁMICO */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <Tag className="h-4 w-4 text-yellow-400" />
-                  Categoría
-                </label>
-                <div className="relative">
-                  <select 
-                    value={filtroCategoria}
-                    onChange={(e) => setFiltroCategoria(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none"
-                  >
-                    <option value="">Todas las categorías</option>
-                    {categoriasDisponibles.map(categoria => (
-                      <option key={categoria} value={categoria}>{categoria}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+              <FilterSelect
+                icon={Tag}
+                label="Categoría"
+                value={filtros.categoria}
+                onChange={updateFiltro('categoria')}
+                options={datosDerivados.categorias}
+                defaultText="Todas las categorías"
+              />
             </div>
 
-            {/* RESUMEN */}
-            <div className="mt-6 pt-5 border-t border-slate-800">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
-                  <div>
-                    <div className="text-sm text-slate-400">Total filtrado</div>
-                    <div className="text-xl font-bold text-red-400">€{total.toFixed(2)}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-slate-400">Transacciones</div>
-                    <div className="text-lg font-semibold text-slate-300">{gastosFiltrados.length}</div>
-                  </div>
-                </div>
-                
-                {/* ESTADÍSTICAS RÁPIDAS */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Categorías activas:</span>
-                    <span className="text-slate-300">{Object.keys(estadisticasCategorias).length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Gasto promedio:</span>
-                    <span className="text-red-300">
-                      €{(gastosFiltrados.length > 0 ? total / gastosFiltrados.length : 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => {
-                  setFiltroMes('');
-                  setFiltroMetodo('');
-                  setFiltroCuenta('');
-                  setFiltroCategoria('');
-                }}
-                className="w-full mt-4 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition"
-              >
-                Limpiar filtros
-              </button>
-            </div>
+            <button
+              onClick={resetFiltros}
+              className="mt-6 w-full py-2.5 bg-slate-800 hover:bg-slate-700 
+                       text-slate-300 rounded-lg text-sm transition"
+            >
+              Limpiar filtros
+            </button>
           </div>
 
-          {/* TARJETA DE ANÁLISIS RÁPIDO - DINÁMICO */}
-          <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-blue-400" />
-              Análisis rápido
+          {/* Estadísticas rápidas */}
+          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-800 rounded-xl p-5">
+            <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2">
+              <TrendingDown className="text-blue-400" />
+              Resumen rápido
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-blue-400" />
-                  <span className="text-sm text-slate-300">Categoría principal</span>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-800/50 p-4 rounded-lg">
+                  <div className="text-xs text-slate-400 mb-1">Gasto total</div>
+                  <div className="text-2xl font-bold text-red-400">
+                    {formatCurrency(stats.total)}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-sm font-medium text-white">{categoriaPrincipal.nombre}</span>
-                  <div className="text-xs text-red-400">€{categoriaPrincipal.monto.toFixed(2)}</div>
+                <div className="bg-slate-800/50 p-4 rounded-lg">
+                  <div className="text-xs text-slate-400 mb-1">Promedio</div>
+                  <div className="text-xl font-bold text-slate-200">
+                    {formatCurrency(stats.promedioPorTransaccion)}
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                <div className="flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-green-400" />
-                  <span className="text-sm text-slate-300">Cuenta más usada</span>
-                </div>
-                <span className="text-sm font-medium text-white">{cuentaMasUsada}</span>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-purple-400" />
-                  <span className="text-sm text-slate-300">Método favorito</span>
-                </div>
-                <span className="text-sm font-medium text-white">{metodoMasComun}</span>
-              </div>
-              
-              {/* TOP CATEGORÍAS */}
+
               <div className="pt-3 border-t border-slate-800">
-                <h4 className="text-xs font-medium text-slate-400 mb-2">Top categorías</h4>
-                <div className="space-y-1">
-                  {Object.entries(estadisticasCategorias)
-                    .sort((a, b) => b[1].total - a[1].total)
-                    .slice(0, 3)
-                    .map(([categoria, datos]) => (
-                      <div key={categoria} className="flex justify-between text-sm">
-                        <span className="text-slate-300 truncate">{categoria}</span>
-                        <span className="text-red-400 font-medium">€{datos.total.toFixed(2)}</span>
-                      </div>
-                    ))}
+                <div className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Mayor gasto</div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-200 font-medium truncate max-w-[65%]">
+                    {stats.categoriaMayor.nombre}
+                  </span>
+                  <span className="text-red-400 font-bold">
+                    {formatCurrency(stats.categoriaMayor.monto)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* COLUMNA DERECHA - TABLA */}
-        <div className="lg:w-2/3 xl:w-3/4">
-          <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 overflow-hidden">
-            {/* HEADER DE TABLA */}
-            <div className="px-6 py-4 border-b border-slate-800">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Historial de gastos</h2>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Mostrando {gastosFiltrados.length} de {gastosMensuales.length} transacciones
-                    {filtroMes && ` en ${formatearMesTexto(filtroMes)}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-lg">
-                  <span>Desliza</span>
-                  <span className="text-slate-400">→</span>
-                  <span>para ver más columnas</span>
-                </div>
-              </div>
+        {/* Contenido principal */}
+        <main className="lg:col-span-8 xl:col-span-9 space-y-6">
+          {/* Tabla */}
+          <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden">
+            <div className="p-5 border-b border-slate-800">
+              <h2 className="text-xl font-semibold text-white">
+                Historial de movimientos
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">
+                {gastosFiltrados.length} de {gastos.length} transacciones
+              </p>
             </div>
 
-            {/* TABLA */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px]">
-                <thead className="bg-slate-900">
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-slate-950/80">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Concepto
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Método
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Categoría
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Cuenta
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Monto
-                    </th>
+                    {['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto'].map((header) => (
+                      <th
+                        key={header}
+                        className={`px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider ${
+                          header === 'Monto' ? 'text-right' : ''
+                        }`}
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-slate-800/60">
                   {gastosFiltrados.map((gasto) => (
-                    <tr key={gasto.id} className="hover:bg-slate-800/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                    <tr
+                      key={gasto.id}
+                      className="hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="px-6 py-4 text-sm text-slate-300 whitespace-nowrap">
                         {gasto.fecha}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-white">{gasto.concepto}</div>
+                      <td className="px-6 py-4 text-sm font-medium text-white">
+                        {gasto.concepto}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4 text-slate-500" />
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
-                            {gasto.metodo}
-                          </span>
-                        </div>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300">
+                          {gasto.metodo}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-slate-500" />
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
-                            {gasto.categoria}
-                          </span>
-                        </div>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-blue-950/50 text-blue-300">
+                          {gasto.categoria}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                        <div className="flex items-center gap-2">
-                          <Database className="h-4 w-4 text-slate-500" />
-                          {gasto.cuenta}
-                        </div>
+                      <td className="px-6 py-4 text-sm text-slate-300">
+                        {gasto.cuenta}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="inline-flex items-center gap-1 bg-red-900/20 px-3 py-1.5 rounded-lg">
-                          <span className="text-sm font-semibold text-red-400">
-                            €{gasto.monto.toFixed(2)}
-                          </span>
-                        </div>
+                      <td className="px-6 py-4 text-right">
+                        <span className="font-semibold text-red-400">
+                          {formatCurrency(gasto.monto)}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -729,68 +470,30 @@ export default function TablaGastos() {
               </table>
             </div>
 
-            {/* FOOTER DE TABLA */}
-            <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
-                <div className="text-slate-400">
-                  <span className="font-medium text-slate-300">{gastosFiltrados.length}</span> transacciones • 
-                  Total: <span className="font-medium text-red-400">€{total.toFixed(2)}</span>
-                </div>
-                <div className="text-slate-500 text-sm flex items-center gap-1">
-                  <Bell className="h-3 w-3" />
-                  <span>Actualizado recientemente</span>
-                </div>
+            {gastosFiltrados.length === 0 && (
+              <div className="py-16 text-center text-slate-500">
+                No hay gastos que coincidan con los filtros actuales
               </div>
-            </div>
+            )}
           </div>
 
-          {/* SUGERENCIAS Y PRÓXIMOS PAGOS - DINÁMICOS */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* SUGERENCIA DE AHORRO - DINÁMICA */}
-            <div className="bg-blue-900/20 border border-blue-800/30 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="h-4 w-4 text-blue-400" />
-                <h4 className="text-sm font-semibold text-blue-300">Sugerencia de ahorro</h4>
-              </div>
-              {sugerenciaAhorro.categoria ? (
-                <div>
-                  <p className="text-sm text-slate-300 mb-2">
-                    {sugerenciaAhorro.mensaje}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-blue-400">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>Basado en tus patrones de gasto reales</span>
-                  </div>
+          {/* Sugerencias rápidas */}
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div className="bg-gradient-to-br from-blue-950/40 to-indigo-950/30 border border-blue-900/30 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-blue-900/40 p-2 rounded-lg">
+                  <Lightbulb className="h-5 w-5 text-blue-400" />
                 </div>
-              ) : (
-                <p className="text-sm text-slate-300">Agrega más gastos para recibir sugerencias personalizadas.</p>
-              )}
+                <h3 className="font-medium text-blue-300">Idea de ahorro</h3>
+              </div>
+              <p className="text-slate-300">
+                {sugerenciaAhorro.mensaje}
+              </p>
             </div>
 
-            {/* PRÓXIMOS PAGOS - DINÁMICOS */}
-            <div className="bg-green-900/20 border border-green-800/30 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-green-400" />
-                <h4 className="text-sm font-semibold text-green-300">Próximos pagos estimados</h4>
-              </div>
-              {proximosPagos.length > 0 ? (
-                <div className="space-y-2">
-                  {proximosPagos.map((pago, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-slate-300">{pago.concepto}</span>
-                      <div className="text-right">
-                        <span className="text-sm font-medium text-green-400">€{pago.monto.toFixed(2)}</span>
-                        <div className="text-xs text-slate-500">{pago.frecuencia}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-300">Analizando patrones de gasto recurrentes...</p>
-              )}
-            </div>
+            {/* Puedes añadir aquí otra tarjeta de "Próximos vencimientos" si decides implementarla */}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
