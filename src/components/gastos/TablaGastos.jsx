@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
-import { gastosMensuales } from '@/lib/gastos';
-import FilaGasto from './FilaGasto';
+import { useState, useMemo, useEffect } from 'react';
+// Se elimina: import { gastosMensuales } from '@/lib/gastos';
 
 // ICONOS LUCIDE REACT (modernos y limpios)
 import { 
@@ -15,14 +14,89 @@ import {
   ChevronDown,
   FileText,
   Wallet,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 export default function TablaGastos() {
+  // Estados para los datos de Notion
+  const [gastosMensuales, setGastosMensuales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Estados de filtros existentes
   const [filtroMes, setFiltroMes] = useState('');
   const [filtroMetodo, setFiltroMetodo] = useState('');
   const [filtroCuenta, setFiltroCuenta] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
+
+  // Fetch de datos desde Notion API
+  useEffect(() => {
+    const fetchGastos = async () => {
+      try {
+        const res = await fetch('/api/gastos');
+        if (!res.ok) throw new Error('Error cargando gastos');
+        const data = await res.json();
+        setGastosMensuales(data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching gastos:', err);
+        
+        // Datos de ejemplo como fallback
+        setGastosMensuales([
+          { 
+            id: 1, 
+            fecha: '2025-10-01', 
+            concepto: 'Alquiler', 
+            metodo: 'Transferencia', 
+            categoria: 'Vivienda', 
+            cuenta: 'BBVA', 
+            monto: 850 
+          },
+          { 
+            id: 2, 
+            fecha: '2025-10-03', 
+            concepto: 'Supermercado', 
+            metodo: 'Tarjeta', 
+            categoria: 'Alimentación', 
+            cuenta: 'Santander', 
+            monto: 120 
+          },
+          { 
+            id: 3, 
+            fecha: '2025-10-05', 
+            concepto: 'Gasolina', 
+            metodo: 'Tarjeta', 
+            categoria: 'Transporte', 
+            cuenta: 'Santander', 
+            monto: 60 
+          },
+          { 
+            id: 4, 
+            fecha: '2025-10-10', 
+            concepto: 'Internet', 
+            metodo: 'Domiciliación', 
+            categoria: 'Servicios', 
+            cuenta: 'BBVA', 
+            monto: 45 
+          },
+          { 
+            id: 5, 
+            fecha: '2025-10-15', 
+            concepto: 'Cine', 
+            metodo: 'Bizum', 
+            categoria: 'Diversión', 
+            cuenta: 'Revolut', 
+            monto: 25 
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGastos();
+  }, []);
 
   const metodosPago = ['Apple Pay', 'Transferencia', 'Bizum', 'Efectivo', 'Tarjeta'];
   const categorias = ['Alimentación', 'Salud e higiene', 'Transporte', 'Diversión', 'Ropa', 'Otros', 'Ahorro'];
@@ -34,20 +108,50 @@ export default function TablaGastos() {
       const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
       
       const cumpleMes = !filtroMes || mesGasto === filtroMes;
-      const cumpleMetodo = !filtroMetodo || gasto.metodoPago === filtroMetodo;
+      const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
       const cumpleCuenta = !filtroCuenta || gasto.cuenta === filtroCuenta;
       const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
       
       return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
     });
-  }, [filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
+  }, [gastosMensuales, filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
 
   const total = gastosFiltrados.reduce((sum, gasto) => sum + gasto.monto, 0);
+
+  // Calcular categoría principal
+  const categoriaPrincipal = useMemo(() => {
+    const categorias = gastosFiltrados.reduce((acc, gasto) => {
+      acc[gasto.categoria] = (acc[gasto.categoria] || 0) + gasto.monto;
+      return acc;
+    }, {});
+    
+    return Object.entries(categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+  }, [gastosFiltrados]);
+
+  // Calcular cuenta más usada
+  const cuentaMasUsada = useMemo(() => {
+    const cuentas = gastosFiltrados.reduce((acc, gasto) => {
+      acc[gasto.cuenta] = (acc[gasto.cuenta] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(cuentas).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+  }, [gastosFiltrados]);
+
+  // Calcular método más común
+  const metodoMasComun = useMemo(() => {
+    const metodos = gastosFiltrados.reduce((acc, gasto) => {
+      acc[gasto.metodo] = (acc[gasto.metodo] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(metodos).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+  }, [gastosFiltrados]);
 
   const exportarCSV = () => {
     const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto'];
     const filas = gastosFiltrados.map(g => 
-      [g.fecha, g.concepto, g.metodoPago, g.categoria, g.cuenta, g.monto].join(',')
+      [g.fecha, g.concepto, g.metodo, g.categoria, g.cuenta, g.monto].join(',')
     );
     
     const csv = [headers.join(','), ...filas].join('\n');
@@ -61,6 +165,44 @@ export default function TablaGastos() {
     
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
+
+  // Estados de carga y error
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-12 w-12 text-blue-400 animate-spin mx-auto mb-4" />
+          <p className="text-slate-400 text-lg">Cargando gastos desde Notion...</p>
+          <p className="text-slate-500 text-sm mt-2">Conectando con tu base de datos</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 p-6">
+        <div className="max-w-2xl mx-auto mt-20">
+          <div className="bg-red-900/20 border border-red-800/30 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-8 w-8 text-red-400" />
+              <h2 className="text-xl font-bold text-white">Error al cargar gastos</h2>
+            </div>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <p className="text-slate-400 text-sm mb-6">
+              Mostrando datos de ejemplo. Asegúrate de que tu endpoint /api/gastos esté configurado correctamente.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
@@ -232,21 +374,21 @@ export default function TablaGastos() {
                   <Tag className="h-4 w-4 text-blue-400" />
                   <span className="text-sm text-slate-300">Categoría principal</span>
                 </div>
-                <span className="text-sm font-medium text-white">Alquiler</span>
+                <span className="text-sm font-medium text-white">{categoriaPrincipal}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                 <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-green-400" />
                   <span className="text-sm text-slate-300">Cuenta más usada</span>
                 </div>
-                <span className="text-sm font-medium text-white">BBVA</span>
+                <span className="text-sm font-medium text-white">{cuentaMasUsada}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-purple-400" />
                   <span className="text-sm text-slate-300">Método favorito</span>
                 </div>
-                <span className="text-sm font-medium text-white">Transferencia</span>
+                <span className="text-sm font-medium text-white">{metodoMasComun}</span>
               </div>
             </div>
           </div>
@@ -311,7 +453,7 @@ export default function TablaGastos() {
                         <div className="flex items-center gap-2">
                           <CreditCard className="h-4 w-4 text-slate-500" />
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
-                            {gasto.metodoPago}
+                            {gasto.metodo}
                           </span>
                         </div>
                       </td>
