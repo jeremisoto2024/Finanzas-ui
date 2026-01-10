@@ -55,7 +55,7 @@ export default function TablaGastos() {
           },
           { 
             id: 2, 
-            fecha: '2025-10-03', 
+            fecha: '2025-09-15', 
             concepto: 'Supermercado', 
             metodo: 'Tarjeta', 
             categoria: 'Alimentación', 
@@ -64,30 +64,12 @@ export default function TablaGastos() {
           },
           { 
             id: 3, 
-            fecha: '2025-10-05', 
+            fecha: '2025-08-05', 
             concepto: 'Gasolina', 
             metodo: 'Tarjeta', 
             categoria: 'Transporte', 
             cuenta: 'Santander', 
             monto: 60 
-          },
-          { 
-            id: 4, 
-            fecha: '2025-10-10', 
-            concepto: 'Internet', 
-            metodo: 'Domiciliación', 
-            categoria: 'Servicios', 
-            cuenta: 'BBVA', 
-            monto: 45 
-          },
-          { 
-            id: 5, 
-            fecha: '2025-10-15', 
-            concepto: 'Cine', 
-            metodo: 'Bizum', 
-            categoria: 'Diversión', 
-            cuenta: 'Revolut', 
-            monto: 25 
           },
         ]);
       } finally {
@@ -98,21 +80,60 @@ export default function TablaGastos() {
     fetchGastos();
   }, []);
 
+  // Obtener meses únicos de los datos
+  const obtenerMesesDisponibles = useMemo(() => {
+    const mesesSet = new Set();
+    
+    gastosMensuales.forEach(gasto => {
+      if (gasto.fecha) {
+        try {
+          const fecha = new Date(gasto.fecha);
+          if (!isNaN(fecha.getTime())) {
+            const año = fecha.getFullYear();
+            const mes = fecha.getMonth() + 1;
+            const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
+            mesesSet.add(mesFormateado);
+          }
+        } catch (error) {
+          console.error('Error procesando fecha:', gasto.fecha, error);
+        }
+      }
+    });
+    
+    // Convertir a array y ordenar descendente (más reciente primero)
+    const mesesArray = Array.from(mesesSet);
+    return mesesArray.sort((a, b) => b.localeCompare(a));
+  }, [gastosMensuales]);
+
+  // Función para formatear mes a texto
+  const formatearMesTexto = (mesFormato) => {
+    if (!mesFormato) return '';
+    const [año, mes] = mesFormato.split('-');
+    const fecha = new Date(año, parseInt(mes) - 1);
+    return fecha.toLocaleDateString('es-ES', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
   const metodosPago = ['Apple Pay', 'Transferencia', 'Bizum', 'Efectivo', 'Tarjeta'];
   const categorias = ['Alimentación', 'Salud e higiene', 'Transporte', 'Diversión', 'Ropa', 'Otros', 'Ahorro'];
   const cuentas = ['BBVA', 'Efectivo'];
   
   const gastosFiltrados = useMemo(() => {
     return gastosMensuales.filter(gasto => {
-      const fechaGasto = new Date(gasto.fecha);
-      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
-      
-      const cumpleMes = !filtroMes || mesGasto === filtroMes;
-      const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
-      const cumpleCuenta = !filtroCuenta || gasto.cuenta === filtroCuenta;
-      const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
-      
-      return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
+      if (gasto.fecha) {
+        const fechaGasto = new Date(gasto.fecha);
+        const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+        
+        const cumpleMes = !filtroMes || mesGasto === filtroMes;
+        const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
+        const cumpleCuenta = !filtroCuenta || gasto.cuenta === filtroCuenta;
+        const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
+        
+        return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
+      }
+      return false;
     });
   }, [gastosMensuales, filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
 
@@ -160,7 +181,7 @@ export default function TablaGastos() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `gastos_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `gastos_${filtroMes || 'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
     
     setTimeout(() => URL.revokeObjectURL(url), 100);
@@ -210,13 +231,17 @@ export default function TablaGastos() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            {/* CAMBIADO: "Finanzas" por "Gastos del Mes" */}
             <h1 className="text-2xl font-bold text-white mb-1">Gastos del Mes</h1>
             <div className="flex items-center gap-3 mt-2">
               {/* CAMBIADO: Color del total a rojo */}
               <span className="text-3xl font-bold text-red-400">€{total.toFixed(2)}</span>
               <div className="h-2 w-2 rounded-full bg-slate-600"></div>
-              <span className="text-slate-400">Octubre 2025</span>
+              <span className="text-slate-400">
+                {filtroMes ? 
+                  formatearMesTexto(filtroMes) : 
+                  'Todos los meses'
+                }
+              </span>
               <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
                 {gastosFiltrados.length} transacciones
               </span>
@@ -247,7 +272,7 @@ export default function TablaGastos() {
             </div>
             
             <div className="space-y-4">
-              {/* FILTRO MES */}
+              {/* FILTRO MES - ACTUALIZADO */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <Calendar className="h-4 w-4 text-blue-400" />
@@ -260,9 +285,11 @@ export default function TablaGastos() {
                     className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none"
                   >
                     <option value="">Todos los meses</option>
-                    <option value="2025-10">Octubre 2025</option>
-                    <option value="2025-09">Septiembre 2025</option>
-                    <option value="2025-08">Agosto 2025</option>
+                    {obtenerMesesDisponibles.map((mes) => (
+                      <option key={mes} value={mes}>
+                        {formatearMesTexto(mes)}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                 </div>
@@ -338,7 +365,6 @@ export default function TablaGastos() {
                 <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
                   <div>
                     <div className="text-sm text-slate-400">Total filtrado</div>
-                    {/* CAMBIADO: Color del total a rojo aquí también */}
                     <div className="text-xl font-bold text-red-400">€{total.toFixed(2)}</div>
                   </div>
                   <div className="text-right">
@@ -404,6 +430,7 @@ export default function TablaGastos() {
                   <h2 className="text-lg font-semibold text-white">Historial de gastos</h2>
                   <p className="text-sm text-slate-400 mt-1">
                     Mostrando {gastosFiltrados.length} de {gastosMensuales.length} transacciones
+                    {filtroMes && ` en ${formatearMesTexto(filtroMes)}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-lg">
