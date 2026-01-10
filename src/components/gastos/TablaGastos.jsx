@@ -28,8 +28,7 @@ import {
   Repeat,
   Calculator,
   Receipt,
-  TrendingUp as TrendingUpIcon,
-  HelpCircle
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 export default function TablaGastos() {
@@ -77,25 +76,28 @@ export default function TablaGastos() {
         setError(err.message);
         console.error('Error fetching datos:', err);
         
-        // Datos de ejemplo MEJORADOS para explicar
+        // Datos de ejemplo MEJORADOS con historial real
         setGastosMensuales([
           { id: 1, fecha: '2026-01-02', concepto: 'Mercado', metodo: 'App', categoria: 'Alimentación', cuenta: 'Móvil', monto: 50 },
           { id: 2, fecha: '2026-01-03', concepto: 'Mami', metodo: 'Bizum', categoria: 'Familia', cuenta: 'Bizum', monto: 20 },
+          { id: 3, fecha: '2026-01-05', concepto: 'Refresco', metodo: 'App', categoria: 'Alimentación', cuenta: 'Móvil', monto: 2 },
         ]);
         
         setPagosFijos([
-          { id: '1', nombre: 'Alquiler', monto: 850.00, metodo: 'Transferencia', categoria: 'Vivienda', frecuencia: 'mensual', activo: true, fechaInicio: '2026-02-01' }
+          { id: '1', nombre: 'Alquiler', monto: 750.00, metodo: 'Transferencia', categoria: 'Vivienda', frecuencia: 'mensual', activo: true, fechaInicio: '2026-02-01' }
         ]);
         
-        // Datos REALES de Configuración.jsx (como los tienes)
+        // DATOS REALES BASADOS EN TUS IMÁGENES
         setComprasCuotas([
           { 
             id: '1', 
-            concepto: 'AliExpress 1', 
+            concepto: 'Aliexpress 1', 
             montoTotal: 33.74,
             cuotasTotales: 4,
-            cuotasPagadas: 3, // ← 3 CUOTAS PAGADAS de 4
-            fechaInicio: '2025-11-01',
+            cuotasPagadas: 3, // 3 de 4 pagadas
+            montoPrimeraCuota: 10.00,
+            montoUltimaCuota: 7.46,
+            fechaInicio: '2025-11-01', // Empezó en noviembre
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
             activo: true,
@@ -104,7 +106,7 @@ export default function TablaGastos() {
               { numero: 1, monto: 10.00, pagada: true, fecha: '2025-11-01' },
               { numero: 2, monto: 8.64, pagada: true, fecha: '2025-12-01' },
               { numero: 3, monto: 7.64, pagada: true, fecha: '2026-01-01' },
-              { numero: 4, monto: 7.46, pagada: false, fecha: '2026-02-01' } // ← PRÓXIMA CUOTA
+              { numero: 4, monto: 7.46, pagada: false, fecha: '2026-02-01' }
             ]
           },
           { 
@@ -112,34 +114,51 @@ export default function TablaGastos() {
             concepto: 'Shein', 
             montoTotal: 50.74,
             cuotasTotales: 4,
-            cuotasPagadas: 1, // ← 1 CUOTA PAGADA de 4
+            cuotasPagadas: 1, // 1 de 4 pagadas
             fechaInicio: '2026-01-01',
             metodo: 'Tarjeta',
-            categoria: 'Ropa',
+            categoria: 'Otros',
             activo: true,
             frecuenciaPago: 'mensual',
             historialCuotas: [
-              { numero: 1, monto: 12.69, pagada: true, fecha: '2026-01-01' }, // ← YA PAGADA
-              { numero: 2, monto: 12.69, pagada: false, fecha: '2026-02-01' }, // ← PRÓXIMA CUOTA
+              { numero: 1, monto: 12.69, pagada: true, fecha: '2026-01-01' },
+              { numero: 2, monto: 12.69, pagada: false, fecha: '2026-02-01' },
               { numero: 3, monto: 12.68, pagada: false, fecha: '2026-03-01' },
               { numero: 4, monto: 12.68, pagada: false, fecha: '2026-04-01' }
             ]
           },
           { 
             id: '3', 
-            concepto: 'AliExpress 3', 
+            concepto: 'Aliexpress 3', 
             montoTotal: 49.95,
             cuotasTotales: 3,
-            cuotasPagadas: 1, // ← 1 CUOTA PAGADA de 3
+            cuotasPagadas: 1, // 1 de 3 pagadas
             fechaInicio: '2026-01-01',
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
             activo: true,
             frecuenciaPago: 'mensual',
             historialCuotas: [
-              { numero: 1, monto: 16.65, pagada: true, fecha: '2026-01-01' }, // ← YA PAGADA
-              { numero: 2, monto: 16.65, pagada: false, fecha: '2026-02-01' }, // ← PRÓXIMA CUOTA
+              { numero: 1, monto: 16.65, pagada: true, fecha: '2026-01-01' },
+              { numero: 2, monto: 16.65, pagada: false, fecha: '2026-02-01' },
               { numero: 3, monto: 16.65, pagada: false, fecha: '2026-03-01' }
+            ]
+          },
+          { 
+            id: '4', 
+            concepto: 'Aliexpress 2', 
+            montoTotal: 33.11,
+            cuotasTotales: 3,
+            cuotasPagadas: 1, // 1 de 3 pagadas
+            fechaInicio: '2026-01-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 11.04, pagada: true, fecha: '2026-01-01' },
+              { numero: 2, monto: 11.04, pagada: false, fecha: '2026-02-01' },
+              { numero: 3, monto: 11.03, pagada: false, fecha: '2026-03-01' }
             ]
           }
         ]);
@@ -151,7 +170,7 @@ export default function TablaGastos() {
     fetchTodosLosDatos();
   }, []);
 
-  // ========== FUNCIONES DE TRANSFORMACIÓN MEJORADAS ==========
+  // ========== FUNCIONES DE TRANSFORMACIÓN CORREGIDAS ==========
 
   // 1. Transformar pagos fijos en gastos
   const transformarPagosFijosAGastos = useMemo(() => {
@@ -175,13 +194,13 @@ export default function TablaGastos() {
       const fechaStr = fechaGasto.toISOString().split('T')[0];
       const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
       
-      // NO incluir enero 2026
+      // NO incluir enero 2026 si ya está pagado
       if (mesGasto === '2026-01') return null;
       
       return {
         id: `pago-fijo-${pago.id}`,
         fecha: fechaStr,
-        concepto: `${pago.nombre}`,
+        concepto: `${pago.nombre} (Pago Fijo)`,
         metodo: pago.metodo,
         categoria: pago.categoria,
         cuenta: 'Cuenta Principal',
@@ -193,63 +212,80 @@ export default function TablaGastos() {
     }).filter(Boolean);
   }, [pagosFijos, filtroMes]);
 
-  // 2. Transformar cuotas en gastos - CON FORMATO CLARO
+  // 2. Transformar cuotas en gastos - USANDO EL HISTORIAL REAL
   const transformarCuotasAGastos = useMemo(() => {
     const gastosCuotas = [];
     
     comprasCuotas.forEach(compra => {
-      // Encontrar la próxima cuota no pagada
-      const proximaCuota = compra.historialCuotas?.find(cuota => !cuota.pagada);
+      // 1. VERIFICAR SI HAY HISTORIAL DE CUOTAS
+      if (!compra.historialCuotas || compra.historialCuotas.length === 0) {
+        console.warn(`Compra ${compra.concepto} no tiene historial de cuotas`);
+        return;
+      }
       
-      // Si no hay cuotas pendientes, no mostrar
-      if (!proximaCuota) return;
+      // 2. ENCONTRAR LA PRÓXIMA CUOTA NO PAGADA
+      const proximaCuota = compra.historialCuotas.find(cuota => !cuota.pagada);
       
-      // Calcular cuántas cuotas se han pagado realmente
-      const cuotasPagadas = compra.cuotasPagadas || 
-                           compra.historialCuotas.filter(c => c.pagada).length;
+      // Si no hay cuotas pendientes, no mostrar nada
+      if (!proximaCuota) {
+        console.log(`Compra ${compra.concepto}: Todas las cuotas están pagadas`);
+        return;
+      }
       
-      const cuotasPendientes = compra.cuotasTotales - cuotasPagadas;
+      // 3. VERIFICAR QUE LA FECHA SEA VÁLIDA
+      if (!proximaCuota.fecha) {
+        console.warn(`Cuota ${proximaCuota.numero} de ${compra.concepto} no tiene fecha`);
+        return;
+      }
       
-      // FORMATO CLARO Y EXPLÍCITO
-      const concepto = `${compra.concepto}`;
-      const infoCuota = `Cuota ${proximaCuota.numero} de ${compra.cuotasTotales}`;
-      const infoProgreso = `${cuotasPagadas}/${compra.cuotasTotales} pagadas`;
-      
-      // Solo incluir si no es enero 2026
       const fechaCuota = new Date(proximaCuota.fecha);
-      const mesCuota = `${fechaCuota.getFullYear()}-${String(fechaCuota.getMonth() + 1).padStart(2, '0')}`;
-      if (mesCuota === '2026-01') return;
+      if (isNaN(fechaCuota.getTime())) {
+        console.warn(`Fecha inválida en cuota ${proximaCuota.numero} de ${compra.concepto}`);
+        return;
+      }
       
-      // Aplicar filtro de mes si existe
+      const fechaStr = proximaCuota.fecha;
+      const mesCuota = `${fechaCuota.getFullYear()}-${String(fechaCuota.getMonth() + 1).padStart(2, '0')}`;
+      
+      // 4. EXCLUIR ENERO 2026 SI YA ESTÁ CUBIERTO
+      if (mesCuota === '2026-01') {
+        console.log(`Cuota de ${compra.concepto} excluida por ser enero 2026`);
+        return;
+      }
+      
+      // 5. APLICAR FILTRO DE MES SI EXISTE
       if (filtroMes && mesCuota !== filtroMes) return;
+      
+      // 6. CALCULAR CUOTAS RESTANTES
+      const cuotasPagadas = compra.cuotasPagadas || compra.historialCuotas.filter(c => c.pagada).length;
+      const cuotasRestantes = compra.cuotasTotales - cuotasPagadas;
       
       gastosCuotas.push({
         id: `cuota-${compra.id}-${proximaCuota.numero}`,
-        fecha: proximaCuota.fecha,
-        concepto: concepto,
+        fecha: fechaStr,
+        concepto: `${compra.concepto} (Cuota ${proximaCuota.numero}/${compra.cuotasTotales})`,
         metodo: compra.metodo,
         categoria: compra.categoria,
         cuenta: 'Financiación',
         monto: parseFloat(proximaCuota.monto.toFixed(2)),
         origen: 'cuota',
-        // Información para mostrar CLARAMENTE
-        infoCuota: infoCuota, // "Cuota 4 de 4"
-        infoProgreso: infoProgreso, // "3/4 pagadas"
         cuotaNumero: proximaCuota.numero,
         totalCuotas: compra.cuotasTotales,
         cuotasPagadas: cuotasPagadas,
-        cuotasPendientes: cuotasPendientes,
-        esFuturo: true
+        cuotasRestantes: cuotasRestantes,
+        esFuturo: true,
+        progreso: `${cuotasPagadas}/${compra.cuotasTotales}`
       });
     });
     
     return gastosCuotas;
   }, [comprasCuotas, filtroMes]);
 
-  // 3. Obtener meses únicos
+  // 3. Obtener meses únicos de TODOS los datos
   const obtenerMesesDisponibles = useMemo(() => {
     const mesesSet = new Set();
     
+    // Agregar meses de gastos normales
     gastosMensuales.forEach(gasto => {
       if (gasto.fecha) {
         try {
@@ -266,6 +302,7 @@ export default function TablaGastos() {
       }
     });
     
+    // Agregar meses de pagos fijos
     transformarPagosFijosAGastos.forEach(gasto => {
       if (gasto.fecha) {
         try {
@@ -280,6 +317,7 @@ export default function TablaGastos() {
       }
     });
     
+    // Agregar meses de cuotas
     transformarCuotasAGastos.forEach(gasto => {
       if (gasto.fecha) {
         try {
@@ -309,11 +347,13 @@ export default function TablaGastos() {
     });
   };
 
-  // ========== COMBINAR GASTOS ==========
+  // ========== COMBINAR Y FILTRAR DATOS ==========
 
+  // Combinar TODOS los gastos (sin enero 2026 para pagos fijos/cuotas)
   const todosLosGastos = useMemo(() => {
     const gastosCombinados = [...gastosMensuales];
     
+    // Solo agregar pagos fijos/cuotas si NO es enero 2026
     if (!filtroMes || filtroMes !== '2026-01') {
       gastosCombinados.push(...transformarPagosFijosAGastos);
       gastosCombinados.push(...transformarCuotasAGastos);
@@ -322,6 +362,7 @@ export default function TablaGastos() {
     return gastosCombinados;
   }, [gastosMensuales, transformarPagosFijosAGastos, transformarCuotasAGastos, filtroMes]);
 
+  // Filtrar gastos combinados
   const gastosFiltrados = useMemo(() => {
     return todosLosGastos.filter(gasto => {
       if (!gasto.fecha) return false;
@@ -341,10 +382,12 @@ export default function TablaGastos() {
 
   // ========== CÁLCULOS ==========
 
+  // 1. Total
   const total = useMemo(() => {
     return gastosFiltrados.reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
   }, [gastosFiltrados]);
 
+  // 2. Estadísticas por tipo de gasto
   const estadisticasPorTipo = useMemo(() => {
     const stats = {
       normal: { total: 0, count: 0, label: 'Gastos Normales' },
@@ -366,8 +409,32 @@ export default function TablaGastos() {
     return stats;
   }, [gastosFiltrados]);
 
+  // 3. Resumen de cuotas pendientes
+  const resumenCuotas = useMemo(() => {
+    const cuotas = transformarCuotasAGastos;
+    const totalCuotas = cuotas.length;
+    const totalMonto = cuotas.reduce((sum, c) => sum + c.monto, 0);
+    const cuotasPorCategoria = {};
+    
+    cuotas.forEach(cuota => {
+      if (!cuotasPorCategoria[cuota.categoria]) {
+        cuotasPorCategoria[cuota.categoria] = { count: 0, total: 0 };
+      }
+      cuotasPorCategoria[cuota.categoria].count++;
+      cuotasPorCategoria[cuota.categoria].total += cuota.monto;
+    });
+    
+    return {
+      totalCuotas,
+      totalMonto,
+      cuotasPorCategoria,
+      cuotas
+    };
+  }, [transformarCuotasAGastos]);
+
+  // 4. Exportar CSV
   const exportarCSV = () => {
-    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Origen', 'Info_Cuota', 'Progreso'];
+    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Origen', 'Progreso'];
     const filas = gastosFiltrados.map(g => [
       g.fecha, 
       g.concepto, 
@@ -376,8 +443,7 @@ export default function TablaGastos() {
       g.cuenta, 
       g.monto, 
       g.origen || 'normal',
-      g.infoCuota || '',
-      g.infoProgreso || ''
+      g.progreso || ''
     ].join(','));
     
     const csv = [headers.join(','), ...filas].join('\n');
@@ -399,6 +465,7 @@ export default function TablaGastos() {
         <div className="text-center">
           <RefreshCw className="h-12 w-12 text-red-400 animate-spin mx-auto mb-4" />
           <p className="text-slate-400 text-lg">Cargando datos financieros...</p>
+          <p className="text-slate-500 text-sm mt-2">Gastos, pagos fijos y cuotas</p>
         </div>
       </div>
     );
@@ -426,26 +493,9 @@ export default function TablaGastos() {
     );
   }
 
-  // ========== RENDER CON EXPLICACIÓN CLARA ==========
+  // ========== RENDER ==========
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* EXPLICACIÓN DEL FORMATO */}
-      <div className="mb-6 bg-blue-900/20 border border-blue-800/30 rounded-xl p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <HelpCircle className="h-5 w-5 text-blue-400" />
-          <h3 className="text-sm font-semibold text-blue-300">📊 Explicación del formato de cuotas</h3>
-        </div>
-        <div className="text-sm text-slate-300 space-y-1">
-          <p>Cuando ves <span className="text-purple-400">"Shein (Cuota 2 de 4)"</span> significa:</p>
-          <div className="ml-4">
-            <p>• <span className="text-purple-400">"Cuota 2"</span>: Es la <strong>segunda cuota</strong> de la compra</p>
-            <p>• <span className="text-purple-400">"de 4"</span>: Hay <strong>4 cuotas en total</strong></p>
-            <p>• En Configuración dice <span className="text-amber-400">"1 de 4 pagadas"</span>: Ya pagaste <strong>1 cuota</strong>, esta es la <strong>cuota #2</strong></p>
-          </div>
-          <p className="mt-2 text-blue-400">💡 <strong>"Cuota X de Y"</strong> = Esta es la cuota número X de Y cuotas totales</p>
-        </div>
-      </div>
-
       {/* HEADER */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -462,6 +512,7 @@ export default function TablaGastos() {
               </span>
             </div>
             
+            {/* DESGLOSE POR TIPO */}
             <div className="flex flex-wrap gap-3 mt-3">
               {Object.entries(estadisticasPorTipo).map(([tipo, data]) => {
                 if (data.count > 0) {
@@ -478,8 +529,23 @@ export default function TablaGastos() {
                 return null;
               })}
             </div>
+            
+            {/* NOTA IMPORTANTE */}
+            {filtroMes === '2026-01' && (
+              <div className="mt-3 text-sm text-amber-400 bg-amber-900/20 px-3 py-2 rounded-lg">
+                ⓘ Los pagos fijos y cuotas de enero 2026 ya están cubiertos
+              </div>
+            )}
+            
+            {/* RESUMEN DE CUOTAS */}
+            {resumenCuotas.totalCuotas > 0 && (
+              <div className="mt-2 text-sm text-purple-400">
+                📊 {resumenCuotas.totalCuotas} cuotas pendientes (Total: €{resumenCuotas.totalMonto.toFixed(2)})
+              </div>
+            )}
           </div>
           
+          {/* BOTÓN DE EXPORTAR */}
           <button 
             onClick={exportarCSV}
             className="flex items-center gap-3 px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
@@ -491,9 +557,9 @@ export default function TablaGastos() {
         </div>
       </div>
 
-      {/* LAYOUT PRINCIPAL */}
+      {/* LAYOUT DE DOS COLUMNAS */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA */}
+        {/* COLUMNA IZQUIERDA - FILTROS Y RESUMEN */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
           {/* PANEL DE FILTROS */}
           <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-5">
@@ -503,6 +569,7 @@ export default function TablaGastos() {
             </div>
             
             <div className="space-y-4">
+              {/* FILTRO MES */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <Calendar className="h-4 w-4 text-red-400" />
@@ -526,6 +593,7 @@ export default function TablaGastos() {
                 </div>
               </div>
 
+              {/* FILTRO MÉTODO */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <CreditCard className="h-4 w-4 text-purple-400" />
@@ -542,11 +610,13 @@ export default function TablaGastos() {
                     <option value="Transferencia">Transferencia</option>
                     <option value="Bizum">Bizum</option>
                     <option value="App">App</option>
+                    <option value="Efectivo">Efectivo</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
                 </div>
               </div>
 
+              {/* FILTRO CATEGORÍA */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <Tag className="h-4 w-4 text-yellow-400" />
@@ -561,8 +631,11 @@ export default function TablaGastos() {
                     <option value="">Todas las categorías</option>
                     <option value="Vivienda">Vivienda</option>
                     <option value="Alimentación">Alimentación</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Entretenimiento">Entretenimiento</option>
+                    <option value="Salud">Salud</option>
                     <option value="Tecnología">Tecnología</option>
-                    <option value="Ropa">Ropa</option>
+                    <option value="Hogar">Hogar</option>
                     <option value="Familia">Familia</option>
                     <option value="Otros">Otros</option>
                   </select>
@@ -571,6 +644,7 @@ export default function TablaGastos() {
               </div>
             </div>
 
+            {/* RESUMEN */}
             <div className="mt-6 pt-5 border-t border-slate-800">
               <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg mb-4">
                 <div>
@@ -595,11 +669,39 @@ export default function TablaGastos() {
               </button>
             </div>
           </div>
+
+          {/* RESUMEN DE CUOTAS PENDIENTES */}
+          {resumenCuotas.totalCuotas > 0 && (
+            <div className="bg-purple-900/20 border border-purple-800/30 rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-purple-400" />
+                Cuotas pendientes
+              </h3>
+              <div className="space-y-3">
+                <div className="text-center p-3 bg-purple-900/30 rounded-lg">
+                  <div className="text-xs text-purple-300 mb-1">Total cuotas</div>
+                  <div className="text-xl font-bold text-purple-400">{resumenCuotas.totalCuotas}</div>
+                  <div className="text-xs text-purple-500 mt-1">€{resumenCuotas.totalMonto.toFixed(2)}</div>
+                </div>
+                
+                {Object.entries(resumenCuotas.cuotasPorCategoria).map(([categoria, data]) => (
+                  <div key={categoria} className="flex justify-between items-center text-sm">
+                    <span className="text-slate-300">{categoria}</span>
+                    <div className="text-right">
+                      <span className="text-purple-400">{data.count} cuotas</span>
+                      <div className="text-xs text-purple-500">€{data.total.toFixed(2)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* COLUMNA DERECHA - TABLA */}
+        {/* COLUMNA DERECHA - TABLA DETALLADA */}
         <div className="lg:w-2/3 xl:w-3/4">
           <div className="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden">
+            {/* HEADER DE TABLA */}
             <div className="px-6 py-4 border-b border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -608,11 +710,13 @@ export default function TablaGastos() {
                   </h2>
                   <p className="text-sm text-slate-400 mt-1">
                     Mostrando {gastosFiltrados.length} transacciones
+                    {resumenCuotas.totalCuotas > 0 && ` (${resumenCuotas.totalCuotas} cuotas pendientes)`}
                   </p>
                 </div>
               </div>
             </div>
 
+            {/* TABLA DETALLADA */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-slate-900">
@@ -629,6 +733,9 @@ export default function TablaGastos() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                       Categoría
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Origen
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                       Monto
                     </th>
@@ -638,41 +745,61 @@ export default function TablaGastos() {
                 <tbody className="divide-y divide-slate-800">
                   {gastosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center">
+                      <td colSpan="6" className="px-6 py-8 text-center">
                         <div className="text-slate-500">
                           <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
                           <p>No hay gastos para mostrar</p>
+                          <p className="text-sm text-slate-600 mt-1">
+                            {filtroMes === '2026-01' 
+                              ? 'Los pagos fijos y cuotas de enero ya están cubiertos'
+                              : 'Cambia los filtros o agrega nuevos gastos'
+                            }
+                          </p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     gastosFiltrados.map((gasto) => {
+                      let origenColor, origenBg, origenIcon, origenTooltip = '';
+                      
+                      switch (gasto.origen) {
+                        case 'pago_fijo':
+                          origenColor = 'text-amber-400';
+                          origenBg = 'bg-amber-900/30';
+                          origenIcon = <Repeat className="h-3 w-3" />;
+                          origenTooltip = 'Pago recurrente mensual';
+                          break;
+                        case 'cuota':
+                          origenColor = 'text-purple-400';
+                          origenBg = 'bg-purple-900/30';
+                          origenIcon = <Calculator className="h-3 w-3" />;
+                          origenTooltip = `Cuota ${gasto.cuotaNumero} de ${gasto.totalCuotas} (${gasto.cuotasPagadas || 0} pagadas)`;
+                          break;
+                        default:
+                          origenColor = 'text-slate-400';
+                          origenBg = 'bg-slate-800';
+                          origenIcon = <Receipt className="h-3 w-3" />;
+                          origenTooltip = 'Gasto normal';
+                      }
+                      
                       return (
                         <tr key={gasto.id} className="hover:bg-slate-800/50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                             {gasto.fecha}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-white">
-                              {gasto.concepto}
-                              {gasto.origen === 'cuota' && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <Calculator className="h-3 w-3 text-purple-400" />
-                                  <span className="text-xs text-purple-400">
-                                    {gasto.infoCuota}
-                                  </span>
-                                  <HelpCircle 
-                                    className="h-3 w-3 text-slate-500 cursor-help" 
-                                    title={`Progreso: ${gasto.infoProgreso}\nCuotas pendientes: ${gasto.cuotasPendientes}`}
-                                  />
-                                </div>
-                              )}
-                              {gasto.origen === 'pago_fijo' && (
-                                <div className="text-xs text-amber-500 mt-1">
-                                  Pago fijo • {gasto.frecuencia}
-                                </div>
-                              )}
-                            </div>
+                            <div className="text-sm font-medium text-white">{gasto.concepto}</div>
+                            {gasto.cuotaNumero && (
+                              <div className="text-xs text-purple-500">
+                                Cuota {gasto.cuotaNumero}/{gasto.totalCuotas}
+                                {gasto.progreso && ` · ${gasto.progreso} pagadas`}
+                              </div>
+                            )}
+                            {gasto.frecuencia && (
+                              <div className="text-xs text-amber-500">
+                                {gasto.frecuencia}
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
@@ -680,20 +807,22 @@ export default function TablaGastos() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${
-                              gasto.origen === 'cuota' ? 'bg-purple-900/30 text-purple-300' :
-                              gasto.origen === 'pago_fijo' ? 'bg-amber-900/30 text-amber-300' :
-                              'bg-blue-900/30 text-blue-300'
-                            }`}>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
                               {gasto.categoria}
                             </span>
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span 
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${origenBg} ${origenColor}`}
+                              title={origenTooltip}
+                            >
+                              {origenIcon}
+                              {gasto.origen === 'pago_fijo' ? 'Pago Fijo' : 
+                               gasto.origen === 'cuota' ? 'Cuota' : 'Normal'}
+                            </span>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <span className={`text-sm font-semibold ${
-                              gasto.origen === 'cuota' ? 'text-purple-400' :
-                              gasto.origen === 'pago_fijo' ? 'text-amber-400' :
-                              'text-red-400'
-                            }`}>
+                            <span className="text-sm font-semibold text-red-400">
                               €{gasto.monto?.toFixed(2) || '0.00'}
                             </span>
                           </td>
@@ -704,36 +833,15 @@ export default function TablaGastos() {
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* EJEMPLOS DE FORMATO */}
-          <div className="mt-6 bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-slate-300 mb-2">📝 Ejemplos de cómo interpretar la tabla:</h4>
-            <div className="text-sm text-slate-400 space-y-2">
-              <div className="flex items-start gap-2">
-                <div className="w-2 h-2 mt-1.5 rounded-full bg-purple-500"></div>
-                <div>
-                  <span className="text-purple-300">"AliExpress 1" con </span>
-                  <span className="text-purple-400">"Cuota 4 de 4"</span>
-                  <span className="text-slate-500"> → Es la </span>
-                  <span className="text-amber-300">cuarta y última cuota</span>
-                  <span className="text-slate-500"> (ya pagaste 3 de 4)</span>
+            
+            {/* FOOTER CON INFORMACIÓN DETALLADA */}
+            {resumenCuotas.totalCuotas > 0 && (
+              <div className="px-6 py-3 border-t border-slate-800 bg-purple-900/10">
+                <div className="text-xs text-purple-300">
+                  💡 Se muestran solo las próximas cuotas pendientes. Cuotas ya pagadas no se incluyen.
                 </div>
               </div>
-              <div className="flex items-start gap-2">
-                <div className="w-2 h-2 mt-1.5 rounded-full bg-purple-500"></div>
-                <div>
-                  <span className="text-purple-300">"Shein" con </span>
-                  <span className="text-purple-400">"Cuota 2 de 4"</span>
-                  <span className="text-slate-500"> → Es la </span>
-                  <span className="text-amber-300">segunda cuota</span>
-                  <span className="text-slate-500"> (ya pagaste 1 de 4)</span>
-                </div>
-              </div>
-              <div className="text-xs text-slate-500 mt-2">
-                💡 Pasa el cursor sobre el icono <HelpCircle className="h-3 w-3 inline text-slate-500" /> para ver el progreso detallado
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
