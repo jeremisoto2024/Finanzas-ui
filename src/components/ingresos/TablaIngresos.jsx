@@ -1,46 +1,32 @@
 import { useState, useMemo, useEffect } from 'react';
-import FilaIngreso from './FilaIngreso';
 
-// ICONOS LUCIDE REACT para ingresos (paleta verde)
+// ICONOS LUCIDE REACT para ingresos (paleta verde unificada)
 import { 
   Download, 
   Filter,
   Calendar,
-  TrendingUp,
+  CreditCard,
   Database,
   Tag,
-  CreditCard,
+  TrendingUp,
   Bell,
   ChevronDown,
   FileText,
   Wallet,
   AlertCircle,
-  DollarSign,
-  Receipt,
-  Landmark,
-  Sparkles,
-  Banknote,
-  Gift,
-  Briefcase,
-  Coins,
-  Target,
-  BarChart3,
-  TrendingDown,
+  RefreshCw,
   Lightbulb,
   Clock,
-  RefreshCw,
-  ArrowUpRight,
-  Percent,
+  TrendingDown,
+  PieChart,
+  Target,
+  BarChart3,
   AlertTriangle,
+  DollarSign,
+  Percent,
   Zap,
   Shield,
-  Thermometer,
-  Home,
-  ShoppingBag,
-  Utensils,
-  Heart,
-  Repeat,
-  CheckCircle
+  Thermometer
 } from 'lucide-react';
 
 export default function TablaIngresos() {
@@ -49,7 +35,7 @@ export default function TablaIngresos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados de filtros existentes
+  // Estados de filtros
   const [filtroMes, setFiltroMes] = useState('');
   const [filtroMetodo, setFiltroMetodo] = useState('');
   const [filtroCuenta, setFiltroCuenta] = useState('');
@@ -394,7 +380,7 @@ export default function TablaIngresos() {
     };
   }, [estadisticasCategorias]);
 
-  // 10. Meta de ingresos y progreso
+  // 10. Meta de ingresos y progreso (mantenemos esta funcionalidad única)
   const metaIngresos = useMemo(() => {
     // Calcular promedio de los últimos 3 meses para establecer una meta realista
     const meses = obtenerMesesDisponibles.slice(0, 3);
@@ -489,13 +475,19 @@ export default function TablaIngresos() {
     return estimaciones;
   }, [ingresosMensuales, mesActual]);
 
-  // 12. Tendencias mensuales
+  // 12. Tendencias mensuales mejoradas (igual que TablaGastos)
   const tendenciaMensual = useMemo(() => {
-    if (obtenerMesesDisponibles.length < 2) return { cambio: 0, mensaje: 'Datos insuficientes' };
+    if (obtenerMesesDisponibles.length < 2) return { 
+      cambio: 0, 
+      mensaje: 'Datos insuficientes',
+      tendencia: 'neutral'
+    };
     
     const meses = obtenerMesesDisponibles.slice(0, 2);
     const totalesPorMes = {};
+    const categoriasPorMes = {};
     
+    // Calcular total y categorías por mes
     ingresosMensuales.forEach(ingreso => {
       if (ingreso.fecha) {
         const fecha = new Date(ingreso.fecha);
@@ -503,29 +495,53 @@ export default function TablaIngresos() {
         
         if (meses.includes(mes)) {
           totalesPorMes[mes] = (totalesPorMes[mes] || 0) + ingreso.monto;
+          
+          if (!categoriasPorMes[mes]) {
+            categoriasPorMes[mes] = {};
+          }
+          categoriasPorMes[mes][ingreso.categoria] = 
+            (categoriasPorMes[mes][ingreso.categoria] || 0) + ingreso.monto;
         }
       }
     });
     
+    // Comparar los dos meses
     const [mesActualKey, mesAnteriorKey] = meses;
     const actual = totalesPorMes[mesActualKey] || 0;
     const anterior = totalesPorMes[mesAnteriorKey] || 0;
     
-    if (anterior === 0) return { cambio: 0, mensaje: 'Sin datos previos' };
+    if (anterior === 0) return { 
+      cambio: 0, 
+      mensaje: 'Sin datos previos',
+      tendencia: 'neutral'
+    };
     
     const cambio = ((actual - anterior) / anterior) * 100;
     
+    // Analizar cambio en categorías principales
+    let analisisCategorias = '';
+    if (categoriasPorMes[mesActualKey] && categoriasPorMes[mesAnteriorKey]) {
+      const categoriasActual = Object.keys(categoriasPorMes[mesActualKey]);
+      const categoriasAnterior = Object.keys(categoriasPorMes[mesAnteriorKey]);
+      
+      const nuevasCategorias = categoriasActual.filter(c => !categoriasAnterior.includes(c));
+      if (nuevasCategorias.length > 0) {
+        analisisCategorias = ` Nuevas categorías: ${nuevasCategorias.join(', ')}`;
+      }
+    }
+    
     return {
       cambio,
+      tendencia: cambio > 5 ? 'subiendo' : cambio < -5 ? 'bajando' : 'estable',
       mensaje: cambio > 0 
-        ? `↑ Aumento del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}`
+        ? `↑ Aumento del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}${analisisCategorias}`
         : cambio < 0
-        ? `↓ Disminución del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}`
-        : 'Sin cambios'
+        ? `↓ Disminución del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}${analisisCategorias}`
+        : `Sin cambios significativos vs ${formatearMesTexto(mesAnteriorKey)}${analisisCategorias}`
     };
   }, [ingresosMensuales, obtenerMesesDisponibles]);
 
-  // 13. Exportar CSV
+  // 13. Exportar CSV mejorado (igual que TablaGastos)
   const exportarCSV = () => {
     const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Tipo', 'Cuenta', 'Monto'];
     const filas = ingresosFiltrados.map(i => {
@@ -585,7 +601,7 @@ export default function TablaIngresos() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* HEADER CON META DE INGRESOS */}
+      {/* HEADER MEJORADO (igual que TablaGastos) */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -596,19 +612,26 @@ export default function TablaIngresos() {
               <span className="text-slate-400">
                 {filtroMes ? formatearMesTexto(filtroMes) : 'Todos los meses'}
               </span>
-              <div className={`text-sm px-3 py-1 rounded-full ${
-                metaIngresos.alcanzada 
-                  ? 'bg-emerald-900/30 text-emerald-400' 
-                  : 'bg-amber-900/30 text-amber-400'
-              }`}>
-                {metaIngresos.alcanzada ? '✅ Meta alcanzada' : `Meta: €${metaIngresos.meta}`}
-              </div>
+              <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
+                {ingresosFiltrados.length} transacciones
+              </span>
             </div>
-            
-            {/* BARRA DE PROGRESO DE META */}
+            {/* TENDENCIA MEJORADA (igual que TablaGastos) */}
+            {tendenciaMensual.cambio !== 0 && (
+              <div className={`mt-2 text-sm flex items-center gap-2 ${
+                tendenciaMensual.tendencia === 'subiendo' ? 'text-emerald-400' : 
+                tendenciaMensual.tendencia === 'bajando' ? 'text-red-400' : 'text-slate-400'
+              }`}>
+                {tendenciaMensual.tendencia === 'subiendo' ? <TrendingUp className="h-4 w-4" /> :
+                 tendenciaMensual.tendencia === 'bajando' ? <TrendingDown className="h-4 w-4" /> :
+                 <TrendingDown className="h-4 w-4" />}
+                <span>{tendenciaMensual.mensaje}</span>
+              </div>
+            )}
+            {/* BARRA DE PROGRESO DE META (mantenemos esta funcionalidad única) */}
             <div className="mt-3 max-w-md">
               <div className="flex justify-between text-sm text-slate-400 mb-1">
-                <span>Progreso hacia la meta</span>
+                <span>Meta mensual: €{metaIngresos.meta}</span>
                 <span>{metaIngresos.progreso.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-slate-800 rounded-full h-2">
@@ -618,22 +641,18 @@ export default function TablaIngresos() {
                       ? 'bg-emerald-500' 
                       : 'bg-gradient-to-r from-amber-500 to-amber-400'
                   }`}
-                  style={{ width: `${metaIngresos.progreso}%` }}
+                  style={{ width: `${Math.min(metaIngresos.progreso, 100)}%` }}
                 ></div>
               </div>
-            </div>
-            
-            {/* TENDENCIA */}
-            {tendenciaMensual.cambio !== 0 && (
-              <div className={`mt-2 text-sm ${
-                tendenciaMensual.cambio > 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}>
-                {tendenciaMensual.mensaje}
+              <div className="text-xs text-slate-500 mt-1">
+                {metaIngresos.alcanzada 
+                  ? '✅ Meta alcanzada' 
+                  : `Faltan €${Math.max(0, metaIngresos.meta - total).toFixed(2)} para la meta`}
               </div>
-            )}
+            </div>
           </div>
           
-          {/* BOTÓN DE EXPORTAR */}
+          {/* BOTÓN DE EXPORTAR MEJORADO (igual que TablaGastos) */}
           <button 
             onClick={exportarCSV}
             className="group flex items-center gap-3 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-emerald-900/30"
@@ -645,11 +664,11 @@ export default function TablaIngresos() {
         </div>
       </div>
 
-      {/* LAYOUT DE DOS COLUMNAS */}
+      {/* LAYOUT DE DOS COLUMNAS (igual que TablaGastos) */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* COLUMNA IZQUIERDA - FILTROS Y ANÁLISIS */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
-          {/* PANEL DE FILTROS */}
+          {/* PANEL DE FILTROS MEJORADO */}
           <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-5 w-5 text-emerald-400" />
@@ -684,7 +703,7 @@ export default function TablaIngresos() {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <CreditCard className="h-4 w-4 text-blue-400" />
-                  Método
+                  Método de recepción
                 </label>
                 <div className="relative">
                   <select 
@@ -704,7 +723,7 @@ export default function TablaIngresos() {
               {/* FILTRO CUENTA - DINÁMICO */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
-                  <Database className="h-4 w-4 text-purple-400" />
+                  <Database className="h-4 w-4 text-green-400" />
                   Cuenta
                 </label>
                 <div className="relative">
@@ -823,7 +842,7 @@ export default function TablaIngresos() {
               
               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                 <div className="flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-blue-400" />
+                  <Wallet className="h-4 w-4 text-green-400" />
                   <span className="text-sm text-slate-300">Cuenta más usada</span>
                 </div>
                 <span className="text-sm font-medium text-white">{cuentaMasUsada}</span>
@@ -860,9 +879,6 @@ export default function TablaIngresos() {
                         width: `${analisisTiposIngresos.porcentajeFijos}%` 
                       }}
                     ></div>
-                  </div>
-                  <div className="text-xs text-slate-500 text-center">
-                    {analisisTiposIngresos.porcentajeFijos.toFixed(0)}% son ingresos fijos
                   </div>
                 </div>
               </div>
@@ -1069,10 +1085,10 @@ export default function TablaIngresos() {
             </div>
           </div>
 
-          {/* DISTRIBUCIÓN POR CATEGORÍAS CON TIPO */}
+          {/* DISTRIBUCIÓN POR CATEGORÍAS */}
           <div className="mt-4 bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-4">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <Target className="h-4 w-4 text-purple-400" />
+              <PieChart className="h-4 w-4 text-purple-400" />
               Distribución por categorías
             </h3>
             <div className="space-y-2">
