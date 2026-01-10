@@ -31,7 +31,6 @@ import {
   RefreshCw,
   ArrowUpRight,
   Percent,
-  PieChart,
   AlertTriangle,
   Zap,
   Shield,
@@ -41,7 +40,6 @@ import {
   Utensils,
   Heart,
   Repeat,
-  Target as TargetIcon,
   CheckCircle
 } from 'lucide-react';
 
@@ -69,17 +67,16 @@ export default function TablaIngresos() {
         setError(err.message);
         console.error('Error fetching ingresos:', err);
         
-        // Datos de ejemplo mejorados
+        // Datos de ejemplo como fallback
         setIngresosMensuales([
           { id: 1, fecha: '2025-10-01', concepto: 'Salario mensual', metodo: 'Transferencia', categoria: 'Sueldo', cuenta: 'BBVA', monto: 2500 },
           { id: 2, fecha: '2025-10-05', concepto: 'Trabajo freelance', metodo: 'PayPal', categoria: 'Freelance', cuenta: 'PayPal', monto: 450 },
           { id: 3, fecha: '2025-10-10', concepto: 'Venta de artículos', metodo: 'Bizum', categoria: 'Ventas', cuenta: 'Revolut', monto: 120 },
           { id: 4, fecha: '2025-10-15', concepto: 'Consultoría', metodo: 'Transferencia', categoria: 'Freelance', cuenta: 'BBVA', monto: 800 },
           { id: 5, fecha: '2025-10-20', concepto: 'Propinas', metodo: 'Efectivo', categoria: 'Extras', cuenta: 'Efectivo', monto: 85 },
-          { id: 6, fecha: '2025-10-25', concepto: 'Inversiones', metodo: 'Transferencia', categoria: 'Inversiones', cuenta: 'BBVA', monto: 300 },
-          { id: 7, fecha: '2025-10-28', concepto: 'Reembolso', metodo: 'Tarjeta', categoria: 'Reembolsos', cuenta: 'Santander', monto: 150 },
-          { id: 8, fecha: '2025-09-01', concepto: 'Salario mensual', metodo: 'Transferencia', categoria: 'Sueldo', cuenta: 'BBVA', monto: 2400 },
-          { id: 9, fecha: '2025-09-10', concepto: 'Freelance diseño', metodo: 'PayPal', categoria: 'Freelance', cuenta: 'PayPal', monto: 600 },
+          { id: 6, fecha: '2025-09-01', concepto: 'Salario mensual', metodo: 'Transferencia', categoria: 'Sueldo', cuenta: 'BBVA', monto: 2400 },
+          { id: 7, fecha: '2025-09-10', concepto: 'Inversiones', metodo: 'Transferencia', categoria: 'Inversiones', cuenta: 'BBVA', monto: 300 },
+          { id: 8, fecha: '2025-09-15', concepto: 'Reembolso', metodo: 'Tarjeta', categoria: 'Reembolsos', cuenta: 'Santander', monto: 150 },
         ]);
       } finally {
         setLoading(false);
@@ -91,8 +88,92 @@ export default function TablaIngresos() {
 
   // ========== FUNCIONES PARA DATOS DINÁMICOS ==========
 
-  // [Todas las funciones de obtención de datos dinámicos permanecen igual...]
-  // (obtenerMesesDisponibles, metodosRecepcionDisponibles, etc.)
+  // 1. Obtener meses únicos de los datos
+  const obtenerMesesDisponibles = useMemo(() => {
+    const mesesSet = new Set();
+    
+    ingresosMensuales.forEach(ingreso => {
+      if (ingreso.fecha) {
+        try {
+          const fecha = new Date(ingreso.fecha);
+          if (!isNaN(fecha.getTime())) {
+            const año = fecha.getFullYear();
+            const mes = fecha.getMonth() + 1;
+            const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
+            mesesSet.add(mesFormateado);
+          }
+        } catch (error) {
+          console.error('Error procesando fecha:', ingreso.fecha, error);
+        }
+      }
+    });
+    
+    // Convertir a array y ordenar descendente (más reciente primero)
+    const mesesArray = Array.from(mesesSet);
+    return mesesArray.sort((a, b) => b.localeCompare(a));
+  }, [ingresosMensuales]);
+
+  // 2. Obtener métodos de recepción únicos
+  const metodosRecepcionDisponibles = useMemo(() => {
+    const metodosSet = new Set();
+    ingresosMensuales.forEach(ingreso => {
+      if (ingreso.metodo) metodosSet.add(ingreso.metodo);
+    });
+    return Array.from(metodosSet).sort();
+  }, [ingresosMensuales]);
+
+  // 3. Obtener cuentas únicas
+  const cuentasDisponibles = useMemo(() => {
+    const cuentasSet = new Set();
+    ingresosMensuales.forEach(ingreso => {
+      if (ingreso.cuenta) cuentasSet.add(ingreso.cuenta);
+    });
+    return Array.from(cuentasSet).sort();
+  }, [ingresosMensuales]);
+
+  // 4. Obtener categorías únicas
+  const categoriasDisponibles = useMemo(() => {
+    const categoriasSet = new Set();
+    ingresosMensuales.forEach(ingreso => {
+      if (ingreso.categoria) categoriasSet.add(ingreso.categoria);
+    });
+    return Array.from(categoriasSet).sort();
+  }, [ingresosMensuales]);
+
+  // 5. Función para formatear mes a texto
+  const formatearMesTexto = (mesFormato) => {
+    if (!mesFormato) return '';
+    const [año, mes] = mesFormato.split('-');
+    const fecha = new Date(año, parseInt(mes) - 1);
+    return fecha.toLocaleDateString('es-ES', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  // 6. Obtener mes actual en formato YYYY-MM
+  const mesActual = useMemo(() => {
+    const ahora = new Date();
+    return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+  }, []);
+
+  // ========== FILTRADO DE DATOS ==========
+  const ingresosFiltrados = useMemo(() => {
+    return ingresosMensuales.filter(ingreso => {
+      if (ingreso.fecha) {
+        const fechaIngreso = new Date(ingreso.fecha);
+        const mesIngreso = `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}`;
+        
+        const cumpleMes = !filtroMes || mesIngreso === filtroMes;
+        const cumpleMetodo = !filtroMetodo || ingreso.metodo === filtroMetodo;
+        const cumpleCuenta = !filtroCuenta || ingreso.cuenta === filtroCuenta;
+        const cumpleCategoria = !filtroCategoria || ingreso.categoria === filtroCategoria;
+        
+        return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
+      }
+      return false;
+    });
+  }, [ingresosMensuales, filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
 
   // ========== CÁLCULOS PRINCIPALES MEJORADOS ==========
 
@@ -123,8 +204,8 @@ export default function TablaIngresos() {
       categorias[categoria].porcentaje = (categorias[categoria].total / total) * 100;
       
       // Determinar tipo de ingreso (FIJO vs VARIABLE)
-      const categoriasFijas = ['Sueldo', 'Pensión', 'Alquiler recibido', 'Subsidio'];
-      const categoriasVariables = ['Freelance', 'Ventas', 'Inversiones', 'Propinas', 'Extras', 'Reembolsos'];
+      const categoriasFijas = ['Sueldo', 'Pensión', 'Alquiler recibido', 'Subsidio', 'Nómina'];
+      const categoriasVariables = ['Freelance', 'Ventas', 'Inversiones', 'Propinas', 'Extras', 'Reembolsos', 'Consultoría'];
       
       if (categoriasFijas.includes(categoria)) {
         categorias[categoria].tipo = 'fijo';
@@ -180,7 +261,29 @@ export default function TablaIngresos() {
     };
   }, [estadisticasCategorias]);
 
-  // 5. Análisis de frecuencia de ingresos
+  // 5. Calcular cuenta más usada
+  const cuentaMasUsada = useMemo(() => {
+    const cuentas = ingresosFiltrados.reduce((acc, ingreso) => {
+      acc[ingreso.cuenta] = (acc[ingreso.cuenta] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const cuenta = Object.entries(cuentas).sort((a, b) => b[1] - a[1])[0];
+    return cuenta ? cuenta[0] : 'N/A';
+  }, [ingresosFiltrados]);
+
+  // 6. Calcular método más común
+  const metodoMasComun = useMemo(() => {
+    const metodos = ingresosFiltrados.reduce((acc, ingreso) => {
+      acc[ingreso.metodo] = (acc[ingreso.metodo] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const metodo = Object.entries(metodos).sort((a, b) => b[1] - a[1])[0];
+    return metodo ? metodo[0] : 'N/A';
+  }, [ingresosFiltrados]);
+
+  // 7. Análisis de frecuencia de ingresos
   const analisisFrecuencia = useMemo(() => {
     if (ingresosFiltrados.length === 0) return { promedioDiario: 0, diasConIngresos: 0, ingresoPorDia: 0 };
     
@@ -189,7 +292,7 @@ export default function TablaIngresos() {
     
     ingresosFiltrados.forEach(ingreso => {
       if (ingreso.fecha) {
-        fechasUnicas.add(ingreso.fecha.split('T')[0]); // Solo la fecha
+        fechasUnicas.add(ingreso.fecha.split('T')[0]);
       }
     });
     
@@ -212,7 +315,7 @@ export default function TablaIngresos() {
     };
   }, [ingresosFiltrados, total, filtroMes]);
 
-  // 6. Alertas de ingresos atípicos
+  // 8. Alertas de ingresos atípicos
   const alertasIngresos = useMemo(() => {
     if (ingresosFiltrados.length < 3) return [];
     
@@ -250,10 +353,10 @@ export default function TablaIngresos() {
       }
     });
     
-    return alertas.slice(0, 3); // Máximo 3 alertas
+    return alertas.slice(0, 3);
   }, [ingresosFiltrados, estadisticasCategorias]);
 
-  // 7. Sugerencia de crecimiento inteligente mejorada
+  // 9. Sugerencia de crecimiento inteligente mejorada
   const sugerenciaCrecimiento = useMemo(() => {
     if (Object.keys(estadisticasCategorias).length === 0) {
       return { categoria: null, crecimientoPotencial: 0, mensaje: '', tipo: 'diversificacion' };
@@ -266,7 +369,7 @@ export default function TablaIngresos() {
     
     if (categoriasVariables.length > 0) {
       const [nombre, datos] = categoriasVariables[0];
-      const crecimientoPotencial = datos.promedio * 2; // Duplicar frecuencia
+      const crecimientoPotencial = datos.promedio * 2;
       
       return {
         categoria: nombre,
@@ -280,7 +383,7 @@ export default function TablaIngresos() {
     // Si solo hay ingresos fijos, sugerir diversificación
     const [nombre, datos] = Object.entries(estadisticasCategorias)
       .sort((a, b) => b[1].total - a[1].total)[0];
-    const crecimientoPotencial = datos.total * 0.10; // 10% de crecimiento
+    const crecimientoPotencial = datos.total * 0.10;
     
     return {
       categoria: nombre,
@@ -291,7 +394,7 @@ export default function TablaIngresos() {
     };
   }, [estadisticasCategorias]);
 
-  // 8. Meta de ingresos y progreso
+  // 10. Meta de ingresos y progreso
   const metaIngresos = useMemo(() => {
     // Calcular promedio de los últimos 3 meses para establecer una meta realista
     const meses = obtenerMesesDisponibles.slice(0, 3);
@@ -313,20 +416,172 @@ export default function TablaIngresos() {
       ? valores.reduce((a, b) => a + b, 0) / valores.length 
       : 0;
     
-    const meta = promedioUltimosMeses * 1.1; // Meta: 10% más que el promedio
+    const meta = promedioUltimosMeses * 1.1;
     const progreso = total > 0 ? (total / meta) * 100 : 0;
     
     return {
       meta: Math.round(meta),
-      progreso: Math.min(progreso, 100), // Máximo 100%
+      progreso: Math.min(progreso, 100),
       alcanzada: total >= meta,
       diferencia: total - meta
     };
   }, [ingresosMensuales, total, obtenerMesesDisponibles]);
 
-  // [El resto de cálculos (proximosIngresos, tendenciaMensual, etc.) permanecen igual...]
+  // 11. Próximos ingresos estimados
+  const proximosIngresos = useMemo(() => {
+    const ingresosMesActual = ingresosMensuales.filter(ingreso => {
+      if (!ingreso.fecha) return false;
+      const fecha = new Date(ingreso.fecha);
+      const mesIngreso = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      return mesIngreso === mesActual;
+    });
+    
+    if (ingresosMesActual.length === 0) return [];
+    
+    const conceptosRecurrentes = {};
+    
+    ingresosMesActual.forEach(ingreso => {
+      const clave = `${ingreso.concepto}-${ingreso.categoria}`;
+      
+      if (!conceptosRecurrentes[clave]) {
+        conceptosRecurrentes[clave] = {
+          concepto: ingreso.concepto,
+          categoria: ingreso.categoria,
+          montos: [],
+          cuenta: ingreso.cuenta,
+          metodo: ingreso.metodo,
+          ultimaFecha: ingreso.fecha
+        };
+      }
+      conceptosRecurrentes[clave].montos.push(ingreso.monto);
+    });
+    
+    const estimaciones = Object.values(conceptosRecurrentes)
+      .filter(item => item.montos.length >= 1)
+      .map(item => {
+        const montoPromedio = item.montos.reduce((a, b) => a + b, 0) / item.montos.length;
+        const fechaUltima = new Date(item.ultimaFecha);
+        
+        let proximaFechaEstimada = new Date(fechaUltima);
+        
+        if (item.concepto.toLowerCase().includes('salario') || 
+            item.concepto.toLowerCase().includes('nómina')) {
+          proximaFechaEstimada.setMonth(proximaFechaEstimada.getMonth() + 1);
+          proximaFechaEstimada.setDate(1);
+        } else if (item.categoria === 'Freelance' || item.categoria === 'Consultoría') {
+          proximaFechaEstimada.setDate(proximaFechaEstimada.getDate() + 15);
+        } else {
+          proximaFechaEstimada.setDate(proximaFechaEstimada.getDate() + 30);
+        }
+        
+        return {
+          concepto: item.concepto,
+          categoria: item.categoria,
+          montoEstimado: montoPromedio,
+          proximaFecha: proximaFechaEstimada.toISOString().split('T')[0],
+          confianza: item.montos.length > 1 ? 'Alta' : 'Media',
+          cuenta: item.cuenta
+        };
+      })
+      .sort((a, b) => new Date(a.proximaFecha) - new Date(b.proximaFecha))
+      .slice(0, 3);
+    
+    return estimaciones;
+  }, [ingresosMensuales, mesActual]);
 
-  // ========== INTERFAZ MEJORADA ==========
+  // 12. Tendencias mensuales
+  const tendenciaMensual = useMemo(() => {
+    if (obtenerMesesDisponibles.length < 2) return { cambio: 0, mensaje: 'Datos insuficientes' };
+    
+    const meses = obtenerMesesDisponibles.slice(0, 2);
+    const totalesPorMes = {};
+    
+    ingresosMensuales.forEach(ingreso => {
+      if (ingreso.fecha) {
+        const fecha = new Date(ingreso.fecha);
+        const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (meses.includes(mes)) {
+          totalesPorMes[mes] = (totalesPorMes[mes] || 0) + ingreso.monto;
+        }
+      }
+    });
+    
+    const [mesActualKey, mesAnteriorKey] = meses;
+    const actual = totalesPorMes[mesActualKey] || 0;
+    const anterior = totalesPorMes[mesAnteriorKey] || 0;
+    
+    if (anterior === 0) return { cambio: 0, mensaje: 'Sin datos previos' };
+    
+    const cambio = ((actual - anterior) / anterior) * 100;
+    
+    return {
+      cambio,
+      mensaje: cambio > 0 
+        ? `↑ Aumento del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}`
+        : cambio < 0
+        ? `↓ Disminución del ${Math.abs(cambio).toFixed(1)}% vs ${formatearMesTexto(mesAnteriorKey)}`
+        : 'Sin cambios'
+    };
+  }, [ingresosMensuales, obtenerMesesDisponibles]);
+
+  // 13. Exportar CSV
+  const exportarCSV = () => {
+    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Tipo', 'Cuenta', 'Monto'];
+    const filas = ingresosFiltrados.map(i => {
+      const tipo = estadisticasCategorias[i.categoria]?.tipo || 'variable';
+      return [i.fecha, i.concepto, i.metodo, i.categoria, tipo, i.cuenta, i.monto].join(',');
+    });
+    
+    const csv = [headers.join(','), ...filas].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ingresos_${filtroMes || 'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  };
+
+  // ========== ESTADOS DE CARGA Y ERROR ==========
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-12 w-12 text-emerald-400 animate-spin mx-auto mb-4" />
+          <p className="text-slate-400 text-lg">Cargando ingresos desde Notion...</p>
+          <p className="text-slate-500 text-sm mt-2">Conectando con tu base de datos</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 p-6">
+        <div className="max-w-2xl mx-auto mt-20">
+          <div className="bg-red-900/20 border border-red-800/30 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-8 w-8 text-red-400" />
+              <h2 className="text-xl font-bold text-white">Error al cargar ingresos</h2>
+            </div>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <p className="text-slate-400 text-sm mb-6">
+              Mostrando datos de ejemplo. Asegúrate de que tu endpoint /api/ingresos esté configurado correctamente.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
@@ -367,6 +622,15 @@ export default function TablaIngresos() {
                 ></div>
               </div>
             </div>
+            
+            {/* TENDENCIA */}
+            {tendenciaMensual.cambio !== 0 && (
+              <div className={`mt-2 text-sm ${
+                tendenciaMensual.cambio > 0 ? 'text-emerald-400' : 'text-red-400'
+              }`}>
+                {tendenciaMensual.mensaje}
+              </div>
+            )}
           </div>
           
           {/* BOTÓN DE EXPORTAR */}
@@ -808,7 +1072,7 @@ export default function TablaIngresos() {
           {/* DISTRIBUCIÓN POR CATEGORÍAS CON TIPO */}
           <div className="mt-4 bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-4">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <PieChart className="h-4 w-4 text-purple-400" />
+              <Target className="h-4 w-4 text-purple-400" />
               Distribución por categorías
             </h3>
             <div className="space-y-2">
