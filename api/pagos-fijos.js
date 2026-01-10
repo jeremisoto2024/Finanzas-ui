@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       database_id: process.env.NOTION_PAGOS_FIJOS_DATEBASE_ID,
       sorts: [
         { property: 'Activo', direction: 'descending' },
-        { property: 'Fecha creación', direction: 'ascending' },
+        { property: 'Próximo pago', direction: 'ascending' },
       ],
     })
 
