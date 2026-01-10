@@ -27,7 +27,8 @@ import {
   Thermometer,
   Repeat,
   Calculator,
-  Receipt
+  Receipt,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 export default function TablaGastos() {
@@ -43,12 +44,7 @@ export default function TablaGastos() {
   // Estados de filtros
   const [filtroMes, setFiltroMes] = useState('');
   const [filtroMetodo, setFiltroMetodo] = useState('');
-  const [filtroCuenta, setFiltroCuenta] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
-
-  // Mes actual (para no mostrar pagos fijos de enero 2025)
-  const mesActual = '2025-01'; // Enero 2025 ya está cubierto
-  const mesSiguiente = '2025-02'; // Febrero 2025 es futuro
 
   // ========== CARGAR TODOS LOS DATOS ==========
   useEffect(() => {
@@ -62,19 +58,17 @@ export default function TablaGastos() {
         const gastosData = await resGastos.json();
         setGastosMensuales(gastosData);
 
-        // 2. Cargar pagos fijos (de Configuracion.jsx)
+        // 2. Cargar pagos fijos
         const resPagos = await fetch('/api/pagos-fijos');
         if (resPagos.ok) {
           const pagosData = await resPagos.json();
-          // Filtrar solo pagos fijos ACTIVOS
           setPagosFijos(pagosData.filter(p => p.activo === true));
         }
 
-        // 3. Cargar compras a cuotas (de Configuracion.jsx)
+        // 3. Cargar compras a cuotas
         const resCuotas = await fetch('/api/compras-cuotas');
         if (resCuotas.ok) {
           const cuotasData = await resCuotas.json();
-          // Filtrar solo compras ACTIVAS
           setComprasCuotas(cuotasData.filter(c => c.activo === true));
         }
 
@@ -91,18 +85,14 @@ export default function TablaGastos() {
           { id: 5, fecha: '2025-01-15', concepto: 'Restaurante', metodo: 'Tarjeta', categoria: 'Comida Fuera', cuenta: 'Santander', monto: 45 },
           { id: 6, fecha: '2025-01-18', concepto: 'Gimnasio', metodo: 'Transferencia', categoria: 'Salud', cuenta: 'BBVA', monto: 30 },
           { id: 7, fecha: '2025-01-20', concepto: 'Compras Online', metodo: 'Tarjeta', categoria: 'Compras', cuenta: 'Revolut', monto: 85 },
-          { id: 8, fecha: '2025-02-01', concepto: 'Alquiler Febrero', metodo: 'Transferencia', categoria: 'Vivienda', cuenta: 'BBVA', monto: 850 },
-          { id: 9, fecha: '2025-02-15', concepto: 'Supermercado Feb', metodo: 'Tarjeta', categoria: 'Alimentación', cuenta: 'Santander', monto: 110 },
         ]);
         
-        // Datos de ejemplo para pagos fijos (ACTIVOS)
         setPagosFijos([
           { id: '1', nombre: 'Netflix', monto: 12.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true, fechaInicio: '2025-02-01' },
           { id: '2', nombre: 'Gimnasio', monto: 45.00, metodo: 'Transferencia', categoria: 'Salud', frecuencia: 'mensual', activo: true, fechaInicio: '2025-02-01' },
           { id: '3', nombre: 'Spotify', monto: 9.99, metodo: 'Tarjeta', categoria: 'Entretenimiento', frecuencia: 'mensual', activo: true, fechaInicio: '2025-02-01' }
         ]);
         
-        // Datos de ejemplo para compras a cuotas (ACTIVAS)
         setComprasCuotas([
           { 
             id: '1', 
@@ -110,21 +100,11 @@ export default function TablaGastos() {
             montoTotal: 1199.00, 
             cuotasTotales: 12,
             cuotasPagadas: 3,
-            montoPrimeraCuota: 150.00,
-            montoUltimaCuota: 49.00,
-            tipoCuotas: 'decreciente',
             fechaInicio: '2025-02-01',
             metodo: 'Tarjeta',
             categoria: 'Tecnología',
             activo: true,
-            frecuenciaPago: 'mensual',
-            historialCuotas: [
-              { numero: 1, monto: 150.00, pagada: false, fecha: '2025-02-01' },
-              { numero: 2, monto: 140.00, pagada: false, fecha: '2025-03-01' },
-              { numero: 3, monto: 130.00, pagada: false, fecha: '2025-04-01' },
-              { numero: 4, monto: 120.00, pagada: false, fecha: '2025-05-01' },
-              { numero: 5, monto: 110.00, pagada: false, fecha: '2025-06-01' }
-            ]
+            frecuenciaPago: 'mensual'
           }
         ]);
       } finally {
@@ -140,14 +120,12 @@ export default function TablaGastos() {
   // 1. Transformar pagos fijos en gastos (SOLO para meses FUTUROS)
   const transformarPagosFijosAGastos = useMemo(() => {
     return pagosFijos.map(pago => {
-      // Crear fecha para el mes filtrado (o usar fechaInicio si no hay filtro)
+      // Crear fecha para el mes filtrado (o usar fechaInicio)
       let fechaGasto;
       if (filtroMes) {
-        // Crear fecha el día 1 del mes filtrado
         const [year, month] = filtroMes.split('-');
         fechaGasto = `${year}-${month}-01`;
       } else {
-        // Si no hay filtro, usar fechaInicio del pago
         fechaGasto = pago.fechaInicio || '2025-02-01';
       }
       
@@ -159,57 +137,52 @@ export default function TablaGastos() {
         categoria: pago.categoria,
         cuenta: 'Cuenta Principal',
         monto: parseFloat(pago.monto),
-        tipo: 'recurrente',
-        frecuencia: pago.frecuencia,
         origen: 'pago_fijo',
-        esFuturo: true // Marcar como gasto futuro
+        esFuturo: true
       };
     });
   }, [pagosFijos, filtroMes]);
 
-  // 2. Transformar cuotas del mes en gastos (SOLO para meses FUTUROS)
+  // 2. Transformar cuotas en gastos (SOLO para meses FUTUROS)
   const transformarCuotasAGastos = useMemo(() => {
     const gastosCuotas = [];
     
     comprasCuotas.forEach(compra => {
-      const cuotasDelMes = compra.historialCuotas?.filter(cuota => {
-        if (!cuota.fecha) return false;
-        
-        // Obtener mes de la cuota
-        const fechaCuota = new Date(cuota.fecha);
+      // Calcular cuota mensual aproximada
+      const cuotasRestantes = compra.cuotasTotales - compra.cuotasPagadas;
+      const montoRestante = compra.montoTotal - (compra.cuotasPagadas * (compra.montoTotal / compra.cuotasTotales));
+      const montoCuotaMensual = montoRestante / cuotasRestantes;
+      
+      // Crear cuotas futuras
+      for (let i = 1; i <= cuotasRestantes; i++) {
+        const fechaCuota = new Date(compra.fechaInicio);
+        fechaCuota.setMonth(fechaCuota.getMonth() + compra.cuotasPagadas + i - 1);
+        const fechaStr = fechaCuota.toISOString().split('T')[0];
         const mesCuota = `${fechaCuota.getFullYear()}-${String(fechaCuota.getMonth() + 1).padStart(2, '0')}`;
         
-        // Si hay filtro de mes, comparar
-        if (filtroMes) {
-          return mesCuota === filtroMes && !cuota.pagada;
+        // Solo incluir si coincide con el filtro o no hay filtro
+        if (!filtroMes || mesCuota === filtroMes) {
+          gastosCuotas.push({
+            id: `cuota-${compra.id}-${i}`,
+            fecha: fechaStr,
+            concepto: `${compra.concepto} (Cuota ${compra.cuotasPagadas + i}/${compra.cuotasTotales})`,
+            metodo: compra.metodo,
+            categoria: compra.categoria,
+            cuenta: 'Financiación',
+            monto: parseFloat(montoCuotaMensual.toFixed(2)),
+            origen: 'cuota',
+            cuotaNumero: compra.cuotasPagadas + i,
+            totalCuotas: compra.cuotasTotales,
+            esFuturo: true
+          });
         }
-        
-        // Si no hay filtro, mostrar cuotas NO PAGADAS
-        return !cuota.pagada;
-      }) || [];
-      
-      cuotasDelMes.forEach(cuota => {
-        gastosCuotas.push({
-          id: `cuota-${compra.id}-${cuota.numero}`,
-          fecha: cuota.fecha,
-          concepto: `${compra.concepto} (Cuota ${cuota.numero}/${compra.cuotasTotales})`,
-          metodo: compra.metodo,
-          categoria: compra.categoria,
-          cuenta: 'Financiación',
-          monto: parseFloat(cuota.monto),
-          tipo: 'financiacion',
-          cuotaNumero: cuota.numero,
-          totalCuotas: compra.cuotasTotales,
-          origen: 'cuota',
-          esFuturo: true // Marcar como gasto futuro
-        });
-      });
+      }
     });
     
     return gastosCuotas;
   }, [comprasCuotas, filtroMes]);
 
-  // 3. Obtener meses únicos de TODOS los datos
+  // 3. Obtener meses únicos de TODOS los datos (CORREGIDO)
   const obtenerMesesDisponibles = useMemo(() => {
     const mesesSet = new Set();
     
@@ -230,17 +203,17 @@ export default function TablaGastos() {
       }
     });
     
-    // Agregar meses de pagos fijos (SOLO futuros, excluyendo enero 2025)
+    // Agregar meses de pagos fijos
     transformarPagosFijosAGastos.forEach(gasto => {
       if (gasto.fecha) {
-        const fecha = new Date(gasto.fecha);
-        const año = fecha.getFullYear();
-        const mes = fecha.getMonth() + 1;
-        const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
-        
-        // NO incluir enero 2025 (ya está cubierto)
-        if (mesFormateado !== '2025-01') {
+        try {
+          const fecha = new Date(gasto.fecha);
+          const año = fecha.getFullYear();
+          const mes = fecha.getMonth() + 1;
+          const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
           mesesSet.add(mesFormateado);
+        } catch (error) {
+          console.error('Error procesando fecha pago fijo:', gasto.fecha, error);
         }
       }
     });
@@ -248,19 +221,18 @@ export default function TablaGastos() {
     // Agregar meses de cuotas
     transformarCuotasAGastos.forEach(gasto => {
       if (gasto.fecha) {
-        const fecha = new Date(gasto.fasto.fecha);
-        const año = fecha.getFullYear();
-        const mes = fecha.getMonth() + 1;
-        const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
-        
-        // NO incluir enero 2025 (ya está cubierto)
-        if (mesFormateado !== '2025-01') {
+        try {
+          const fecha = new Date(gasto.fecha);
+          const año = fecha.getFullYear();
+          const mes = fecha.getMonth() + 1;
+          const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
           mesesSet.add(mesFormateado);
+        } catch (error) {
+          console.error('Error procesando fecha cuota:', gasto.fecha, error);
         }
       }
     });
     
-    // Convertir a array y ordenar descendente
     const mesesArray = Array.from(mesesSet);
     return mesesArray.sort((a, b) => b.localeCompare(a));
   }, [gastosMensuales, transformarPagosFijosAGastos, transformarCuotasAGastos]);
@@ -278,13 +250,12 @@ export default function TablaGastos() {
 
   // ========== COMBINAR Y FILTRAR DATOS ==========
 
-  // Combinar TODOS los gastos
+  // Combinar TODOS los gastos (sin enero 2025 para pagos fijos/cuotas)
   const todosLosGastos = useMemo(() => {
     const gastosCombinados = [...gastosMensuales];
     
-    // IMPORTANTE: NO agregar pagos fijos/cuotas de ENERO 2025 (ya están cubiertos)
+    // Solo agregar pagos fijos/cuotas si NO es enero 2025
     if (!filtroMes || filtroMes !== '2025-01') {
-      // Solo agregar pagos fijos si NO es enero 2025
       gastosCombinados.push(...transformarPagosFijosAGastos);
       gastosCombinados.push(...transformarCuotasAGastos);
     }
@@ -295,25 +266,27 @@ export default function TablaGastos() {
   // Filtrar gastos combinados
   const gastosFiltrados = useMemo(() => {
     return todosLosGastos.filter(gasto => {
-      if (gasto.fecha) {
-        const fechaGasto = new Date(gasto.fecha);
-        const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
-        
-        const cumpleMes = !filtroMes || mesGasto === filtroMes;
-        const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
-        const cumpleCuenta = !filtroCuenta || gasto.cuenta === filtroCuenta;
-        const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
-        
-        return cumpleMes && cumpleMetodo && cumpleCuenta && cumpleCategoria;
-      }
-      return false;
+      if (!gasto.fecha) return false;
+      
+      const fechaGasto = new Date(gasto.fecha);
+      if (isNaN(fechaGasto.getTime())) return false;
+      
+      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+      
+      const cumpleMes = !filtroMes || mesGasto === filtroMes;
+      const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
+      const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
+      
+      return cumpleMes && cumpleMetodo && cumpleCategoria;
     });
-  }, [todosLosGastos, filtroMes, filtroMetodo, filtroCuenta, filtroCategoria]);
+  }, [todosLosGastos, filtroMes, filtroMetodo, filtroCategoria]);
 
-  // ========== CÁLCULOS PRINCIPALES ==========
+  // ========== CÁLCULOS SIMPLIFICADOS ==========
 
   // 1. Total
-  const total = gastosFiltrados.reduce((sum, gasto) => sum + gasto.monto, 0);
+  const total = useMemo(() => {
+    return gastosFiltrados.reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
+  }, [gastosFiltrados]);
 
   // 2. Estadísticas por tipo de gasto
   const estadisticasPorTipo = useMemo(() => {
@@ -326,10 +299,10 @@ export default function TablaGastos() {
     gastosFiltrados.forEach(gasto => {
       const tipo = gasto.origen || 'normal';
       if (stats[tipo]) {
-        stats[tipo].total += gasto.monto;
+        stats[tipo].total += gasto.monto || 0;
         stats[tipo].count += 1;
       } else {
-        stats.normal.total += gasto.monto;
+        stats.normal.total += gasto.monto || 0;
         stats.normal.count += 1;
       }
     });
@@ -342,42 +315,39 @@ export default function TablaGastos() {
     const categorias = {};
     
     gastosFiltrados.forEach(gasto => {
+      if (!gasto.categoria) return;
+      
       if (!categorias[gasto.categoria]) {
         categorias[gasto.categoria] = {
           total: 0,
           count: 0,
-          promedio: 0,
-          porcentaje: 0,
-          tipo: gasto.origen === 'pago_fijo' ? 'recurrente' : 
-                gasto.origen === 'cuota' ? 'financiacion' : 'normal'
+          porcentaje: 0
         };
       }
-      categorias[gasto.categoria].total += gasto.monto;
+      categorias[gasto.categoria].total += gasto.monto || 0;
       categorias[gasto.categoria].count += 1;
     });
     
-    // Calcular promedio y porcentaje
+    // Calcular porcentajes
     Object.keys(categorias).forEach(categoria => {
-      categorias[categoria].promedio = categorias[categoria].total / categorias[categoria].count;
-      categorias[categoria].porcentaje = total > 0 ? (categorias[categoria].total / total) * 100 : 0;
+      categorias[categoria].porcentaje = total > 0 ? 
+        (categorias[categoria].total / total) * 100 : 0;
     });
     
     return categorias;
   }, [gastosFiltrados, total]);
 
-  // 4. Análisis de gastos esenciales vs. discrecionales
+  // 4. Análisis esenciales vs discrecionales
   const analisisEsencialesDiscrecionales = useMemo(() => {
     let esenciales = 0;
     let discrecionales = 0;
     
-    Object.entries(estadisticasCategorias).forEach(([_, datos]) => {
+    gastosFiltrados.forEach(gasto => {
       const categoriasEsenciales = ['Vivienda', 'Alimentación', 'Transporte', 'Salud', 'Educación'];
-      const categoria = _;
-      
-      if (categoriasEsenciales.includes(categoria)) {
-        esenciales += datos.total;
+      if (categoriasEsenciales.includes(gasto.categoria)) {
+        esenciales += gasto.monto || 0;
       } else {
-        discrecionales += datos.total;
+        discrecionales += gasto.monto || 0;
       }
     });
     
@@ -389,14 +359,16 @@ export default function TablaGastos() {
       porcentajeDiscrecionales: totalCalculado > 0 ? (discrecionales / totalCalculado) * 100 : 0,
       saludFinanciera: totalCalculado > 0 && esenciales <= 0.5 * totalCalculado ? 'Buena' : 'Por mejorar'
     };
-  }, [estadisticasCategorias]);
+  }, [gastosFiltrados]);
 
   // 5. Método más común
   const metodoMasComun = useMemo(() => {
-    const metodos = gastosFiltrados.reduce((acc, gasto) => {
-      acc[gasto.metodo] = (acc[gasto.metodo] || 0) + 1;
-      return acc;
-    }, {});
+    const metodos = {};
+    gastosFiltrados.forEach(gasto => {
+      if (gasto.metodo) {
+        metodos[gasto.metodo] = (metodos[gasto.metodo] || 0) + 1;
+      }
+    });
     
     const metodo = Object.entries(metodos).sort((a, b) => b[1] - a[1])[0];
     return metodo ? metodo[0] : 'N/A';
@@ -404,20 +376,16 @@ export default function TablaGastos() {
 
   // 6. Exportar CSV
   const exportarCSV = () => {
-    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Tipo', 'Origen'];
-    const filas = gastosFiltrados.map(g => {
-      const tipo = estadisticasCategorias[g.categoria]?.tipo || 'normal';
-      return [
-        g.fecha, 
-        g.concepto, 
-        g.metodo, 
-        g.categoria, 
-        g.cuenta, 
-        g.monto, 
-        tipo,
-        g.origen || 'normal'
-      ].join(',');
-    });
+    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Origen'];
+    const filas = gastosFiltrados.map(g => [
+      g.fecha, 
+      g.concepto, 
+      g.metodo, 
+      g.categoria, 
+      g.cuenta, 
+      g.monto, 
+      g.origen || 'normal'
+    ].join(','));
     
     const csv = [headers.join(','), ...filas].join('\n');
     
@@ -431,7 +399,7 @@ export default function TablaGastos() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
-  // 7. Tendencias
+  // 7. Tendencias simplificadas
   const tendenciaMensual = useMemo(() => {
     if (obtenerMesesDisponibles.length < 2) return { 
       cambio: 0, 
@@ -440,30 +408,34 @@ export default function TablaGastos() {
     };
     
     const meses = obtenerMesesDisponibles.slice(0, 2);
-    const totalesPorMes = {};
-    
-    gastosMensuales.forEach(gasto => {
-      if (gasto.fecha) {
-        const fecha = new Date(gasto.fecha);
-        const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-        
-        if (meses.includes(mes)) {
-          totalesPorMes[mes] = (totalesPorMes[mes] || 0) + gasto.monto;
-        }
-      }
-    });
-    
     const [mesActualKey, mesAnteriorKey] = meses;
-    const actual = totalesPorMes[mesActualKey] || 0;
-    const anterior = totalesPorMes[mesAnteriorKey] || 0;
     
-    if (anterior === 0) return { 
+    // Calcular totales
+    const totalActual = gastosMensuales
+      .filter(g => {
+        if (!g.fecha) return false;
+        const fecha = new Date(g.fecha);
+        const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+        return mes === mesActualKey;
+      })
+      .reduce((sum, g) => sum + (g.monto || 0), 0);
+    
+    const totalAnterior = gastosMensuales
+      .filter(g => {
+        if (!g.fecha) return false;
+        const fecha = new Date(g.fecha);
+        const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+        return mes === mesAnteriorKey;
+      })
+      .reduce((sum, g) => sum + (g.monto || 0), 0);
+    
+    if (totalAnterior === 0) return { 
       cambio: 0, 
       mensaje: 'Sin datos previos',
       tendencia: 'neutral'
     };
     
-    const cambio = ((actual - anterior) / anterior) * 100;
+    const cambio = ((totalActual - totalAnterior) / totalAnterior) * 100;
     
     return {
       cambio,
@@ -511,10 +483,10 @@ export default function TablaGastos() {
     );
   }
 
-  // ========== RENDER ==========
+  // ========== RENDER SIMPLIFICADO ==========
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* HEADER MEJORADO */}
+      {/* HEADER */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -551,7 +523,7 @@ export default function TablaGastos() {
             {/* NOTA IMPORTANTE */}
             {filtroMes === '2025-01' && (
               <div className="mt-3 text-sm text-amber-400 bg-amber-900/20 px-3 py-2 rounded-lg">
-                ⓘ Los pagos fijos y cuotas de enero 2025 ya están cubiertos y no se muestran
+                ⓘ Los pagos fijos y cuotas de enero 2025 ya están cubiertos
               </div>
             )}
             
@@ -572,9 +544,9 @@ export default function TablaGastos() {
           {/* BOTÓN DE EXPORTAR */}
           <button 
             onClick={exportarCSV}
-            className="group flex items-center gap-3 px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:shadow-red-900/30"
+            className="flex items-center gap-3 px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
           >
-            <Download className="h-5 w-5 group-hover:scale-110 transition-transform" />
+            <Download className="h-5 w-5" />
             <FileText className="h-5 w-5" />
             <span>Exportar CSV</span>
           </button>
@@ -583,17 +555,17 @@ export default function TablaGastos() {
 
       {/* LAYOUT DE DOS COLUMNAS */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA - FILTROS Y ANÁLISIS */}
+        {/* COLUMNA IZQUIERDA - FILTROS */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
-          {/* PANEL DE FILTROS MEJORADO */}
-          <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
+          {/* PANEL DE FILTROS */}
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-5 w-5 text-red-400" />
               <h2 className="text-lg font-semibold text-white">Filtros</h2>
             </div>
             
             <div className="space-y-4">
-              {/* FILTRO MES - DINÁMICO */}
+              {/* FILTRO MES */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <Calendar className="h-4 w-4 text-red-400" />
@@ -603,7 +575,7 @@ export default function TablaGastos() {
                   <select 
                     value={filtroMes}
                     onChange={(e) => setFiltroMes(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition appearance-none"
+                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                   >
                     <option value="">Todos los meses</option>
                     {obtenerMesesDisponibles.map((mes) => (
@@ -613,7 +585,7 @@ export default function TablaGastos() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
                 </div>
               </div>
 
@@ -627,7 +599,7 @@ export default function TablaGastos() {
                   <select 
                     value={filtroMetodo}
                     onChange={(e) => setFiltroMetodo(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition appearance-none"
+                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                   >
                     <option value="">Todos los métodos</option>
                     <option value="Tarjeta">Tarjeta</option>
@@ -635,7 +607,7 @@ export default function TablaGastos() {
                     <option value="Bizum">Bizum</option>
                     <option value="Efectivo">Efectivo</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
                 </div>
               </div>
 
@@ -649,7 +621,7 @@ export default function TablaGastos() {
                   <select 
                     value={filtroCategoria}
                     onChange={(e) => setFiltroCategoria(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition appearance-none"
+                    className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                   >
                     <option value="">Todas las categorías</option>
                     <option value="Vivienda">Vivienda</option>
@@ -661,45 +633,21 @@ export default function TablaGastos() {
                     <option value="Educación">Educación</option>
                     <option value="Otros">Otros</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
                 </div>
               </div>
             </div>
 
-            {/* RESUMEN MEJORADO */}
+            {/* RESUMEN */}
             <div className="mt-6 pt-5 border-t border-slate-800">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg">
-                  <div>
-                    <div className="text-sm text-slate-400">Total filtrado</div>
-                    <div className="text-xl font-bold text-red-400">€{total.toFixed(2)}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-slate-400">Transacciones</div>
-                    <div className="text-lg font-semibold text-slate-300">{gastosFiltrados.length}</div>
-                  </div>
+              <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg mb-4">
+                <div>
+                  <div className="text-sm text-slate-400">Total filtrado</div>
+                  <div className="text-xl font-bold text-red-400">€{total.toFixed(2)}</div>
                 </div>
-                
-                {/* ESTADÍSTICAS RÁPIDAS */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Gasto promedio:</span>
-                    <span className="text-red-300">
-                      €{(gastosFiltrados.length > 0 ? total / gastosFiltrados.length : 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Método más usado:</span>
-                    <span className="text-slate-300">{metodoMasComun}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Salud financiera:</span>
-                    <span className={`${
-                      analisisEsencialesDiscrecionales.saludFinanciera === 'Buena' ? 'text-green-400' : 'text-amber-400'
-                    }`}>
-                      {analisisEsencialesDiscrecionales.saludFinanciera}
-                    </span>
-                  </div>
+                <div className="text-right">
+                  <div className="text-sm text-slate-400">Transacciones</div>
+                  <div className="text-lg font-semibold text-slate-300">{gastosFiltrados.length}</div>
                 </div>
               </div>
 
@@ -707,18 +655,17 @@ export default function TablaGastos() {
                 onClick={() => {
                   setFiltroMes('');
                   setFiltroMetodo('');
-                  setFiltroCuenta('');
                   setFiltroCategoria('');
                 }}
-                className="w-full mt-4 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition"
+                className="w-full px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition"
               >
                 Limpiar filtros
               </button>
             </div>
           </div>
 
-          {/* TARJETA DE ANÁLISIS RÁPIDO */}
-          <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
+          {/* TARJETA DE ANÁLISIS */}
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-red-400" />
               Análisis por tipo
@@ -754,40 +701,13 @@ export default function TablaGastos() {
                   </div>
                 );
               })}
-              
-              {/* ANÁLISIS ESENCIALES VS DISCRECIONALES */}
-              <div className="pt-3 border-t border-slate-800">
-                <h4 className="text-xs font-medium text-slate-400 mb-2">Composición de gastos</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-300">Esenciales</span>
-                    <span className="text-amber-400 font-medium">
-                      €{analisisEsencialesDiscrecionales.esenciales.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-300">Discrecionales</span>
-                    <span className="text-red-400 font-medium">
-                      €{analisisEsencialesDiscrecionales.discrecionales.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-800 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-amber-500 to-red-500 h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${analisisEsencialesDiscrecionales.porcentajeEsenciales}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* COLUMNA DERECHA - TABLA Y ANÁLISIS DETALLADO */}
+        {/* COLUMNA DERECHA - TABLA */}
         <div className="lg:w-2/3 xl:w-3/4">
-          <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 overflow-hidden">
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden">
             {/* HEADER DE TABLA */}
             <div className="px-6 py-4 border-b border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -796,20 +716,14 @@ export default function TablaGastos() {
                   <p className="text-sm text-slate-400 mt-1">
                     Mostrando {gastosFiltrados.length} transacciones
                     {filtroMes && ` en ${formatearMesTexto(filtroMes)}`}
-                    {filtroMes === '2025-01' && ' (sin pagos fijos/cuotas)'}
                   </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-lg">
-                  <span>Desliza</span>
-                  <span className="text-slate-400">→</span>
-                  <span>para ver más columnas</span>
                 </div>
               </div>
             </div>
 
-            {/* TABLA MEJORADA */}
+            {/* TABLA */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[800px]">
                 <thead className="bg-slate-900">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -851,7 +765,6 @@ export default function TablaGastos() {
                     </tr>
                   ) : (
                     gastosFiltrados.map((gasto) => {
-                      // Determinar colores según origen
                       let origenColor, origenBg, origenIcon;
                       
                       switch (gasto.origen) {
@@ -885,36 +798,26 @@ export default function TablaGastos() {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <CreditCard className="h-4 w-4 text-slate-500" />
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
-                                {gasto.metodo}
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
+                              {gasto.metodo}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <Tag className="h-4 w-4 text-slate-500" />
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
-                                {gasto.categoria}
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
+                              {gasto.categoria}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${origenBg} ${origenColor}`}>
-                                {origenIcon}
-                                {gasto.origen === 'pago_fijo' ? 'Pago Fijo' : 
-                                 gasto.origen === 'cuota' ? 'Cuota' : 'Normal'}
-                              </span>
-                            </div>
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${origenBg} ${origenColor}`}>
+                              {origenIcon}
+                              {gasto.origen === 'pago_fijo' ? 'Pago Fijo' : 
+                               gasto.origen === 'cuota' ? 'Cuota' : 'Normal'}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="inline-flex items-center gap-1 bg-red-900/20 px-3 py-1.5 rounded-lg">
-                              <span className="text-sm font-semibold text-red-400">
-                                €{gasto.monto.toFixed(2)}
-                              </span>
-                            </div>
+                            <span className="text-sm font-semibold text-red-400">
+                              €{gasto.monto?.toFixed(2) || '0.00'}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -923,24 +826,10 @@ export default function TablaGastos() {
                 </tbody>
               </table>
             </div>
-
-            {/* FOOTER DE TABLA */}
-            <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
-                <div className="text-slate-400">
-                  <span className="font-medium text-slate-300">{gastosFiltrados.length}</span> transacciones • 
-                  Total: <span className="font-medium text-red-400">€{total.toFixed(2)}</span>
-                </div>
-                <div className="text-slate-500 text-sm flex items-center gap-1">
-                  <Bell className="h-3 w-3" />
-                  <span>Actualizado recientemente</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* DISTRIBUCIÓN POR CATEGORÍAS */}
-          <div className="mt-6 bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-800 p-5">
+          <div className="mt-6 bg-slate-900/80 rounded-xl border border-slate-800 p-5">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <PieChart className="h-4 w-4 text-purple-400" />
               Distribución por categorías
@@ -948,32 +837,21 @@ export default function TablaGastos() {
             <div className="space-y-2">
               {Object.entries(estadisticasCategorias)
                 .sort((a, b) => b[1].total - a[1].total)
-                .slice(0, 8) // Mostrar solo top 8
+                .slice(0, 8)
                 .map(([categoria, datos]) => {
                   const esEsencial = ['Vivienda', 'Alimentación', 'Transporte', 'Salud', 'Educación'].includes(categoria);
-                  const colorBarra = esEsencial ? 'from-amber-500 to-amber-400' : 'from-red-500 to-red-400';
                   
                   return (
                     <div key={categoria} className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-300">{categoria}</span>
-                          {datos.tipo === 'recurrente' && (
-                            <Repeat className="h-3 w-3 text-amber-500" />
-                          )}
-                          {datos.tipo === 'financiacion' && (
-                            <Calculator className="h-3 w-3 text-purple-500" />
-                          )}
-                        </div>
-                        <span className={`${
-                          esEsencial ? 'text-amber-400' : 'text-red-400'
-                        }`}>
+                        <span className="text-slate-300">{categoria}</span>
+                        <span className={esEsencial ? 'text-amber-400' : 'text-red-400'}>
                           €{datos.total.toFixed(2)} ({datos.porcentaje.toFixed(1)}%)
                         </span>
                       </div>
                       <div className="w-full bg-slate-800 rounded-full h-1.5">
                         <div 
-                          className={`bg-gradient-to-r ${colorBarra} h-1.5 rounded-full transition-all duration-700`}
+                          className={`h-1.5 rounded-full ${esEsencial ? 'bg-amber-500' : 'bg-red-500'}`}
                           style={{ width: `${datos.porcentaje}%` }}
                         ></div>
                       </div>
