@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       metodo: page.properties['Método']?.select?.name || '',
       categoria: page.properties['Categoría']?.select?.name || '',
       frecuencia: page.properties.Frecuencia?.select?.name || '',
-      proximoPago: page.properties['Próximo pago']?.date?.start || '',
+      Fecha creación: page.properties['Próximo pago']?.date?.start || '',
       activo: page.properties.Activo?.checkbox || false,
     }))
 
