@@ -4,33 +4,55 @@ const notion = new Client({
   auth: process.env.NOTION_TOKEN
 })
 
-export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Método no permitido' })
+function calcularProximoPago(fecha, frecuencia) {
+  if (!fecha || !frecuencia) return null
+
+  const f = new Date(fecha)
+
+  switch (frecuencia) {
+    case 'Mensual':
+      f.setMonth(f.getMonth() + 1)
+      break
+    case 'Semanal':
+      f.setDate(f.getDate() + 7)
+      break
+    case 'Anual':
+      f.setFullYear(f.getFullYear() + 1)
+      break
+    default:
+      return null
   }
 
+  return f.toISOString().split('T')[0]
+}
+
+export default async function handler(req, res) {
   try {
     const response = await notion.databases.query({
       database_id: process.env.NOTION_PAGOS_FIJOS_DB
     })
 
-    const pagosFijos = response.results.map((page) => {
-      const props = page.properties
+    const data = response.results.map((page) => {
+      const p = page.properties
+
+      const fechaBase = p.Fecha?.date?.start || null
+      const frecuencia = p.Frecuencia?.select?.name || null
 
       return {
         id: page.id,
-        nombre: props.Nombre?.title?.[0]?.plain_text || '',
-        cantidad: props.Cantidad?.number || 0,
-        categoria: props.Categoría?.select?.name || '',
-        metodoPago: props['Método de pago']?.select?.name || '',
-        cuenta: props.Cuenta?.select?.name || '',
-        fecha: props.Fecha?.date?.start || null
+        nombre: p.Nombre?.title?.[0]?.plain_text || '',
+        cantidad: p.Cantidad?.number || 0,
+        categoria: p.Categoría?.select?.name || '',
+        metodoPago: p['Método de pago']?.select?.name || '',
+        cuenta: p.Cuenta?.select?.name || '',
+        fecha: fechaBase,
+        proximoPago: calcularProximoPago(fechaBase, frecuencia)
       }
     })
 
-    res.status(200).json(pagosFijos)
+    res.status(200).json(data)
   } catch (error) {
-    console.error('ERROR PAGOS FIJOS:', error)
+    console.error(error)
     res.status(500).json({ error: 'Error cargando pagos fijos' })
   }
 }
