@@ -4,111 +4,458 @@ import {
   Filter,
   Calendar,
   CreditCard,
+  Database,
   Tag,
+  TrendingDown,
+  Bell,
   ChevronDown,
   FileText,
+  Wallet,
   AlertCircle,
   RefreshCw,
-  Receipt,
-  Home,
-  ShoppingBag,
-  Car,
-  Gamepad2,
-  Heart,
-  Smartphone,
-  Shirt,
-  Users,
-  BookOpen,
-  Couch,
-  MoreHorizontal,
-  Banknote,
-  Coins,
-  Globe,
-  Wallet,
+  Lightbulb,
+  Clock,
+  TrendingUp,
+  PieChart,
+  Target,
+  BarChart3,
+  AlertTriangle,
+  DollarSign,
+  Percent,
+  Zap,
+  Shield,
+  Thermometer,
   Repeat,
   Calculator,
-  DollarSign,
-  BarChart3,
-  Clock,
-  Wifi,
-  Coffee,
-  Utensils,
-  Gift,
-  Music,
-  Briefcase,
-  Plane,
-  Train,
-  Bike,
-  Building,
-  GraduationCap,
-  Stethoscope,
-  Camera,
-  Headphones,
-  ShoppingCart,
-  Package,
-  Zap,
-  Thermometer
+  Receipt,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 export default function TablaGastos() {
-  // [TODO EL CÓDIGO SE MANTIENE EXACTAMENTE IGUAL...]
-  // Solo voy a cambiar cómo se muestran los iconos en la tabla
-  
-  // ========== FUNCIONES PARA ICONOS MEJORADOS ==========
-  
-  // Obtener icono por categoría (MEJORADO)
-  const getIconoCategoria = (categoria) => {
-    const iconos = {
-      'Vivienda': <Home className="h-4 w-4 text-amber-500" />,
-      'Alimentación': <ShoppingBag className="h-4 w-4 text-emerald-500" />,
-      'Transporte': <Car className="h-4 w-4 text-blue-500" />,
-      'Entretenimiento': <Gamepad2 className="h-4 w-4 text-purple-500" />,
-      'Salud': <Heart className="h-4 w-4 text-red-500" />,
-      'Tecnología': <Smartphone className="h-4 w-4 text-cyan-500" />,
-      'Ropa': <Shirt className="h-4 w-4 text-pink-500" />,
-      'Familia': <Users className="h-4 w-4 text-indigo-500" />,
-      'Educación': <BookOpen className="h-4 w-4 text-sky-500" />,
-      'Hogar': <Couch className="h-4 w-4 text-orange-500" />,
-      'Servicios': <Wifi className="h-4 w-4 text-slate-500" />,
-      'Telefonía': <Smartphone className="h-4 w-4 text-violet-500" />,
-      'Cafetería': <Coffee className="h-4 w-4 text-amber-400" />,
-      'Restaurante': <Utensils className="h-4 w-4 text-red-400" />,
-      'Regalos': <Gift className="h-4 w-4 text-pink-400" />,
-      'Música': <Music className="h-4 w-4 text-purple-400" />,
-      'Trabajo': <Briefcase className="h-4 w-4 text-blue-400" />,
-      'Viajes': <Plane className="h-4 w-4 text-sky-400" />,
-      'Otros': <MoreHorizontal className="h-4 w-4 text-gray-500" />
+  // Estados para los datos de Notion
+  const [gastosMensuales, setGastosMensuales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Nuevos estados para pagos fijos y cuotas
+  const [pagosFijos, setPagosFijos] = useState([]);
+  const [comprasCuotas, setComprasCuotas] = useState([]);
+
+  // Estados de filtros
+  const [filtroMes, setFiltroMes] = useState('');
+  const [filtroMetodo, setFiltroMetodo] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+
+  // ========== CARGAR TODOS LOS DATOS ==========
+  useEffect(() => {
+    const fetchTodosLosDatos = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. Cargar gastos normales
+        const resGastos = await fetch('/api/gastos');
+        if (!resGastos.ok) throw new Error('Error cargando gastos');
+        const gastosData = await resGastos.json();
+        setGastosMensuales(gastosData);
+
+        // 2. Cargar pagos fijos
+        const resPagos = await fetch('/api/pagos-fijos');
+        if (resPagos.ok) {
+          const pagosData = await resPagos.json();
+          setPagosFijos(pagosData.filter(p => p.activo === true));
+        }
+
+        // 3. Cargar compras a cuotas
+        const resCuotas = await fetch('/api/compras-cuotas');
+        if (resCuotas.ok) {
+          const cuotasData = await resCuotas.json();
+          setComprasCuotas(cuotasData.filter(c => c.activo === true));
+        }
+
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching datos:', err);
+        
+        // Datos de ejemplo MEJORADOS con historial real
+        setGastosMensuales([
+          { id: 1, fecha: '2026-01-02', concepto: 'Mercado', metodo: 'App', categoria: 'Alimentación', cuenta: 'Móvil', monto: 50 },
+          { id: 2, fecha: '2026-01-03', concepto: 'Mami', metodo: 'Bizum', categoria: 'Familia', cuenta: 'Bizum', monto: 20 },
+          { id: 3, fecha: '2026-01-05', concepto: 'Refresco', metodo: 'App', categoria: 'Alimentación', cuenta: 'Móvil', monto: 2 },
+        ]);
+        
+        // PAGOS FIJOS SOLO LOS YA EFECTUADOS (con fecha pasada)
+        setPagosFijos([
+          { 
+            id: '1', 
+            nombre: 'Alquiler Enero', 
+            monto: 750.00, 
+            metodo: 'Transferencia', 
+            categoria: 'Vivienda', 
+            frecuencia: 'mensual', 
+            activo: true, 
+            fechaInicio: '2026-01-01', // YA PAGADO
+            fechaRealPago: '2026-01-01' // Fecha cuando realmente se pagó
+          }
+        ]);
+        
+        // DATOS REALES BASADOS EN TUS IMÁGENES - SOLO CUOTAS YA PAGADAS
+        setComprasCuotas([
+          { 
+            id: '1', 
+            concepto: 'Aliexpress 1', 
+            montoTotal: 33.74,
+            cuotasTotales: 4,
+            cuotasPagadas: 3, // 3 de 4 pagadas
+            montoPrimeraCuota: 10.00,
+            montoUltimaCuota: 7.46,
+            fechaInicio: '2025-11-01', // Empezó en noviembre
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 10.00, pagada: true, fecha: '2025-11-01' }, // YA PAGADA
+              { numero: 2, monto: 8.64, pagada: true, fecha: '2025-12-01' }, // YA PAGADA
+              { numero: 3, monto: 7.64, pagada: true, fecha: '2026-01-01' }, // YA PAGADA
+              { numero: 4, monto: 7.46, pagada: false, fecha: '2026-02-01' } // FUTURA - NO MOSTRAR
+            ]
+          },
+          { 
+            id: '2', 
+            concepto: 'Shein', 
+            montoTotal: 50.74,
+            cuotasTotales: 4,
+            cuotasPagadas: 1, // 1 de 4 pagadas
+            fechaInicio: '2026-01-01',
+            metodo: 'Tarjeta',
+            categoria: 'Otros',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 12.69, pagada: true, fecha: '2026-01-01' }, // YA PAGADA
+              { numero: 2, monto: 12.69, pagada: false, fecha: '2026-02-01' }, // FUTURA - NO MOSTRAR
+              { numero: 3, monto: 12.68, pagada: false, fecha: '2026-03-01' }, // FUTURA - NO MOSTRAR
+              { numero: 4, monto: 12.68, pagada: false, fecha: '2026-04-01' } // FUTURA - NO MOSTRAR
+            ]
+          },
+          { 
+            id: '3', 
+            concepto: 'Aliexpress 3', 
+            montoTotal: 49.95,
+            cuotasTotales: 3,
+            cuotasPagadas: 1, // 1 de 3 pagadas
+            fechaInicio: '2026-01-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 16.65, pagada: true, fecha: '2026-01-01' }, // YA PAGADA
+              { numero: 2, monto: 16.65, pagada: false, fecha: '2026-02-01' }, // FUTURA - NO MOSTRAR
+              { numero: 3, monto: 16.65, pagada: false, fecha: '2026-03-01' } // FUTURA - NO MOSTRAR
+            ]
+          },
+          { 
+            id: '4', 
+            concepto: 'Aliexpress 2', 
+            montoTotal: 33.11,
+            cuotasTotales: 3,
+            cuotasPagadas: 1, // 1 de 3 pagadas
+            fechaInicio: '2026-01-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            historialCuotas: [
+              { numero: 1, monto: 11.04, pagada: true, fecha: '2026-01-01' }, // YA PAGADA
+              { numero: 2, monto: 11.04, pagada: false, fecha: '2026-02-01' }, // FUTURA - NO MOSTRAR
+              { numero: 3, monto: 11.03, pagada: false, fecha: '2026-03-01' } // FUTURA - NO MOSTRAR
+            ]
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
     };
-    return iconos[categoria] || <Tag className="h-4 w-4 text-slate-400" />;
+
+    fetchTodosLosDatos();
+  }, []);
+
+  // ========== FUNCIONES DE TRANSFORMACIÓN - SOLO HISTÓRICOS ==========
+
+  // 1. Transformar pagos fijos YA EFECTUADOS en gastos
+  const transformarPagosFijosAGastos = useMemo(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Normalizar a inicio del día
+    
+    return pagosFijos.map(pago => {
+      // Usar fechaRealPago si existe, sino fechaInicio
+      const fechaPagoStr = pago.fechaRealPago || pago.fechaInicio;
+      if (!fechaPagoStr) return null;
+      
+      const fechaPago = new Date(fechaPagoStr);
+      fechaPago.setHours(0, 0, 0, 0);
+      
+      // SOLO incluir si la fecha de pago es HOY o PASADA
+      if (fechaPago > hoy) {
+        return null; // Pago futuro, no mostrar
+      }
+      
+      const fechaStr = fechaPagoStr;
+      const mesGasto = `${fechaPago.getFullYear()}-${String(fechaPago.getMonth() + 1).padStart(2, '0')}`;
+      
+      return {
+        id: `pago-fijo-${pago.id}`,
+        fecha: fechaStr,
+        concepto: `${pago.nombre} (Pago Fijo)`,
+        metodo: pago.metodo,
+        categoria: pago.categoria,
+        cuenta: 'Cuenta Principal',
+        monto: parseFloat(pago.monto),
+        origen: 'pago_fijo',
+        frecuencia: pago.frecuencia,
+        esHistorico: true
+      };
+    }).filter(Boolean);
+  }, [pagosFijos]);
+
+  // 2. Transformar CUOTAS YA PAGADAS en gastos
+  const transformarCuotasAGastos = useMemo(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    const gastosCuotas = [];
+    
+    comprasCuotas.forEach(compra => {
+      // Verificar que tenga historial de cuotas
+      if (!compra.historialCuotas || compra.historialCuotas.length === 0) {
+        return;
+      }
+      
+      // Filtrar SOLO cuotas PAGADAS con fecha HOY o PASADA
+      compra.historialCuotas.forEach(cuota => {
+        if (!cuota.pagada) return; // Solo cuotas pagadas
+        if (!cuota.fecha) return; // Necesita fecha
+        
+        const fechaCuota = new Date(cuota.fecha);
+        fechaCuota.setHours(0, 0, 0, 0);
+        
+        // Solo incluir si la fecha es hoy o pasada
+        if (fechaCuota <= hoy) {
+          const cuotasPagadas = compra.cuotasPagadas || compra.historialCuotas.filter(c => c.pagada).length;
+          
+          gastosCuotas.push({
+            id: `cuota-${compra.id}-${cuota.numero}`,
+            fecha: cuota.fecha,
+            concepto: `${compra.concepto}`,
+            metodo: compra.metodo,
+            categoria: compra.categoria,
+            cuenta: 'Financiación',
+            monto: parseFloat(cuota.monto.toFixed(2)),
+            origen: 'cuota',
+            cuotaNumero: cuota.numero,
+            totalCuotas: compra.cuotasTotales,
+            cuotasPagadas: cuotasPagadas,
+            infoCuota: `Cuota ${cuota.numero} de ${compra.cuotasTotales}`,
+            infoProgreso: `${cuotasPagadas}/${compra.cuotasTotales} pagadas`,
+            esHistorico: true
+          });
+        }
+      });
+    });
+    
+    return gastosCuotas;
+  }, [comprasCuotas]);
+
+  // 3. Obtener meses únicos de TODOS los datos HISTÓRICOS
+  const obtenerMesesDisponibles = useMemo(() => {
+    const mesesSet = new Set();
+    
+    // Agregar meses de gastos normales
+    gastosMensuales.forEach(gasto => {
+      if (gasto.fecha) {
+        try {
+          const fecha = new Date(gasto.fecha);
+          if (!isNaN(fecha.getTime())) {
+            const año = fecha.getFullYear();
+            const mes = fecha.getMonth() + 1;
+            const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
+            mesesSet.add(mesFormateado);
+          }
+        } catch (error) {
+          console.error('Error procesando fecha:', gasto.fecha, error);
+        }
+      }
+    });
+    
+    // Agregar meses de pagos fijos históricos
+    transformarPagosFijosAGastos.forEach(gasto => {
+      if (gasto.fecha) {
+        try {
+          const fecha = new Date(gasto.fecha);
+          const año = fecha.getFullYear();
+          const mes = fecha.getMonth() + 1;
+          const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
+          mesesSet.add(mesFormateado);
+        } catch (error) {
+          console.error('Error procesando fecha pago fijo:', gasto.fecha, error);
+        }
+      }
+    });
+    
+    // Agregar meses de cuotas históricas
+    transformarCuotasAGastos.forEach(gasto => {
+      if (gasto.fecha) {
+        try {
+          const fecha = new Date(gasto.fecha);
+          const año = fecha.getFullYear();
+          const mes = fecha.getMonth() + 1;
+          const mesFormateado = `${año}-${mes.toString().padStart(2, '0')}`;
+          mesesSet.add(mesFormateado);
+        } catch (error) {
+          console.error('Error procesando fecha cuota:', gasto.fecha, error);
+        }
+      }
+    });
+    
+    const mesesArray = Array.from(mesesSet);
+    return mesesArray.sort((a, b) => b.localeCompare(a));
+  }, [gastosMensuales, transformarPagosFijosAGastos, transformarCuotasAGastos]);
+
+  // 4. Función para formatear mes a texto
+  const formatearMesTexto = (mesFormato) => {
+    if (!mesFormato) return '';
+    const [año, mes] = mesFormato.split('-');
+    const fecha = new Date(año, parseInt(mes) - 1);
+    return fecha.toLocaleDateString('es-ES', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
   };
 
-  // Obtener icono por método de pago (MEJORADO)
-  const getIconoMetodo = (metodo) => {
-    const iconos = {
-      'Tarjeta': <CreditCard className="h-4 w-4 text-purple-500" />,
-      'Transferencia': <Banknote className="h-4 w-4 text-green-500" />,
-      'Bizum': <Smartphone className="h-4 w-4 text-blue-500" />,
-      'App': <ShoppingBag className="h-4 w-4 text-red-500" />,
-      'Efectivo': <Coins className="h-4 w-4 text-yellow-500" />,
-      'PayPal': <Globe className="h-4 w-4 text-blue-400" />
+  // ========== COMBINAR Y FILTRAR DATOS ==========
+
+  // Combinar TODOS los gastos HISTÓRICOS
+  const todosLosGastos = useMemo(() => {
+    return [
+      ...gastosMensuales.map(g => ({ ...g, origen: 'normal' })),
+      ...transformarPagosFijosAGastos,
+      ...transformarCuotasAGastos
+    ];
+  }, [gastosMensuales, transformarPagosFijosAGastos, transformarCuotasAGastos]);
+
+  // Filtrar gastos combinados
+  const gastosFiltrados = useMemo(() => {
+    return todosLosGastos.filter(gasto => {
+      if (!gasto.fecha) return false;
+      
+      const fechaGasto = new Date(gasto.fecha);
+      if (isNaN(fechaGasto.getTime())) return false;
+      
+      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+      
+      const cumpleMes = !filtroMes || mesGasto === filtroMes;
+      const cumpleMetodo = !filtroMetodo || gasto.metodo === filtroMetodo;
+      const cumpleCategoria = !filtroCategoria || gasto.categoria === filtroCategoria;
+      
+      return cumpleMes && cumpleMetodo && cumpleCategoria;
+    });
+  }, [todosLosGastos, filtroMes, filtroMetodo, filtroCategoria]);
+
+  // ========== CÁLCULOS ==========
+
+  // 1. Total
+  const total = useMemo(() => {
+    return gastosFiltrados.reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
+  }, [gastosFiltrados]);
+
+  // 2. Estadísticas por tipo de gasto
+  const estadisticasPorTipo = useMemo(() => {
+    const stats = {
+      normal: { total: 0, count: 0, label: 'Gastos Normales' },
+      pago_fijo: { total: 0, count: 0, label: 'Pagos Fijos' },
+      cuota: { total: 0, count: 0, label: 'Cuotas Pagadas' }
     };
-    return iconos[metodo] || <Wallet className="h-4 w-4 text-slate-400" />;
+    
+    gastosFiltrados.forEach(gasto => {
+      const tipo = gasto.origen || 'normal';
+      if (stats[tipo]) {
+        stats[tipo].total += gasto.monto || 0;
+        stats[tipo].count += 1;
+      } else {
+        stats.normal.total += gasto.monto || 0;
+        stats.normal.count += 1;
+      }
+    });
+    
+    return stats;
+  }, [gastosFiltrados]);
+
+  // 3. Exportar CSV
+  const exportarCSV = () => {
+    const headers = ['Fecha', 'Concepto', 'Método', 'Categoría', 'Cuenta', 'Monto', 'Origen', 'Progreso'];
+    const filas = gastosFiltrados.map(g => [
+      g.fecha, 
+      g.concepto, 
+      g.metodo, 
+      g.categoria, 
+      g.cuenta, 
+      g.monto, 
+      g.origen || 'normal',
+      g.infoProgreso || ''
+    ].join(','));
+    
+    const csv = [headers.join(','), ...filas].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `gastos_${filtroMes || 'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
-  // Obtener icono por tipo de gasto (MEJORADO)
-  const getIconoTipo = (tipo) => {
-    const iconos = {
-      'normal': <Receipt className="h-4 w-4 text-slate-400" />,
-      'pago_fijo': <Repeat className="h-4 w-4 text-amber-500" />,
-      'cuota': <Calculator className="h-4 w-4 text-purple-500" />
-    };
-    return iconos[tipo] || <DollarSign className="h-4 w-4 text-slate-400" />;
-  };
+  // ========== ESTADOS DE CARGA ==========
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-12 w-12 text-red-400 animate-spin mx-auto mb-4" />
+          <p className="text-slate-400 text-lg">Cargando datos financieros...</p>
+          <p className="text-slate-500 text-sm mt-2">Gastos, pagos fijos y cuotas</p>
+        </div>
+      </div>
+    );
+  }
 
-  // ========== RENDER (SOLO MODIFICO LA TABLA) ==========
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 p-6">
+        <div className="max-w-2xl mx-auto mt-20">
+          <div className="bg-red-900/20 border border-red-800/30 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-8 w-8 text-red-400" />
+              <h2 className="text-xl font-bold text-white">Error al cargar datos</h2>
+            </div>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========== RENDER ==========
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* HEADER - IGUAL */}
+      {/* HEADER */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -117,7 +464,7 @@ export default function TablaGastos() {
               <span className="text-3xl font-bold text-red-400">€{total.toFixed(2)}</span>
               <div className="h-2 w-2 rounded-full bg-slate-600"></div>
               <span className="text-slate-400">
-                {filtroMes ? formatearMesTexto(filtroMes) : 'Próximos gastos'}
+                {filtroMes ? formatearMesTexto(filtroMes) : 'Gastos históricos'}
               </span>
               <span className="text-slate-500 text-sm bg-slate-900 px-3 py-1 rounded-full">
                 {gastosFiltrados.length} transacciones
@@ -143,21 +490,12 @@ export default function TablaGastos() {
             </div>
             
             {/* NOTA IMPORTANTE */}
-            {filtroMes === '2026-01' && (
-              <div className="mt-3 text-sm text-amber-400 bg-amber-900/20 px-3 py-2 rounded-lg">
-                ⓘ Los pagos fijos y cuotas de enero 2026 ya están cubiertos
-              </div>
-            )}
-            
-            {/* RESUMEN DE CUOTAS */}
-            {resumenCuotas.totalCuotas > 0 && (
-              <div className="mt-2 text-sm text-purple-400">
-                📊 {resumenCuotas.totalCuotas} cuotas pendientes (Total: €{resumenCuotas.totalMonto.toFixed(2)})
-              </div>
-            )}
+            <div className="mt-3 text-sm text-amber-400 bg-amber-900/20 px-3 py-2 rounded-lg">
+              💡 Mostrando solo gastos <strong>ya efectuados</strong> (históricos)
+            </div>
           </div>
           
-          {/* BOTÓN DE EXPORTAR - IGUAL */}
+          {/* BOTÓN DE EXPORTAR */}
           <button 
             onClick={exportarCSV}
             className="flex items-center gap-3 px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
@@ -171,9 +509,9 @@ export default function TablaGastos() {
 
       {/* LAYOUT DE DOS COLUMNAS */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* COLUMNA IZQUIERDA - FILTROS Y RESUMEN (IGUAL) */}
+        {/* COLUMNA IZQUIERDA - FILTROS Y RESUMEN */}
         <div className="lg:w-1/3 xl:w-1/4 space-y-6">
-          {/* PANEL DE FILTROS - IGUAL */}
+          {/* PANEL DE FILTROS */}
           <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-5 w-5 text-red-400" />
@@ -181,7 +519,7 @@ export default function TablaGastos() {
             </div>
             
             <div className="space-y-4">
-              {/* FILTRO MES - IGUAL */}
+              {/* FILTRO MES */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <Calendar className="h-4 w-4 text-red-400" />
@@ -193,11 +531,10 @@ export default function TablaGastos() {
                     onChange={(e) => setFiltroMes(e.target.value)}
                     className="w-full px-4 py-2.5 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
                   >
-                    <option value="">Próximos gastos</option>
+                    <option value="">Todos los meses</option>
                     {obtenerMesesDisponibles.map((mes) => (
                       <option key={mes} value={mes}>
                         {formatearMesTexto(mes)}
-                        {mes === '2026-01' && ' (sin pagos fijos)'}
                       </option>
                     ))}
                   </select>
@@ -205,7 +542,7 @@ export default function TablaGastos() {
                 </div>
               </div>
 
-              {/* FILTRO MÉTODO - IGUAL */}
+              {/* FILTRO MÉTODO */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <CreditCard className="h-4 w-4 text-purple-400" />
@@ -228,7 +565,7 @@ export default function TablaGastos() {
                 </div>
               </div>
 
-              {/* FILTRO CATEGORÍA - IGUAL */}
+              {/* FILTRO CATEGORÍA */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
                   <Tag className="h-4 w-4 text-yellow-400" />
@@ -256,7 +593,7 @@ export default function TablaGastos() {
               </div>
             </div>
 
-            {/* RESUMEN - IGUAL */}
+            {/* RESUMEN */}
             <div className="mt-6 pt-5 border-t border-slate-800">
               <div className="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg mb-4">
                 <div>
@@ -281,54 +618,26 @@ export default function TablaGastos() {
               </button>
             </div>
           </div>
-
-          {/* RESUMEN DE CUOTAS PENDIENTES - IGUAL */}
-          {resumenCuotas.totalCuotas > 0 && (
-            <div className="bg-purple-900/20 border border-purple-800/30 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-purple-400" />
-                Cuotas pendientes
-              </h3>
-              <div className="space-y-3">
-                <div className="text-center p-3 bg-purple-900/30 rounded-lg">
-                  <div className="text-xs text-purple-300 mb-1">Total cuotas</div>
-                  <div className="text-xl font-bold text-purple-400">{resumenCuotas.totalCuotas}</div>
-                  <div className="text-xs text-purple-500 mt-1">€{resumenCuotas.totalMonto.toFixed(2)}</div>
-                </div>
-                
-                {Object.entries(resumenCuotas.cuotasPorCategoria).map(([categoria, data]) => (
-                  <div key={categoria} className="flex justify-between items-center text-sm">
-                    <span className="text-slate-300">{categoria}</span>
-                    <div className="text-right">
-                      <span className="text-purple-400">{data.count} cuotas</span>
-                      <div className="text-xs text-purple-500">€{data.total.toFixed(2)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* COLUMNA DERECHA - TABLA DETALLADA CON ICONOS MEJORADOS */}
+        {/* COLUMNA DERECHA - TABLA DETALLADA */}
         <div className="lg:w-2/3 xl:w-3/4">
           <div className="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden">
-            {/* HEADER DE TABLA - IGUAL */}
+            {/* HEADER DE TABLA */}
             <div className="px-6 py-4 border-b border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-white">
-                    {filtroMes ? `Gastos de ${formatearMesTexto(filtroMes)}` : 'Próximos gastos'}
+                    {filtroMes ? `Gastos de ${formatearMesTexto(filtroMes)}` : 'Todos los gastos históricos'}
                   </h2>
                   <p className="text-sm text-slate-400 mt-1">
-                    Mostrando {gastosFiltrados.length} transacciones
-                    {resumenCuotas.totalCuotas > 0 && ` (${resumenCuotas.totalCuotas} cuotas pendientes)`}
+                    Mostrando {gastosFiltrados.length} transacciones efectuadas
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* TABLA DETALLADA CON ICONOS MEJORADOS */}
+            {/* TABLA DETALLADA */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-slate-900">
@@ -362,10 +671,7 @@ export default function TablaGastos() {
                           <Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
                           <p>No hay gastos para mostrar</p>
                           <p className="text-sm text-slate-600 mt-1">
-                            {filtroMes === '2026-01' 
-                              ? 'Los pagos fijos y cuotas de enero ya están cubiertos'
-                              : 'Cambia los filtros o agrega nuevos gastos'
-                            }
+                            Cambia los filtros o selecciona otro mes
                           </p>
                         </div>
                       </td>
@@ -385,7 +691,7 @@ export default function TablaGastos() {
                           origenColor = 'text-purple-400';
                           origenBg = 'bg-purple-900/30';
                           origenIcon = <Calculator className="h-3 w-3" />;
-                          origenTooltip = `Cuota ${gasto.cuotaNumero} de ${gasto.totalCuotas} (${gasto.cuotasPagadas || 0} pagadas)`;
+                          origenTooltip = gasto.infoProgreso || `Cuota ${gasto.cuotaNumero} de ${gasto.totalCuotas}`;
                           break;
                         default:
                           origenColor = 'text-slate-400';
@@ -394,10 +700,6 @@ export default function TablaGastos() {
                           origenTooltip = 'Gasto normal';
                       }
                       
-                      // Obtener iconos mejorados
-                      const iconoCategoria = getIconoCategoria(gasto.categoria);
-                      const iconoMetodo = getIconoMetodo(gasto.metodo);
-                      
                       return (
                         <tr key={gasto.id} className="hover:bg-slate-800/50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
@@ -405,33 +707,26 @@ export default function TablaGastos() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-white">{gasto.concepto}</div>
-                            {gasto.cuotaNumero && (
+                            {gasto.origen === 'cuota' && gasto.infoCuota && (
                               <div className="text-xs text-purple-500">
-                                Cuota {gasto.cuotaNumero}/{gasto.totalCuotas}
-                                {gasto.progreso && ` · ${gasto.progreso} pagadas`}
+                                {gasto.infoCuota} • {gasto.infoProgreso}
                               </div>
                             )}
-                            {gasto.frecuencia && (
+                            {gasto.origen === 'pago_fijo' && gasto.frecuencia && (
                               <div className="text-xs text-amber-500">
-                                {gasto.frecuencia}
+                                Pago fijo • {gasto.frecuencia}
                               </div>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              {iconoMetodo}
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
-                                {gasto.metodo}
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
+                              {gasto.metodo}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              {iconoCategoria}
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
-                                {gasto.categoria}
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-900/30 text-blue-300">
+                              {gasto.categoria}
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span 
@@ -456,14 +751,12 @@ export default function TablaGastos() {
               </table>
             </div>
             
-            {/* FOOTER CON INFORMACIÓN DETALLADA - IGUAL */}
-            {resumenCuotas.totalCuotas > 0 && (
-              <div className="px-6 py-3 border-t border-slate-800 bg-purple-900/10">
-                <div className="text-xs text-purple-300">
-                  💡 Se muestran solo las próximas cuotas pendientes. Cuotas ya pagadas no se incluyen.
-                </div>
+            {/* FOOTER CON INFORMACIÓN DETALLADA */}
+            <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
+              <div className="text-xs text-slate-400">
+                💡 Mostrando solo gastos <strong>ya efectuados</strong>. Pagos futuros no se incluyen.
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
