@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await notion.databases.query({
-      database_id: process.env.PAGOS_FIJOS_DB_ID,
+      database_id: process.env.NOTION_PAGOS_FIJOS_DB_ID,
       sorts: [
         { property: 'Activo', direction: 'descending' },
         { property: 'Próximo pago', direction: 'ascending' },
