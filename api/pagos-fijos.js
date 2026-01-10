@@ -1,7 +1,7 @@
 import { Client } from '@notionhq/client'
 
 const notion = new Client({
-  auth: process.env.NOTION_TOKEN,
+  auth: process.env.NOTION_TOKEN
 })
 
 export default async function handler(req, res) {
@@ -11,27 +11,26 @@ export default async function handler(req, res) {
 
   try {
     const response = await notion.databases.query({
-      database_id: process.env.NOTION_PAGOS_FIJOS_DB,
-      sorts: [
-        { property: 'Activo', direction: 'descending' },
-        { property: 'Próximo pago', direction: 'ascending' },
-      ],
+      database_id: process.env.NOTION_PAGOS_FIJOS_DB
     })
 
-    const data = response.results.map((page) => ({
-      id: page.id,
-      nombre: page.properties.Nombre?.title[0]?.plain_text || '',
-      monto: page.properties.Monto?.number || 0,
-      metodo: page.properties['Método']?.select?.name || '',
-      categoria: page.properties['Categoría']?.select?.name || '',
-      Frecuencia: page.properties.Frecuencia?.select?.name || '',
-      Próximo pago: page.properties['Próximo pago']?.date?.start || '',
-      activo: page.properties.Activo?.checkbox || false,
-    }))
+    const pagosFijos = response.results.map((page) => {
+      const props = page.properties
 
-    res.status(200).json(data)
+      return {
+        id: page.id,
+        nombre: props.Nombre?.title?.[0]?.plain_text || '',
+        cantidad: props.Cantidad?.number || 0,
+        categoria: props.Categoría?.select?.name || '',
+        metodoPago: props['Método de pago']?.select?.name || '',
+        cuenta: props.Cuenta?.select?.name || '',
+        fecha: props.Fecha?.date?.start || null
+      }
+    })
+
+    res.status(200).json(pagosFijos)
   } catch (error) {
-    console.error(error)
+    console.error('ERROR PAGOS FIJOS:', error)
     res.status(500).json({ error: 'Error cargando pagos fijos' })
   }
 }
