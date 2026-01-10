@@ -1,5 +1,3 @@
-Tabla gasto 1
-
 import { useState, useMemo, useEffect } from 'react';
 
 // ICONOS LUCIDE REACT (modernos y limpios)
