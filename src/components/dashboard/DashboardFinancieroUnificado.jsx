@@ -1,6 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Wallet, TrendingUp, TrendingDown, PieChart, BarChart3,
   Home, ShoppingCart, Car, Film, Heart, Shirt, Gift, Coffee,
@@ -8,42 +6,41 @@ import {
   Calendar, Target, RefreshCw, AlertCircle, DollarSign, MoreHorizontal,
   CreditCard, Download, Filter, ChevronRight, Sparkles, Bell,
   Settings, Eye, EyeOff, CheckCircle, Shield, Lock, Users,
-  Database, Cpu, Zap as ZapIcon, Activity, Globe,
-  Award, Crown, Star, Target as TargetIcon, TrendingUp as ArrowUp,
-  TrendingDown as ArrowDown, Percent, Clock, ShieldCheck,
-  BarChart4, Smartphone, Briefcase, Plane, GraduationCap, Music
+  Database, Cpu, Activity, Globe, Award, Crown, Star,
+  Percent, Clock, ShieldCheck, BarChart4, Smartphone, Briefcase,
+  Plane, GraduationCap, Music, Layers, Zap as ZapIcon, ChevronDown
 } from 'lucide-react';
 import {
   PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer,
   Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  LineChart, Line, AreaChart, Area, RadialBarChart, RadialBar
+  LineChart, Line, AreaChart, Area, RadialBarChart, RadialBar,
+  ComposedChart, Scatter
 } from 'recharts';
 
-// Paleta de colores elite - Tono oscuro premium
+// Paleta de colores elite - Tono oscuro premium con acentos dorados
 const COLORS = {
   primary: {
-    sapphire: '#0ea5e9',      // Azul zafiro
-    emerald: '#10b981',       // Verde esmeralda
-    amethyst: '#8b5cf6',      // Violeta amatista
-    gold: '#f59e0b',          // Oro
-    ruby: '#ef4444',          // Rojo rubí
-    platinum: '#94a3b8'       // Platino
+    slate: '#0f172a',
+    darkSlate: '#020617',
+    lightSlate: '#1e293b'
+  },
+  accent: {
+    gold: '#fbbf24',
+    sapphire: '#0ea5e9',
+    emerald: '#10b981',
+    amethyst: '#8b5cf6',
+    ruby: '#ef4444'
   },
   gradient: {
-    sapphire: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)',
-    emerald: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
-    amethyst: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-    gold: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-    ruby: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-    carbon: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
-  },
-  glass: {
-    light: 'rgba(30, 41, 59, 0.7)',
-    dark: 'rgba(15, 23, 42, 0.9)'
+    premium: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%)',
+    dark: 'linear-gradient(152deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%)',
+    success: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)',
+    warning: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%)',
+    danger: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)'
   }
 };
 
-export default function DashboardFinancieroElite() {
+export default function DashboardFinancieroElitePro() {
   // Estado único para todos los datos
   const [datos, setDatos] = useState({
     ingresos: [],
@@ -54,9 +51,8 @@ export default function DashboardFinancieroElite() {
     error: null
   });
 
-  const [activeTab, setActiveTab] = useState('overview');
   const [showBalance, setShowBalance] = useState(true);
-  const [viewMode, setViewMode] = useState('grid'); // grid, compact, detail
+  const [viewMode, setViewMode] = useState('grid');
 
   // Estado para mes actual
   const [mesActual] = useState(() => {
@@ -105,8 +101,7 @@ export default function DashboardFinancieroElite() {
   // ========== EFECTO INICIAL ==========
   useEffect(() => {
     cargarDatos();
-    // Recargar cada 1 minuto para datos en tiempo real
-    const intervalo = setInterval(cargarDatos, 60000);
+    const intervalo = setInterval(cargarDatos, 120000);
     return () => clearInterval(intervalo);
   }, []);
 
@@ -187,7 +182,7 @@ export default function DashboardFinancieroElite() {
       return categorias;
     }, {});
 
-    // 8. DATOS PARA GRÁFICOS (datos de ejemplo para desarrollo)
+    // 8. DATOS PARA GRÁFICOS
     const ultimosMeses = Array.from({ length: 6 }, (_, i) => {
       const fecha = new Date();
       fecha.setMonth(fecha.getMonth() - i);
@@ -195,36 +190,17 @@ export default function DashboardFinancieroElite() {
         mes: fecha.toLocaleDateString('es-ES', { month: 'short' }),
         ingresos: ingresosMes * (0.8 + Math.random() * 0.4),
         gastos: totalGastos * (0.7 + Math.random() * 0.6),
-        ahorro: (ingresosMes - totalGastos) * (0.5 + Math.random() * 0.5)
+        ahorro: Math.max(0, (ingresosMes - totalGastos) * (0.5 + Math.random() * 0.5))
       };
     }).reverse();
 
-    // 9. PUNTUACIÓN FINANCIERA (0-100)
+    // 9. PUNTUACIÓN FINANCIERA
     const puntuacionFinanciera = Math.min(100, Math.max(0, 
-      40 + // Base
-      (porcentajeDisponible * 0.5) + // Porcentaje disponible
-      (disponible > 0 ? 20 : -20) + // Balance positivo
-      (porcentajeGastado < 80 ? 15 : -15) + // Control de gastos
-      (promedioDiario < 50 ? 10 : -10) // Gasto diario controlado
+      40 + (porcentajeDisponible * 0.5) + 
+      (disponible > 0 ? 20 : -20) + 
+      (porcentajeGastado < 80 ? 15 : -15) + 
+      (promedioDiario < ingresosMes/30 * 0.5 ? 10 : -10)
     ));
-
-    // 10. INSIGHTS AUTOMÁTICOS
-    const insights = [];
-    if (porcentajeGastado > 85) insights.push({ 
-      tipo: 'warning', 
-      mensaje: 'Tu porcentaje de gasto es alto. Considera revisar gastos no esenciales.',
-      icono: AlertCircle 
-    });
-    if (disponible > ingresosMes * 0.3) insights.push({ 
-      tipo: 'success', 
-      mensaje: 'Excelente salud financiera. Tienes un buen margen para ahorrar.',
-      icono: CheckCircle 
-    });
-    if (gastosCuotas > ingresosMes * 0.2) insights.push({ 
-      tipo: 'info', 
-      mensaje: 'Tus cuotas representan una parte significativa de tus ingresos.',
-      icono: CreditCard 
-    });
 
     return {
       ingresosMes,
@@ -247,431 +223,339 @@ export default function DashboardFinancieroElite() {
       gastosPorCategoria,
       mesActual,
       ultimosMeses,
-      puntuacionFinanciera,
-      insights
+      puntuacionFinanciera
     };
   }, [datos, mesActual]);
 
-  // ========== COMPONENTES DE INTERFAZ ELITE ==========
+  // ========== COMPONENTES DE INTERFAZ ==========
 
-  const LoadingScreen = () => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-8">
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-violet-500/20 blur-3xl"></div>
-        <div className="relative">
-          <div className="w-24 h-24 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin mb-8"></div>
+  const LoadingState = () => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-8">
+      <div className="text-center">
+        <div className="relative inline-block">
+          <div className="w-16 h-16 border-2 border-slate-700 border-t-gold rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <Crown className="h-12 w-12 text-blue-400" />
+            <Crown className="h-8 w-8 text-gold" />
           </div>
         </div>
-      </div>
-      <h3 className="text-2xl font-bold text-white mt-8 mb-2 bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-        Cargando Dashboard Elite
-      </h3>
-      <p className="text-slate-400 text-center max-w-md">
-        Analizando tu información financiera con inteligencia artificial...
-      </p>
-      <div className="mt-6 flex items-center gap-2">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse delay-150"></div>
-        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse delay-300"></div>
+        <h3 className="text-xl font-semibold text-white mt-6">Cargando Dashboard</h3>
+        <p className="text-slate-400 text-sm mt-2">Preparando análisis financiero...</p>
       </div>
     </div>
   );
 
-  const ErrorScreen = () => (
+  const ErrorState = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 flex items-center justify-center">
-      <div className="max-w-lg w-full">
-        <div className="relative">
-          <div className="absolute -inset-4 bg-gradient-to-r from-rose-500/10 to-red-500/10 blur-3xl"></div>
-          <div className="relative bg-gradient-to-br from-slate-900/90 to-slate-800/70 border border-slate-700/50 rounded-2xl p-8 backdrop-blur-xl">
-            <div className="flex flex-col items-center text-center">
-              <div className="p-4 bg-gradient-to-br from-rose-900/30 to-red-800/20 rounded-2xl mb-6 border border-rose-800/30">
-                <Shield className="h-12 w-12 text-rose-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Conexión Segura Fallida</h2>
-              <p className="text-slate-300 mb-6">
-                No podemos acceder a tus datos financieros en este momento.
-                Esto puede ser temporal. Por favor, verifica tu conexión.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => cargarDatos(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all duration-300 shadow-lg shadow-blue-900/30 flex items-center gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Reintentar
-                </button>
-                <button className="px-6 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-300 rounded-xl font-medium transition-all border border-slate-700">
-                  Soporte
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="max-w-md w-full">
+        <div className="bg-slate-900/50 border border-slate-700 rounded-2xl p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-ruby mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Error de Conexión</h2>
+          <p className="text-slate-300 mb-6">
+            No se pudieron cargar los datos financieros. Verifica tu conexión e intenta nuevamente.
+          </p>
+          <button
+            onClick={() => cargarDatos(true)}
+            className="bg-gradient-to-r from-gold to-amber-500 text-slate-900 px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     </div>
   );
 
-  const HeaderElite = () => (
-    <div className="mb-10">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-violet-600 blur-lg opacity-30"></div>
-              <div className="relative p-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700">
-                <Crown className="h-6 w-6 text-blue-400" />
-              </div>
+  const HeaderSection = () => (
+    <div className="mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-gradient-to-br from-gold/10 to-gold/5 rounded-lg border border-gold/20">
+              <Crown className="h-5 w-5 text-gold" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-white">
-                Finanzas <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">Elite</span>
-              </h1>
-              <p className="text-slate-400 mt-1">Dashboard financiero inteligente</p>
-            </div>
-            <div className="hidden lg:flex items-center gap-2 ml-4">
-              <div className="px-3 py-1 bg-gradient-to-r from-blue-900/30 to-violet-900/30 text-blue-300 text-xs font-medium rounded-full border border-blue-700/50">
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3" />
-                  Secure
-                </span>
-              </div>
-              <div className="px-3 py-1 bg-gradient-to-r from-emerald-900/30 to-green-900/30 text-emerald-300 text-xs font-medium rounded-full border border-emerald-700/50">
-                AI Powered
-              </div>
-            </div>
+            <h1 className="text-2xl font-bold text-white">Finanzas Elite</h1>
+            <span className="px-2 py-1 bg-slate-800 text-gold text-xs font-medium rounded">PRO</span>
           </div>
-          <div className="flex items-center gap-4 text-sm text-slate-400">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {new Date().toLocaleDateString('es-ES', { 
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}
-            </span>
-            <span className="hidden md:inline">•</span>
-            <span className="hidden md:flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Actualizado hace 2 min
-            </span>
-          </div>
+          <p className="text-slate-400 text-sm">
+            {new Date().toLocaleDateString('es-ES', { 
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-slate-900/50 rounded-xl p-1 border border-slate-700">
-            <button 
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-2 rounded-lg text-sm ${viewMode === 'grid' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
-            >
-              Grid
-            </button>
-            <button 
-              onClick={() => setViewMode('compact')}
-              className={`px-3 py-2 rounded-lg text-sm ${viewMode === 'compact' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
-            >
-              Compact
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowBalance(!showBalance)}
-            className="p-3 bg-slate-900/50 hover:bg-slate-800 rounded-xl border border-slate-700 transition-all group"
+            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            title={showBalance ? 'Ocultar saldos' : 'Mostrar saldos'}
           >
             {showBalance ? 
-              <EyeOff className="h-4 w-4 text-slate-400 group-hover:text-rose-400" /> : 
-              <Eye className="h-4 w-4 text-slate-400 group-hover:text-emerald-400" />
+              <EyeOff className="h-4 w-4 text-slate-400" /> : 
+              <Eye className="h-4 w-4 text-slate-400" />
             }
           </button>
           <button
             onClick={() => cargarDatos(true)}
-            className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl transition-all shadow-lg shadow-blue-900/30"
+            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            title="Actualizar datos"
           >
-            <RefreshCw className="h-4 w-4 text-white" />
+            <RefreshCw className="h-4 w-4 text-slate-400" />
           </button>
-          <button className="p-3 bg-slate-900/50 hover:bg-slate-800 rounded-xl border border-slate-700">
-            <Settings className="h-4 w-4 text-slate-400" />
-          </button>
-        </div>
-      </div>
-
-      {/* Progreso del mes */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 via-violet-900/10 to-emerald-900/10 blur-2xl"></div>
-        <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl p-6 border border-slate-700/50 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-900/30 to-blue-800/20 rounded-lg border border-blue-800/30">
-                <Calendar className="h-5 w-5 text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Progreso del Mes</h3>
-                <p className="text-sm text-slate-400">Día {calculos?.diaActual} de {calculos?.ultimoDiaMes}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">{calculos?.porcentajeMes?.toFixed(1)}%</div>
-              <div className="text-sm text-slate-400">{calculos?.diasRestantes} días restantes</div>
-            </div>
-          </div>
-          <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
-            <div 
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-violet-500 to-emerald-500 transition-all duration-1000"
-              style={{ width: `${calculos?.porcentajeMes || 0}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between text-xs text-slate-500 mt-2">
-            <span>Inicio</span>
-            <span>Fin de mes</span>
-          </div>
+          <select className="bg-slate-800 text-slate-300 text-sm px-3 py-2 rounded-lg border border-slate-700">
+            <option>Mes Actual</option>
+            <option>Últimos 3 meses</option>
+            <option>Año completo</option>
+          </select>
         </div>
       </div>
     </div>
   );
 
-  const MetricCard = ({ title, value, icon: Icon, color, change, trend, suffix, description }) => (
-    <div className="group relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 to-slate-800/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <div className="relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl p-6 border border-slate-700/50 backdrop-blur-sm hover:border-slate-600/50 transition-all duration-300 hover:scale-[1.02]">
+  const StatCard = ({ title, value, icon: Icon, color, change, suffix = '€', trend }) => {
+    const colors = {
+      gold: 'text-gold border-gold/20',
+      emerald: 'text-emerald border-emerald/20',
+      ruby: 'text-ruby border-ruby/20',
+      sapphire: 'text-sapphire border-sapphire/20',
+      amethyst: 'text-amethyst border-amethyst/20'
+    };
+
+    return (
+      <div className={`bg-slate-900/50 border ${colors[color]} rounded-xl p-5 backdrop-blur-sm`}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-sm text-slate-400 mb-1">{title}</p>
             <div className="flex items-baseline gap-2">
               <p className="text-3xl font-bold text-white">
-                {showBalance ? `${value?.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix || ''}` : '•••••'}
+                {showBalance ? `${value?.toLocaleString('es-ES')}${suffix}` : '•••••'}
               </p>
               {change && (
-                <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${change > 0 ? 'bg-emerald-900/30 text-emerald-300' : 'bg-rose-900/30 text-rose-300'}`}>
-                  {change > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                  {Math.abs(change)}%
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  change > 0 ? 'bg-emerald/10 text-emerald' : 'bg-ruby/10 text-ruby'
+                }`}>
+                  {change > 0 ? '+' : ''}{change}%
                 </span>
               )}
             </div>
           </div>
-          <div className={`p-3 rounded-xl bg-gradient-to-br ${color} backdrop-blur-sm border border-slate-700/50`}>
-            <Icon className="h-6 w-6 text-white" />
+          <div className={`p-2 rounded-lg bg-${color}/10`}>
+            <Icon className={`h-5 w-5 text-${color}`} />
           </div>
         </div>
-        {description && (
-          <p className="text-sm text-slate-400 mt-3">{description}</p>
-        )}
         {trend && (
-          <div className="mt-4 pt-4 border-t border-slate-800/50">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">Tendencia</span>
-              <span className={`font-medium ${trend > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}%
-              </span>
-            </div>
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>vs mes anterior</span>
+            <span className={trend > 0 ? 'text-emerald' : 'text-ruby'}>
+              {trend > 0 ? '↗ ' : '↘ '}{Math.abs(trend)}%
+            </span>
           </div>
         )}
       </div>
-    </div>
-  );
-
-  const FinancialScore = () => {
-    const score = calculos?.puntuacionFinanciera || 0;
-    const getScoreColor = (score) => {
-      if (score >= 80) return 'text-emerald-400';
-      if (score >= 60) return 'text-amber-400';
-      return 'text-rose-400';
-    };
-    
-    const getScoreLabel = (score) => {
-      if (score >= 80) return 'Excelente';
-      if (score >= 60) return 'Buena';
-      if (score >= 40) return 'Regular';
-      return 'Necesita mejorar';
-    };
-
-    const data = [
-      { name: 'Score', value: score, fill: '#0ea5e9' }
-    ];
-
-    return (
-      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-emerald-600 to-green-600 rounded-lg">
-              <Award className="h-5 w-5 text-white" />
-            </div>
-            Puntuación Financiera
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row items-center gap-8">
-            <div className="flex-1">
-              <div className="relative h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart 
-                    innerRadius="20%" 
-                    outerRadius="100%" 
-                    data={data} 
-                    startAngle={180} 
-                    endAngle={-180}
-                  >
-                    <RadialBar 
-                      minAngle={15} 
-                      background 
-                      clockWise={true} 
-                      dataKey="value" 
-                      cornerRadius={10}
-                    />
-                    <text 
-                      x="50%" 
-                      y="50%" 
-                      textAnchor="middle" 
-                      dominantBaseline="middle"
-                      className={`text-4xl font-bold ${getScoreColor(score)}`}
-                    >
-                      {score}
-                    </text>
-                    <text 
-                      x="50%" 
-                      y="60%" 
-                      textAnchor="middle" 
-                      dominantBaseline="middle"
-                      className="text-sm text-slate-400"
-                    >
-                      /100
-                    </text>
-                  </RadialBarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="flex-1 space-y-4">
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-2">
-                  {getScoreLabel(score)}
-                </h4>
-                <p className="text-sm text-slate-400">
-                  Tu puntuación se basa en múltiples factores: balance, control de gastos, ahorro y consistencia.
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Balance mensual</span>
-                  <span className={`text-sm font-medium ${calculos?.balance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {calculos?.balance >= 0 ? '+20 pts' : '-20 pts'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Control de gastos</span>
-                  <span className={`text-sm font-medium ${calculos?.porcentajeGastado < 80 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {calculos?.porcentajeGastado < 80 ? '+15 pts' : '-15 pts'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Disponibilidad</span>
-                  <span className="text-sm font-medium text-emerald-400">
-                    +{Math.floor(calculos?.porcentajeDisponible * 0.5)} pts
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Consistencia</span>
-                  <span className="text-sm font-medium text-blue-400">
-                    +10 pts
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     );
   };
 
-  const TrendChart = () => (
-    <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-violet-600 to-blue-600 rounded-lg">
-              <BarChart3 className="h-5 w-5 text-white" />
+  const ProgressCard = () => {
+    if (!calculos) return null;
+    
+    return (
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-5 w-5 text-slate-400" />
+            <div>
+              <h3 className="text-sm font-semibold text-white">Progreso Mensual</h3>
+              <p className="text-xs text-slate-400">Día {calculos.diaActual} de {calculos.ultimoDiaMes}</p>
             </div>
-            Evolución Financiera
-          </CardTitle>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span className="text-xs text-slate-400">Ingresos</span>
+          </div>
+          <span className="text-sm font-semibold text-white">{calculos.porcentajeMes.toFixed(1)}%</span>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Gasto vs Presupuesto</span>
+              <span>{calculos.porcentajeGastado.toFixed(1)}%</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-              <span className="text-xs text-slate-400">Gastos</span>
+            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${
+                  calculos.porcentajeGastado > 85 ? 'bg-ruby' :
+                  calculos.porcentajeGastado > 70 ? 'bg-amber-500' : 'bg-emerald'
+                }`}
+                style={{ width: `${Math.min(calculos.porcentajeGastado, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <div className="text-xs text-slate-400 mb-1">Días restantes</div>
+              <div className="text-lg font-semibold text-white">{calculos.diasRestantes}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-slate-400 mb-1">Diario disponible</div>
+              <div className={`text-lg font-semibold ${
+                calculos.disponibleDiario > 0 ? 'text-emerald' : 'text-ruby'
+              }`}>
+                {calculos.disponibleDiario.toFixed(0)}€
+              </div>
             </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-72">
+      </div>
+    );
+  };
+
+  const FinancialScore = () => {
+    if (!calculos) return null;
+    
+    const score = calculos.puntuacionFinanciera;
+    const data = [{ value: score }];
+    
+    return (
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Award className="h-5 w-5 text-gold" />
+          <h3 className="text-sm font-semibold text-white">Puntuación Financiera</h3>
+        </div>
+        
+        <div className="flex flex-col items-center">
+          <div className="relative h-48 w-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart 
+                innerRadius="40%" 
+                outerRadius="80%" 
+                data={data} 
+                startAngle={180} 
+                endAngle={-180}
+              >
+                <RadialBar 
+                  background={{ fill: '#1e293b' }}
+                  dataKey="value"
+                  cornerRadius={30}
+                  fill={score >= 80 ? '#10b981' : score >= 60 ? '#fbbf24' : '#ef4444'}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-bold text-white">{score}</span>
+              <span className="text-xs text-slate-400">/100</span>
+              <span className={`text-xs mt-1 ${
+                score >= 80 ? 'text-emerald' : score >= 60 ? 'text-amber-500' : 'text-ruby'
+              }`}>
+                {score >= 80 ? 'Excelente' : score >= 60 ? 'Buena' : 'Mejorable'}
+              </span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4 mt-6 w-full">
+            <div className="text-center">
+              <div className="text-xs text-slate-400">Balance</div>
+              <div className={`text-sm font-semibold ${
+                calculos.balance >= 0 ? 'text-emerald' : 'text-ruby'
+              }`}>
+                {calculos.balance >= 0 ? 'Positivo' : 'Negativo'}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-slate-400">Control</div>
+              <div className={`text-sm font-semibold ${
+                calculos.porcentajeGastado < 80 ? 'text-emerald' : 'text-ruby'
+              }`}>
+                {calculos.porcentajeGastado < 80 ? 'Bueno' : 'Alto'}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-slate-400">Disponible</div>
+              <div className={`text-sm font-semibold ${
+                calculos.porcentajeDisponible > 30 ? 'text-emerald' : 
+                calculos.porcentajeDisponible > 15 ? 'text-amber-500' : 'text-ruby'
+              }`}>
+                {calculos.porcentajeDisponible.toFixed(0)}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const TrendChart = () => {
+    if (!calculos) return null;
+    
+    return (
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-5 w-5 text-slate-400" />
+            <h3 className="text-sm font-semibold text-white">Evolución Financiera</h3>
+          </div>
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-sapphire"></div>
+              <span className="text-slate-400">Ingresos</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-ruby"></div>
+              <span className="text-slate-400">Gastos</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={calculos?.ultimosMeses || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.3} />
+            <AreaChart data={calculos.ultimosMeses}>
+              <defs>
+                <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis 
                 dataKey="mes" 
-                stroke="#94a3b8" 
+                stroke="#64748b"
                 fontSize={12}
-                tickLine={false}
-                axisLine={false}
               />
               <YAxis 
-                stroke="#94a3b8" 
+                stroke="#64748b"
                 fontSize={12}
-                tickLine={false}
-                axisLine={false}
                 tickFormatter={(value) => `€${value}`}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#1e293b',
-                  border: '1px solid #475569',
-                  borderRadius: '8px',
-                  backdropFilter: 'blur(10px)'
+                  border: '1px solid #334155',
+                  borderRadius: '8px'
                 }}
-                formatter={(value) => [`€${value.toFixed(2)}`, '']}
-                labelFormatter={(label) => `Mes: ${label}`}
+                formatter={(value) => [`€${value.toFixed(0)}`, '']}
               />
-              <Line 
+              <Area 
                 type="monotone" 
                 dataKey="ingresos" 
                 stroke="#0ea5e9" 
-                strokeWidth={3}
-                dot={{ stroke: '#0ea5e9', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, strokeWidth: 0 }}
+                fill="url(#colorIngresos)" 
+                strokeWidth={2}
               />
-              <Line 
+              <Area 
                 type="monotone" 
                 dataKey="gastos" 
                 stroke="#ef4444" 
-                strokeWidth={3}
-                dot={{ stroke: '#ef4444', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, strokeWidth: 0 }}
+                fill="url(#colorGastos)" 
+                strokeWidth={2}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-white">€{calculos?.ingresosMes?.toFixed(0) || 0}</div>
-            <div className="text-xs text-slate-400">Ingreso actual</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-rose-400">€{calculos?.totalGastos?.toFixed(0) || 0}</div>
-            <div className="text-xs text-slate-400">Gasto actual</div>
-          </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${calculos?.balance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              €{Math.abs(calculos?.balance || 0).toFixed(0)}
-            </div>
-            <div className="text-xs text-slate-400">{calculos?.balance >= 0 ? 'Superávit' : 'Déficit'}</div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    );
+  };
 
   const ExpenseDistribution = () => {
     if (!calculos) return null;
@@ -679,118 +563,167 @@ export default function DashboardFinancieroElite() {
     const data = Object.entries(calculos.gastosPorCategoria)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([name, value], index) => ({
+      .map(([name, value]) => ({
         name,
         value,
-        color: obtenerColorCategoria(name),
-        icon: obtenerIconoCategoria(name)
+        color: obtenerColorCategoria(name)
       }));
     
     const total = data.reduce((acc, item) => acc + item.value, 0);
-    const otros = (calculos.totalGastos || 0) - total;
-
-    if (otros > 0) {
-      data.push({
-        name: 'Otros',
-        value: otros,
-        color: '#94a3b8',
-        icon: MoreHorizontal
-      });
-    }
 
     return (
-      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-rose-600 to-pink-600 rounded-lg">
-              <PieChart className="h-5 w-5 text-white" />
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <PieChart className="h-5 w-5 text-slate-400" />
+            <h3 className="text-sm font-semibold text-white">Distribución de Gastos</h3>
+          </div>
+          <span className="text-xs text-slate-400">{data.length} categorías</span>
+        </div>
+        
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1">
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={60}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {data.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color}
+                        stroke="#1e293b"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => [`€${value.toFixed(2)}`, '']}
+                    contentStyle={{
+                      backgroundColor: '#1e293b',
+                      border: '1px solid #334155',
+                      borderRadius: '8px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-            Distribución de Gastos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-1">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={2}
-                      dataKey="value"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {data.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.color}
-                          stroke="#1e293b"
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [`€${value.toFixed(2)}`, 'Monto']}
-                      contentStyle={{
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #475569',
-                        borderRadius: '8px',
-                        backdropFilter: 'blur(10px)'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="space-y-3">
-                {data.map((item, index) => {
-                  const Icon = item.icon;
-                  const porcentaje = ((item.value / calculos.totalGastos) * 100);
-                  
-                  return (
-                    <div 
-                      key={index} 
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-slate-800/50 group-hover:scale-110 transition-transform">
-                          <Icon className="h-4 w-4" style={{ color: item.color }} />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-white">{item.name}</div>
-                          <div className="text-xs text-slate-500">{porcentaje.toFixed(1)}% del total</div>
-                        </div>
+          </div>
+          
+          <div className="flex-1">
+            <div className="space-y-3">
+              {data.map((item, index) => {
+                const porcentaje = ((item.value / total) * 100);
+                const Icon = obtenerIconoCategoria(item.name);
+                
+                return (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded bg-slate-700">
+                        <Icon className="h-3 w-3" style={{ color: item.color }} />
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold text-white">€{item.value.toFixed(2)}</div>
-                        <div className="text-xs text-slate-500">por día: €{(item.value / 30).toFixed(2)}</div>
+                      <div>
+                        <div className="text-sm font-medium text-white">{item.name}</div>
+                        <div className="text-xs text-slate-400">{porcentaje.toFixed(1)}%</div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-              <div className="mt-6 p-4 bg-gradient-to-r from-blue-900/20 to-violet-900/20 rounded-xl border border-slate-700/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-slate-300">Gasto total</div>
-                    <div className="text-2xl font-bold text-white">€{calculos.totalGastos.toFixed(2)}</div>
+                    <div className="text-sm font-semibold text-white">€{item.value.toFixed(0)}</div>
                   </div>
-                  <Percent className="h-8 w-8 text-blue-400" />
-                </div>
-                <div className="text-xs text-slate-400 mt-2">
-                  {data.length} categorías principales
-                </div>
+                );
+              })}
+            </div>
+            
+            <div className="mt-4 p-3 bg-slate-800/50 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-300">Total gastos</span>
+                <span className="text-lg font-bold text-white">€{total.toFixed(0)}</span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    );
+  };
+
+  const ExpenseBreakdown = () => {
+    if (!calculos) return null;
+    
+    return (
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Layers className="h-5 w-5 text-slate-400" />
+          <h3 className="text-sm font-semibold text-white">Desglose de Gastos</h3>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Receipt className="h-4 w-4 text-slate-400" />
+              <div>
+                <div className="text-sm font-medium text-white">Gastos Normales</div>
+                <div className="text-xs text-slate-400">Compras diarias</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-semibold text-white">€{calculos.gastosNormales.toFixed(2)}</div>
+              <div className="text-xs text-slate-400">
+                {((calculos.gastosNormales / calculos.totalGastos) * 100).toFixed(1)}%
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Home className="h-4 w-4 text-sapphire" />
+              <div>
+                <div className="text-sm font-medium text-white">Pagos Fijos</div>
+                <div className="text-xs text-slate-400">Servicios recurrentes</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-semibold text-white">€{calculos.gastosFijos.toFixed(2)}</div>
+              <div className="text-xs text-slate-400">
+                {((calculos.gastosFijos / calculos.totalGastos) * 100).toFixed(1)}%
+              </div>
+            </div>
+          </div>
+
+          {calculos.gastosCuotas > 0 && (
+            <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-4 w-4 text-amethyst" />
+                <div>
+                  <div className="text-sm font-medium text-white">Cuotas Pagadas</div>
+                  <div className="text-xs text-slate-400">Compras financiadas</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-semibold text-white">€{calculos.gastosCuotas.toFixed(2)}</div>
+                <div className="text-xs text-slate-400">
+                  {((calculos.gastosCuotas / calculos.totalGastos) * 100).toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-slate-300">Total Gastos</span>
+              <span className="text-xl font-bold text-ruby">€{calculos.totalGastos.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -806,8 +739,8 @@ export default function DashboardFinancieroElite() {
       'Ahorro': TrendingUp,
       'Café': Coffee,
       'Restaurante': Utensils,
-      'Internet': Globe,
-      'Teléfono': Smartphone,
+      'Internet': Wifi,
+      'Teléfono': Phone,
       'Luz': Zap,
       'Educación': GraduationCap,
       'Viajes': Plane,
@@ -844,273 +777,140 @@ export default function DashboardFinancieroElite() {
 
   // ========== RENDER PRINCIPAL ==========
   
-  if (datos.loading) return <LoadingScreen />;
-  if (datos.error) return <ErrorScreen />;
+  if (datos.loading) return <LoadingState />;
+  if (datos.error) return <ErrorState />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-6">
-      <HeaderElite />
+      <HeaderSection />
       
-      {/* Métricas Principales */}
-      <div className={`grid ${viewMode === 'compact' ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 lg:grid-cols-4'} gap-4 mb-8`}>
-        <MetricCard
+      {/* KPIs Principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
           title="Ingresos Totales"
           value={calculos?.ingresosMes}
           icon={TrendingUp}
-          color="from-blue-900/30 to-blue-800/20"
+          color="sapphire"
           change={12.5}
           trend={8.2}
-          suffix="€"
-          description="Ingresos netos del mes actual"
         />
-        <MetricCard
+        <StatCard
           title="Gastos Totales"
           value={calculos?.totalGastos}
           icon={TrendingDown}
-          color="from-rose-900/30 to-rose-800/20"
+          color="ruby"
           change={-3.2}
           trend={-2.1}
-          suffix="€"
-          description="Incluye todos los gastos"
         />
-        <MetricCard
+        <StatCard
           title="Disponible"
           value={calculos?.disponible}
           icon={Wallet}
-          color="from-emerald-900/30 to-emerald-800/20"
+          color="emerald"
           change={8.7}
           trend={12.5}
-          suffix="€"
-          description="Para gastos y ahorro"
         />
-        <MetricCard
-          title="Diario Disponible"
-          value={calculos?.disponibleDiario}
-          icon={Calendar}
-          color="from-violet-900/30 to-violet-800/20"
-          suffix="€/día"
-          description="Para los próximos días"
+        <StatCard
+          title="Proyección"
+          value={calculos?.proyeccionMensual}
+          icon={BarChart3}
+          color="amethyst"
+          suffix="€"
+          trend={5.3}
         />
       </div>
 
       {/* Sección principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 space-y-6">
           <TrendChart />
           <ExpenseDistribution />
         </div>
         <div className="space-y-6">
           <FinancialScore />
+          <ProgressCard />
+        </div>
+      </div>
+
+      {/* Sección inferior */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ExpenseBreakdown />
+        
+        {/* Insights */}
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Sparkles className="h-5 w-5 text-gold" />
+            <h3 className="text-sm font-semibold text-white">Insights y Recomendaciones</h3>
+          </div>
           
-          {/* Balance Summary */}
-          <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-amber-600 to-yellow-600 rounded-lg">
-                  <DollarSign className="h-5 w-5 text-white" />
-                </div>
-                Balance del Mes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className={`p-4 rounded-xl ${calculos?.balance >= 0 ? 'bg-emerald-900/20 border border-emerald-800/30' : 'bg-rose-900/20 border border-rose-800/30'}`}>
-                <div className="flex items-center justify-between">
+          <div className="space-y-4">
+            {calculos?.porcentajeGastado > 85 && (
+              <div className="p-3 bg-ruby/10 border border-ruby/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-ruby mt-0.5" />
                   <div>
-                    <p className="text-sm text-slate-400">Balance actual</p>
-                    <p className={`text-3xl font-bold ${calculos?.balance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {showBalance ? `€${calculos?.balance.toFixed(2)}` : '•••••'}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${calculos?.balance >= 0 ? 'bg-emerald-900/30' : 'bg-rose-900/30'}`}>
-                    {calculos?.balance >= 0 ? (
-                      <TrendingUp className="h-6 w-6 text-emerald-400" />
-                    ) : (
-                      <TrendingDown className="h-6 w-6 text-rose-400" />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-800/30 rounded-lg p-3">
-                  <p className="text-xs text-slate-400 mb-1">Por gastar hoy</p>
-                  <p className="text-lg font-semibold text-white">
-                    €{(calculos?.promedioDiario || 0).toFixed(0)}
-                  </p>
-                </div>
-                <div className="bg-slate-800/30 rounded-lg p-3">
-                  <p className="text-xs text-slate-400 mb-1">Meta diaria</p>
-                  <p className="text-lg font-semibold text-emerald-400">
-                    €{(calculos?.disponibleDiario || 0).toFixed(0)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-800">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-300">Progreso del mes</span>
-                  <span className="text-sm font-medium text-slate-300">{calculos?.porcentajeGastado.toFixed(1)}%</span>
-                </div>
-                <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(calculos?.porcentajeGastado, 100)}%`,
-                      background: calculos?.porcentajeGastado > 85 
-                        ? COLORS.gradient.ruby
-                        : calculos?.porcentajeGastado > 70
-                        ? COLORS.gradient.gold
-                        : COLORS.gradient.emerald
-                    }}
-                  ></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Insights */}
-          {calculos?.insights && calculos.insights.length > 0 && (
-            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-                  <div className="p-2 bg-gradient-to-br from-amber-600 to-orange-600 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-white" />
-                  </div>
-                  Insights Inteligentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {calculos.insights.map((insight, index) => {
-                  const Icon = insight.icono;
-                  return (
-                    <div 
-                      key={index}
-                      className={`p-3 rounded-lg border ${
-                        insight.tipo === 'warning' ? 'bg-amber-900/20 border-amber-800/30' :
-                        insight.tipo === 'success' ? 'bg-emerald-900/20 border-emerald-800/30' :
-                        'bg-blue-900/20 border-blue-800/30'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Icon className={`h-5 w-5 mt-0.5 ${
-                          insight.tipo === 'warning' ? 'text-amber-400' :
-                          insight.tipo === 'success' ? 'text-emerald-400' :
-                          'text-blue-400'
-                        }`} />
-                        <p className="text-sm text-slate-300">{insight.mensaje}</p>
-                      </div>
+                    <div className="text-sm font-medium text-white">Alto porcentaje de gasto</div>
+                    <div className="text-xs text-slate-300 mt-1">
+                      Estás gastando el {calculos.porcentajeGastado.toFixed(1)}% de tus ingresos. 
+                      Considera revisar gastos no esenciales.
                     </div>
-                  );
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {calculos?.disponible > calculos?.ingresosMes * 0.3 && (
+              <div className="p-3 bg-emerald/10 border border-emerald/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium text-white">Excelente salud financiera</div>
+                    <div className="text-xs text-slate-300 mt-1">
+                      Tienes un {calculos.porcentajeDisponible.toFixed(1)}% disponible. 
+                      Perfecto para ahorrar o invertir.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="p-3 bg-sapphire/10 border border-sapphire/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Calculator className="h-4 w-4 text-sapphire mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-white">Proyección mensual</div>
+                  <div className="text-xs text-slate-300 mt-1">
+                    Si mantienes este ritmo, gastarás €{calculos?.proyeccionMensual.toFixed(0)} este mes.
+                    {calculos?.porcentajeProyeccion > 100 ? ' Superarás tu presupuesto.' : ' Estás dentro del presupuesto.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 pt-4 border-t border-slate-700">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-400">Análisis generado el</span>
+              <span className="text-xs text-slate-300">
+                {new Date().toLocaleTimeString('es-ES', { 
+                  hour: '2-digit', 
+                  minute: '2-digit'
                 })}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Sección de desglose */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <BarChart4 className="h-5 w-5 text-blue-400" />
-          Desglose Detallado
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-900/30 rounded-lg border border-blue-800/30">
-                  <Receipt className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-white">Gastos Normales</h4>
-                  <p className="text-xs text-slate-400">Compras diarias</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xl font-bold text-white">€{calculos?.gastosNormales.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">
-                  {((calculos?.gastosNormales / calculos?.totalGastos) * 100).toFixed(1)}% del total
-                </div>
-              </div>
-            </div>
-            <div className="text-xs text-slate-400">
-              Promedio: €{(calculos?.gastosNormales / 30).toFixed(2)}/día
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-violet-900/30 rounded-lg border border-violet-800/30">
-                  <Home className="h-5 w-5 text-violet-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-white">Pagos Fijos</h4>
-                  <p className="text-xs text-slate-400">Servicios recurrentes</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xl font-bold text-white">€{calculos?.gastosFijos.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">
-                  {((calculos?.gastosFijos / calculos?.totalGastos) * 100).toFixed(1)}% del total
-                </div>
-              </div>
-            </div>
-            <div className="text-xs text-slate-400">
-              {datos.pagosFijos?.filter(p => p.activo !== false).length || 0} servicios activos
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-900/30 rounded-lg border border-rose-800/30">
-                  <CreditCard className="h-5 w-5 text-rose-400" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-white">Cuotas Pagadas</h4>
-                  <p className="text-xs text-slate-400">Compras financiadas</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xl font-bold text-white">€{calculos?.gastosCuotas.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">
-                  {((calculos?.gastosCuotas / calculos?.totalGastos) * 100).toFixed(1)}% del total
-                </div>
-              </div>
-            </div>
-            <div className="text-xs text-slate-400">
-              {datos.comprasCuotas?.filter(c => c.activo !== false).length || 0} compras activas
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Elite */}
-      <div className="pt-6 border-t border-slate-800/50">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-slate-400">Sistema activo</span>
-            </div>
-            <span className="text-xs text-slate-600">•</span>
-            <span className="text-xs text-slate-400">
-              Última actualización: {new Date().toLocaleTimeString('es-ES', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit'
-              })}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Finanzas Elite v2.0</span>
-            <div className="px-2 py-1 bg-gradient-to-r from-blue-900/30 to-violet-900/30 text-blue-300 text-xs rounded-full border border-blue-800/30">
-              <span className="flex items-center gap-1">
-                <Lock className="h-2 w-2" />
-                Encriptado
               </span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-slate-800">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-emerald rounded-full animate-pulse"></div>
+            <span className="text-xs text-slate-400">Sistema activo • Actualizado cada 2 min</span>
+          </div>
+          <div className="text-xs text-slate-500">
+            Finanzas Elite Pro • {new Date().getFullYear()} • Todos los derechos reservados
           </div>
         </div>
       </div>
