@@ -1,9 +1,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { gastos } from '@/lib/data'
-import { totalGastos, gastosPorCategoria } from '@/lib/finanzas'
 import { motion } from 'framer-motion'
+import { useGastos } from '@/contexts/GastosContext'
 
-// ICONOS LUCIDE REACT MODERNOS - Sincronizados con GraficoGastos.jsx
+// ICONOS LUCIDE REACT MODERNOS
 import { 
   Home,
   ShoppingCart,
@@ -25,9 +24,9 @@ import {
   PieChart
 } from 'lucide-react'
 
-// Configuración de iconos por categoría - Sincronizado con GraficoGastos.jsx
+// Configuración de iconos por categoría
 const categoriaIconos = {
-  'Alquiler': Home,
+  'Vivienda': Home,
   'Alimentación': ShoppingCart,
   'Transporte': Car,
   'Entretenimiento': Film,
@@ -40,38 +39,53 @@ const categoriaIconos = {
   'Internet': Wifi,
   'Teléfono': Phone,
   'Luz': Zap,
+  'Tecnología': Zap,
+  'Familia': Heart,
+  'Hogar': Home,
   'Otros': MoreHorizontal
 }
 
-// COLORES ESPECÍFICOS PARA CADA CATEGORÍA - Sincronizado con GraficoGastos.jsx
+// COLORES ESPECÍFICOS PARA CADA CATEGORÍA
 const coloresPorCategoria = {
-  'Alquiler': '#3b82f6',       // AZUL para Alquiler
-  'Alimentación': '#10b981',   // VERDE para Alimentación
-  'Transporte': '#f59e0b',     // AMARILLO/ÁMBAR para Transporte
-  'Entretenimiento': '#8b5cf6', // VIOLETA para Entretenimiento
-  'Salud': '#ef4444',          // ROJO para Salud
-  'Ropa': '#ec4899',           // ROSA para Ropa
-  'Regalos': '#14b8a6',        // TURQUESA para Regalos
-  'Ahorro': '#84cc16',         // VERDE LIMA para Ahorro
-  'Café': '#f97316',           // NARANJA para Café
-  'Restaurante': '#6366f1',    // ÍNDIGO para Restaurante
-  'Internet': '#06b6d4',       // CIAN para Internet
-  'Teléfono': '#8b5cf6',       // VIOLETA para Teléfono
-  'Luz': '#fbbf24',            // AMARILLO para Luz
-  'Otros': '#94a3b8',          // GRIS para Otros
+  'Vivienda': '#3b82f6',
+  'Alquiler': '#3b82f6',
+  'Alimentación': '#10b981',
+  'Transporte': '#f59e0b',
+  'Entretenimiento': '#8b5cf6',
+  'Salud': '#ef4444',
+  'Ropa': '#ec4899',
+  'Regalos': '#14b8a6',
+  'Ahorro': '#84cc16',
+  'Café': '#f97316',
+  'Restaurante': '#6366f1',
+  'Internet': '#06b6d4',
+  'Teléfono': '#8b5cf6',
+  'Luz': '#fbbf24',
+  'Tecnología': '#8b5cf6',
+  'Familia': '#ec4899',
+  'Hogar': '#10b981',
+  'Otros': '#94a3b8',
 }
 
 export default function ResumenGastos() {
-  const total = totalGastos(gastos)
-  const porCategoria = gastosPorCategoria(gastos)
+  const { 
+    gastosFiltrados, 
+    totalGastosFiltrados, 
+    gastosPorCategoria, 
+    filtroMes,
+    formatearMesTexto 
+  } = useGastos();
+
+  const total = totalGastosFiltrados;
+  const porCategoria = gastosPorCategoria;
   
   // Calcular categoría con mayor gasto
   const categoriaMayorGasto = Object.entries(porCategoria).reduce((max, [cat, monto]) => 
     monto > max.monto ? { categoria: cat, monto } : max, 
     { categoria: '', monto: 0 }
-  )
+  );
   
-  const porcentajeMayorGasto = total > 0 ? (categoriaMayorGasto.monto / total) * 100 : 0
+  const porcentajeMayorGasto = total > 0 ? (categoriaMayorGasto.monto / total) * 100 : 0;
 
   return (
     <Card className="bg-slate-900/80 border border-slate-800 backdrop-blur-sm">
@@ -82,6 +96,11 @@ export default function ResumenGastos() {
               <TrendingDown className="h-5 w-5 text-red-400" />
             </div>
             Resumen de Gastos
+            {filtroMes && (
+              <span className="text-xs font-normal text-slate-400 ml-2">
+                ({formatearMesTexto(filtroMes)})
+              </span>
+            )}
           </CardTitle>
           <div className="text-xs text-slate-500 bg-slate-900 px-2 py-1 rounded-lg">
             {Object.keys(porCategoria).length} categorías
@@ -99,9 +118,8 @@ export default function ResumenGastos() {
             €{total.toFixed(2)}
           </p>
           <p className="text-sm text-slate-400 mt-1">
-            {total > 800
-              ? 'Este mes estás gastando más de lo habitual'
-              : 'Buen control de gastos 👌'}
+            {gastosFiltrados.length} transacciones
+            {filtroMes ? ` en ${formatearMesTexto(filtroMes)}` : ' totales'}
           </p>
         </motion.div>
       </CardHeader>
@@ -136,12 +154,12 @@ export default function ResumenGastos() {
           </div>
         )}
 
-        {/* LISTA DE CATEGORÍAS - CON ICONOS SINCRONIZADOS */}
+        {/* LISTA DE CATEGORÍAS */}
         <div className="space-y-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-300">Gastos por categoría</h3>
             <div className="text-xs text-slate-500">
-              {Object.entries(porCategoria).length} de {Object.keys(porCategoria).length}
+              {Object.entries(porCategoria).length} categorías activas
             </div>
           </div>
           
@@ -149,10 +167,9 @@ export default function ResumenGastos() {
             {Object.entries(porCategoria)
               .sort(([, montoA], [, montoB]) => montoB - montoA)
               .map(([categoria, monto], index) => {
-                // Usar iconos sincronizados con GraficoGastos.jsx
-                const Icon = categoriaIconos[categoria] || DollarSign
-                const color = coloresPorCategoria[categoria] || '#94a3b8'
-                const porcentaje = total > 0 ? (monto / total) * 100 : 0
+                const Icon = categoriaIconos[categoria] || DollarSign;
+                const color = coloresPorCategoria[categoria] || '#94a3b8';
+                const porcentaje = total > 0 ? (monto / total) * 100 : 0;
 
                 return (
                   <motion.div
@@ -209,18 +226,18 @@ export default function ResumenGastos() {
             <div className="text-center p-2 bg-slate-800/30 rounded-lg">
               <div className="text-xs text-slate-400">Promedio/cat</div>
               <div className="text-sm font-medium text-slate-300">
-                €{(total / Object.keys(porCategoria).length).toFixed(0)}
+                €{Object.keys(porCategoria).length > 0 ? (total / Object.keys(porCategoria).length).toFixed(0) : '0'}
               </div>
             </div>
             <div className="text-center p-2 bg-slate-800/30 rounded-lg">
               <div className="text-xs text-slate-400">Transacciones</div>
               <div className="text-sm font-medium text-slate-300">
-                {gastos?.length || 0}
+                {gastosFiltrados?.length || 0}
               </div>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
