@@ -17,7 +17,11 @@
     "framer-motion": "^10.16.4",
     "recharts": "^2.12.7",
     "@mui/icons-material": "^5.14.19",
-    "lucide-react": "^0.309.0"
+    "lucide-react": "^0.309.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "vite": "^5.0.0",
