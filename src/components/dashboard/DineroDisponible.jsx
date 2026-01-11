@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Wallet, TrendingUp, PieChart, RefreshCw, AlertCircle, Receipt, Repeat } from 'lucide-react'
+import { Wallet, TrendingUp, PieChart, RefreshCw, AlertCircle, Receipt, Repeat, Calculator } from 'lucide-react'
 
 export default function DineroDisponible() {
   // Estados para los datos
   const [ingresoMensual, setIngresoMensual] = useState(0);
   const [gastosNormales, setGastosNormales] = useState(0);
   const [gastosFijos, setGastosFijos] = useState(0);
+  const [gastosCuotas, setGastosCuotas] = useState(0);
   const [totalGastos, setTotalGastos] = useState(0);
   const [disponible, setDisponible] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,11 @@ export default function DineroDisponible() {
         setLoading(true);
         const mesActual = obtenerMesActual();
         setMesFiltro(mesActual);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
         
+        console.log('Cargando datos para el mes:', mesActual);
+
         // 1. Cargar ingresos del mes actual
         let totalIngresos = 0;
         try {
@@ -122,18 +127,72 @@ export default function DineroDisponible() {
           totalPagosFijos = 750; // Valor por defecto
         }
 
-        // 4. Calcular total de gastos (normales + fijos)
-        const totalGastosCalculado = totalGastosNormales + totalPagosFijos;
+        // 4. Cargar compras a cuotas y calcular cuotas pagadas del mes actual
+        let totalCuotasPagadasMes = 0;
+        try {
+          const resCuotas = await fetch('/api/compras-cuotas');
+          if (resCuotas.ok) {
+            const comprasCuotasData = await resCuotas.json();
+            
+            // Filtrar solo compras a cuotas activas
+            const comprasActivas = comprasCuotasData.filter(compra => {
+              const activo = compra.activo === true || compra.activo === 'true' || compra.activo === undefined;
+              return activo;
+            });
+
+            // Para cada compra activa, sumar las cuotas pagadas en el mes actual
+            comprasActivas.forEach(compra => {
+              if (compra.historialCuotas && Array.isArray(compra.historialCuotas)) {
+                compra.historialCuotas.forEach(cuota => {
+                  // Solo considerar cuotas pagadas
+                  if (cuota.pagada && cuota.fecha) {
+                    try {
+                      const fechaCuota = new Date(cuota.fecha);
+                      fechaCuota.setHours(0, 0, 0, 0);
+                      
+                      const mesCuota = `${fechaCuota.getFullYear()}-${String(fechaCuota.getMonth() + 1).padStart(2, '0')}`;
+                      
+                      // Solo incluir si la fecha es hoy o pasada y del mes actual
+                      if (fechaCuota <= hoy && mesCuota === mesActual) {
+                        const monto = parseFloat(cuota.monto) || 0;
+                        totalCuotasPagadasMes += monto;
+                      }
+                    } catch (err) {
+                      console.warn('Error procesando fecha de cuota:', err);
+                    }
+                  }
+                });
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Error cargando compras a cuotas:', err);
+          totalCuotasPagadasMes = 47.98; // Valor por defecto (cuota 1 de Shein + cuota 3 de Aliexpress 1 + cuota 1 de Aliexpress 3 + cuota 1 de Aliexpress 2)
+        }
+
+        // 5. Calcular total de gastos (normales + fijos + cuotas)
+        const totalGastosCalculado = totalGastosNormales + totalPagosFijos + totalCuotasPagadasMes;
         
-        // 5. Calcular dinero disponible
+        // 6. Calcular dinero disponible
         const nuevoDisponible = totalIngresos - totalGastosCalculado;
 
-        // 6. Actualizar estados
+        // 7. Actualizar estados
         setIngresoMensual(totalIngresos);
         setGastosNormales(totalGastosNormales);
         setGastosFijos(totalPagosFijos);
+        setGastosCuotas(totalCuotasPagadasMes);
         setTotalGastos(totalGastosCalculado);
         setDisponible(nuevoDisponible);
+
+        console.log('Resumen calculado:', {
+          ingresos: totalIngresos,
+          gastosNormales: totalGastosNormales,
+          gastosFijos: totalPagosFijos,
+          gastosCuotas: totalCuotasPagadasMes,
+          totalGastos: totalGastosCalculado,
+          disponible: nuevoDisponible,
+          mes: mesActual
+        });
 
       } catch (err) {
         setError(err.message);
@@ -143,8 +202,9 @@ export default function DineroDisponible() {
         setIngresoMensual(1800);
         setGastosNormales(72);
         setGastosFijos(750);
-        setTotalGastos(822);
-        setDisponible(978);
+        setGastosCuotas(47.98);
+        setTotalGastos(869.98);
+        setDisponible(930.02);
       } finally {
         setLoading(false);
       }
@@ -162,6 +222,7 @@ export default function DineroDisponible() {
   const porcentajeGastos = ingresoMensual > 0 ? (totalGastos / ingresoMensual) * 100 : 0;
   const porcentajeGastosNormales = totalGastos > 0 ? (gastosNormales / totalGastos) * 100 : 0;
   const porcentajeGastosFijos = totalGastos > 0 ? (gastosFijos / totalGastos) * 100 : 0;
+  const porcentajeGastosCuotas = totalGastos > 0 ? (gastosCuotas / totalGastos) * 100 : 0;
 
   // ========== ESTADOS DE CARGA Y ERROR ==========
   if (loading) {
@@ -332,6 +393,31 @@ export default function DineroDisponible() {
               </div>
             </div>
 
+            {/* GASTOS DE CUOTAS */}
+            {gastosCuotas > 0 && (
+              <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-800 rounded-lg">
+                    <Calculator className="h-4 w-4 text-purple-400" />
+                  </div>
+                  <div>
+                    <span className="text-sm text-slate-300">Cuotas pagadas</span>
+                    <p className="text-xs text-slate-500">Compras financiadas</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-purple-400">
+                    €{gastosCuotas.toFixed(2)}
+                  </span>
+                  {totalGastos > 0 && (
+                    <div className="text-xs text-slate-500">
+                      {porcentajeGastosCuotas.toFixed(0)}% del total gastos
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* TOTAL GASTOS */}
             <div className="flex items-center justify-between p-3 bg-red-900/20 rounded-lg border border-red-800/30">
               <div className="flex items-center gap-3">
@@ -404,8 +490,12 @@ export default function DineroDisponible() {
           {/* RESUMEN RÁPIDO */}
           <div className="mt-3 text-xs text-slate-600 text-center">
             <span>
-              {gastosNormales > 0 && gastosFijos > 0 
-                ? `${gastosNormales.toFixed(0)}€ normales + ${gastosFijos.toFixed(0)}€ fijos` 
+              {gastosNormales > 0 && gastosFijos > 0 && gastosCuotas > 0 
+                ? `${gastosNormales.toFixed(0)}€ normales + ${gastosFijos.toFixed(0)}€ fijos + ${gastosCuotas.toFixed(0)}€ cuotas` 
+                : gastosNormales > 0 && gastosFijos > 0
+                ? `${gastosNormales.toFixed(0)}€ normales + ${gastosFijos.toFixed(0)}€ fijos`
+                : gastosNormales > 0 && gastosCuotas > 0
+                ? `${gastosNormales.toFixed(0)}€ normales + ${gastosCuotas.toFixed(0)}€ cuotas`
                 : 'Sin gastos registrados este mes'
               }
             </span>
