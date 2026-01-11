@@ -8,7 +8,7 @@ import {
   Calendar, Target, RefreshCw, AlertCircle, DollarSign, MoreHorizontal,
   CreditCard, Download, Filter, ChevronRight, Sparkles, Bell,
   Settings, Eye, EyeOff, CheckCircle, Shield, Lock, Users,
-  LineChart, Database, Cpu, Zap as ZapIcon, Activity, Globe,
+  Database, Cpu, Zap as ZapIcon, Activity, Globe,
   Award, Crown, Star, Target as TargetIcon, TrendingUp as ArrowUp,
   TrendingDown as ArrowDown, Percent, Clock, ShieldCheck,
   BarChart4, Smartphone, Briefcase, Plane, GraduationCap, Music
@@ -187,15 +187,15 @@ export default function DashboardFinancieroElite() {
       return categorias;
     }, {});
 
-    // 8. DATOS PARA GRÁFICOS
+    // 8. DATOS PARA GRÁFICOS (datos de ejemplo para desarrollo)
     const ultimosMeses = Array.from({ length: 6 }, (_, i) => {
       const fecha = new Date();
       fecha.setMonth(fecha.getMonth() - i);
       return {
         mes: fecha.toLocaleDateString('es-ES', { month: 'short' }),
-        ingresos: Math.random() * 2000 + 1500,
-        gastos: Math.random() * 1500 + 800,
-        ahorro: Math.random() * 500 + 200
+        ingresos: ingresosMes * (0.8 + Math.random() * 0.4),
+        gastos: totalGastos * (0.7 + Math.random() * 0.6),
+        ahorro: (ingresosMes - totalGastos) * (0.5 + Math.random() * 0.5)
       };
     }).reverse();
 
@@ -589,7 +589,7 @@ export default function DashboardFinancieroElite() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
             <div className="p-2 bg-gradient-to-br from-violet-600 to-blue-600 rounded-lg">
-              <LineChart className="h-5 w-5 text-white" />
+              <BarChart3 className="h-5 w-5 text-white" />
             </div>
             Evolución Financiera
           </CardTitle>
@@ -906,7 +906,7 @@ export default function DashboardFinancieroElite() {
           <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 border border-slate-700/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-gold-600 to-amber-600 rounded-lg">
+                <div className="p-2 bg-gradient-to-br from-amber-600 to-yellow-600 rounded-lg">
                   <DollarSign className="h-5 w-5 text-white" />
                 </div>
                 Balance del Mes
