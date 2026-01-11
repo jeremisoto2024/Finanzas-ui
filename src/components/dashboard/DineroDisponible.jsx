@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Wallet, TrendingUp, PieChart, RefreshCw, AlertCircle, Database, CreditCard } from 'lucide-react'
+import { Wallet, TrendingUp, PieChart, RefreshCw, AlertCircle, Receipt, Repeat } from 'lucide-react'
 
 export default function DineroDisponible() {
   // Estados para los datos
   const [ingresoMensual, setIngresoMensual] = useState(0);
+  const [gastosNormales, setGastosNormales] = useState(0);
   const [gastosFijos, setGastosFijos] = useState(0);
+  const [totalGastos, setTotalGastos] = useState(0);
   const [disponible, setDisponible] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,124 +19,7 @@ export default function DineroDisponible() {
     return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
   };
 
-  // ========== CARGAR DATOS DE AMBAS APIS ==========
-  useEffect(() => {
-    const fetchDatosFinancieros = async () => {
-      try {
-        setLoading(true);
-        const mesActual = obtenerMesActual();
-        setMesFiltro(mesActual);
-        
-        console.log('Cargando datos para el mes:', mesActual);
-
-        // 1. Cargar ingresos del mes actual
-        let totalIngresos = 0;
-        try {
-          const resIngresos = await fetch('/api/ingresos');
-          if (resIngresos.ok) {
-            const ingresosData = await resIngresos.json();
-            console.log('Datos de ingresos recibidos:', ingresosData);
-            
-            // Filtrar ingresos del mes actual
-            const ingresosMesActual = ingresosData.filter(ingreso => {
-              if (!ingreso.fecha) return false;
-              try {
-                const fechaIngreso = new Date(ingreso.fecha);
-                const mesIngreso = `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}`;
-                return mesIngreso === mesActual;
-              } catch (error) {
-                console.warn('Error procesando fecha de ingreso:', ingreso.fecha);
-                return false;
-              }
-            });
-
-            // Sumar todos los ingresos del mes actual
-            totalIngresos = ingresosMesActual.reduce((sum, ingreso) => {
-              const monto = parseFloat(ingreso.monto) || 0;
-              return sum + monto;
-            }, 0);
-
-            console.log(`Total ingresos mes ${mesActual}: €${totalIngresos.toFixed(2)} de ${ingresosMesActual.length} registros`);
-          } else {
-            console.warn('API de ingresos no disponible');
-            totalIngresos = 1800; // Valor por defecto
-          }
-        } catch (err) {
-          console.warn('Error cargando ingresos:', err);
-          totalIngresos = 1800; // Valor por defecto
-        }
-
-        // 2. Cargar pagos fijos activos
-        let totalPagosFijos = 0;
-        try {
-          const resPagosFijos = await fetch('/api/pagos-fijos');
-          if (resPagosFijos.ok) {
-            const pagosFijosData = await resPagosFijos.json();
-            console.log('Datos de pagos fijos recibidos:', pagosFijosData);
-            
-            // Filtrar solo pagos fijos activos
-            const pagosActivos = pagosFijosData.filter(pago => {
-              // Verificar si el pago está activo
-              const activo = pago.activo === true || pago.activo === 'true' || pago.activo === undefined;
-              return activo;
-            });
-
-            // Sumar montos de todos los pagos fijos activos
-            totalPagosFijos = pagosActivos.reduce((sum, pago) => {
-              const monto = parseFloat(pago.monto) || 0;
-              return sum + monto;
-            }, 0);
-
-            console.log(`Total pagos fijos activos: €${totalPagosFijos.toFixed(2)} de ${pagosActivos.length} registros`);
-          } else {
-            console.warn('API de pagos fijos no disponible');
-            totalPagosFijos = 950; // Valor por defecto
-          }
-        } catch (err) {
-          console.warn('Error cargando pagos fijos:', err);
-          totalPagosFijos = 950; // Valor por defecto
-        }
-
-        // 3. Calcular disponible
-        const nuevoDisponible = totalIngresos - totalPagosFijos;
-
-        // 4. Actualizar estados
-        setIngresoMensual(totalIngresos);
-        setGastosFijos(totalPagosFijos);
-        setDisponible(nuevoDisponible);
-
-        console.log('Resumen calculado:', {
-          ingresos: totalIngresos,
-          gastosFijos: totalPagosFijos,
-          disponible: nuevoDisponible,
-          mes: mesActual
-        });
-
-      } catch (err) {
-        setError(err.message);
-        console.error('Error general cargando datos financieros:', err);
-        
-        // Usar valores por defecto en caso de error
-        setIngresoMensual(1800);
-        setGastosFijos(950);
-        setDisponible(850);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDatosFinancieros();
-    
-    // Opcional: Recargar datos cada 30 segundos para actualizaciones en tiempo real
-    const intervalo = setInterval(fetchDatosFinancieros, 30000);
-    return () => clearInterval(intervalo);
-  }, []);
-
-  // ========== CÁLCULOS DERIVADOS ==========
-  const porcentajeDisponible = ingresoMensual > 0 ? (disponible / ingresoMensual) * 100 : 0;
-  const porcentajeGastosFijos = ingresoMensual > 0 ? (gastosFijos / ingresoMensual) * 100 : 0;
-  
-  // Formatear mes para mostrar
+  // ========== FORMATEAR MES A TEXTO ==========
   const formatearMesTexto = (mesFormato) => {
     if (!mesFormato) return '';
     const [año, mes] = mesFormato.split('-');
@@ -144,6 +29,139 @@ export default function DineroDisponible() {
       year: 'numeric' 
     });
   };
+
+  // ========== CARGAR TODOS LOS DATOS ==========
+  useEffect(() => {
+    const fetchDatosFinancieros = async () => {
+      try {
+        setLoading(true);
+        const mesActual = obtenerMesActual();
+        setMesFiltro(mesActual);
+        
+        // 1. Cargar ingresos del mes actual
+        let totalIngresos = 0;
+        try {
+          const resIngresos = await fetch('/api/ingresos');
+          if (resIngresos.ok) {
+            const ingresosData = await resIngresos.json();
+            
+            // Filtrar ingresos del mes actual
+            const ingresosMesActual = ingresosData.filter(ingreso => {
+              if (!ingreso.fecha) return false;
+              try {
+                const fechaIngreso = new Date(ingreso.fecha);
+                const mesIngreso = `${fechaIngreso.getFullYear()}-${String(fechaIngreso.getMonth() + 1).padStart(2, '0')}`;
+                return mesIngreso === mesActual;
+              } catch {
+                return false;
+              }
+            });
+
+            // Sumar todos los ingresos del mes actual
+            totalIngresos = ingresosMesActual.reduce((sum, ingreso) => {
+              const monto = parseFloat(ingreso.monto) || 0;
+              return sum + monto;
+            }, 0);
+          }
+        } catch (err) {
+          console.warn('Error cargando ingresos:', err);
+          totalIngresos = 1800; // Valor por defecto
+        }
+
+        // 2. Cargar gastos normales del mes actual
+        let totalGastosNormales = 0;
+        try {
+          const resGastos = await fetch('/api/gastos');
+          if (resGastos.ok) {
+            const gastosData = await resGastos.json();
+            
+            // Filtrar gastos del mes actual
+            const gastosMesActual = gastosData.filter(gasto => {
+              if (!gasto.fecha) return false;
+              try {
+                const fechaGasto = new Date(gasto.fecha);
+                const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+                return mesGasto === mesActual;
+              } catch {
+                return false;
+              }
+            });
+
+            // Sumar todos los gastos normales del mes actual
+            totalGastosNormales = gastosMesActual.reduce((sum, gasto) => {
+              const monto = parseFloat(gasto.monto) || 0;
+              return sum + monto;
+            }, 0);
+          }
+        } catch (err) {
+          console.warn('Error cargando gastos normales:', err);
+          totalGastosNormales = 72; // Valor por defecto (50+20+2)
+        }
+
+        // 3. Cargar pagos fijos activos
+        let totalPagosFijos = 0;
+        try {
+          const resPagosFijos = await fetch('/api/pagos-fijos');
+          if (resPagosFijos.ok) {
+            const pagosFijosData = await resPagosFijos.json();
+            
+            // Filtrar solo pagos fijos activos
+            const pagosActivos = pagosFijosData.filter(pago => {
+              const activo = pago.activo === true || pago.activo === 'true' || pago.activo === undefined;
+              return activo;
+            });
+
+            // Sumar montos de todos los pagos fijos activos
+            totalPagosFijos = pagosActivos.reduce((sum, pago) => {
+              const monto = parseFloat(pago.monto) || 0;
+              return sum + monto;
+            }, 0);
+          }
+        } catch (err) {
+          console.warn('Error cargando pagos fijos:', err);
+          totalPagosFijos = 750; // Valor por defecto
+        }
+
+        // 4. Calcular total de gastos (normales + fijos)
+        const totalGastosCalculado = totalGastosNormales + totalPagosFijos;
+        
+        // 5. Calcular dinero disponible
+        const nuevoDisponible = totalIngresos - totalGastosCalculado;
+
+        // 6. Actualizar estados
+        setIngresoMensual(totalIngresos);
+        setGastosNormales(totalGastosNormales);
+        setGastosFijos(totalPagosFijos);
+        setTotalGastos(totalGastosCalculado);
+        setDisponible(nuevoDisponible);
+
+      } catch (err) {
+        setError(err.message);
+        console.error('Error general cargando datos financieros:', err);
+        
+        // Usar valores por defecto en caso de error
+        setIngresoMensual(1800);
+        setGastosNormales(72);
+        setGastosFijos(750);
+        setTotalGastos(822);
+        setDisponible(978);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDatosFinancieros();
+    
+    // Recargar datos cada 60 segundos para actualizaciones
+    const intervalo = setInterval(fetchDatosFinancieros, 60000);
+    return () => clearInterval(intervalo);
+  }, []);
+
+  // ========== CÁLCULOS DERIVADOS ==========
+  const porcentajeDisponible = ingresoMensual > 0 ? (disponible / ingresoMensual) * 100 : 0;
+  const porcentajeGastos = ingresoMensual > 0 ? (totalGastos / ingresoMensual) * 100 : 0;
+  const porcentajeGastosNormales = totalGastos > 0 ? (gastosNormales / totalGastos) * 100 : 0;
+  const porcentajeGastosFijos = totalGastos > 0 ? (gastosFijos / totalGastos) * 100 : 0;
 
   // ========== ESTADOS DE CARGA Y ERROR ==========
   if (loading) {
@@ -161,9 +179,6 @@ export default function DineroDisponible() {
           <div className="text-center">
             <RefreshCw className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-3" />
             <p className="text-sm text-slate-400">Calculando...</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Obteniendo datos de ingresos y gastos fijos
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -183,12 +198,11 @@ export default function DineroDisponible() {
         </CardHeader>
         <CardContent className="text-center py-6">
           <p className="text-sm text-amber-400 mb-2">Error cargando datos</p>
-          <p className="text-xs text-slate-500 mb-3 max-w-xs mx-auto">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md transition"
           >
-            Reintentar conexión
+            Reintentar
           </button>
         </CardContent>
       </Card>
@@ -229,9 +243,6 @@ export default function DineroDisponible() {
           <p className="text-sm text-emerald-300">
             Para gastos variables y ahorro
           </p>
-          <p className="text-xs text-slate-500 mt-1">
-            Basado en datos de {formatearMesTexto(mesFiltro)}
-          </p>
         </div>
 
         {/* BARRA DE PROGRESO */}
@@ -250,63 +261,97 @@ export default function DineroDisponible() {
             ></div>
             <div 
               className="h-full bg-slate-600 transition-all duration-500"
-              style={{ width: `${Math.min(Math.max(porcentajeGastosFijos, 0), 100)}%` }}
-              title={`${porcentajeGastosFijos.toFixed(1)}% gastos fijos`}
+              style={{ width: `${Math.min(Math.max(porcentajeGastos, 0), 100)}%` }}
+              title={`${porcentajeGastos.toFixed(1)}% gastos totales`}
             ></div>
           </div>
         </div>
 
         {/* DESGLOSE DETALLADO */}
         <div className="space-y-3">
-          {/* INGRESO MENSUAL - DESDE API */}
+          {/* INGRESO MENSUAL */}
           <div className="flex items-center justify-between p-3 bg-emerald-900/20 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-900/30 rounded-lg">
                 <TrendingUp className="h-4 w-4 text-emerald-400" />
               </div>
               <div>
-                <span className="text-sm text-slate-300">Ingreso mensual</span>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
-                  <Database className="h-3 w-3" />
-                  <span>Desde API de ingresos</span>
-                </div>
+                <span className="text-sm text-slate-300">Ingresos totales</span>
               </div>
             </div>
             <div className="text-right">
               <span className="text-lg font-bold text-emerald-400">
                 €{ingresoMensual.toFixed(2)}
               </span>
-              {ingresoMensual === 0 && (
-                <div className="text-xs text-amber-500 mt-1">
-                  Sin ingresos registrados este mes
-                </div>
-              )}
             </div>
           </div>
 
-          {/* GASTOS FIJOS - DESDE API */}
-          <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-800 rounded-lg">
-                <PieChart className="h-4 w-4 text-slate-400" />
-              </div>
-              <div>
-                <span className="text-sm text-slate-300">Gastos fijos</span>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
-                  <CreditCard className="h-3 w-3" />
-                  <span>Desde API de pagos-fijos</span>
+          {/* GASTOS TOTALES - CON DESGLOSE */}
+          <div className="space-y-2">
+            {/* GASTOS NORMALES */}
+            <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-800 rounded-lg">
+                  <Receipt className="h-4 w-4 text-slate-400" />
                 </div>
+                <div>
+                  <span className="text-sm text-slate-300">Gastos normales</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-bold text-slate-300">
+                  €{gastosNormales.toFixed(2)}
+                </span>
+                {totalGastos > 0 && (
+                  <div className="text-xs text-slate-500">
+                    {porcentajeGastosNormales.toFixed(0)}% del total gastos
+                  </div>
+                )}
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-lg font-bold text-slate-300">
-                €{gastosFijos.toFixed(2)}
-              </span>
-              {gastosFijos > 0 && ingresoMensual > 0 && (
-                <div className="text-xs text-slate-500">
-                  {(porcentajeGastosFijos).toFixed(0)}% del ingreso
+
+            {/* GASTOS FIJOS */}
+            <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-800 rounded-lg">
+                  <Repeat className="h-4 w-4 text-amber-400" />
                 </div>
-              )}
+                <div>
+                  <span className="text-sm text-slate-300">Gastos fijos</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-bold text-slate-300">
+                  €{gastosFijos.toFixed(2)}
+                </span>
+                {totalGastos > 0 && (
+                  <div className="text-xs text-slate-500">
+                    {porcentajeGastosFijos.toFixed(0)}% del total gastos
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* TOTAL GASTOS */}
+            <div className="flex items-center justify-between p-3 bg-red-900/20 rounded-lg border border-red-800/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-900/30 rounded-lg">
+                  <PieChart className="h-4 w-4 text-red-400" />
+                </div>
+                <div>
+                  <span className="text-sm text-slate-300">Total gastos</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-bold text-red-400">
+                  €{totalGastos.toFixed(2)}
+                </span>
+                {ingresoMensual > 0 && (
+                  <div className="text-xs text-slate-500">
+                    {porcentajeGastos.toFixed(0)}% del ingreso
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -328,9 +373,9 @@ export default function DineroDisponible() {
             </div>
             
             <div className="p-2 bg-slate-800/30 rounded">
-              <div className="text-slate-500">Relación D/F</div>
+              <div className="text-slate-500">Relación D/G</div>
               <div className="text-slate-300">
-                {gastosFijos > 0 ? (disponible/gastosFijos).toFixed(1) : '∞'}:1
+                {totalGastos > 0 ? (disponible/totalGastos).toFixed(1) : '∞'}:1
               </div>
             </div>
           </div>
@@ -339,27 +384,31 @@ export default function DineroDisponible() {
           {disponible < 0 ? (
             <div className="mt-3 p-2 bg-red-900/20 border border-red-800/30 rounded text-center">
               <p className="text-xs text-red-400">
-                ⚠️ ¡Atención! Los gastos fijos superan tus ingresos en €{Math.abs(disponible).toFixed(2)}
+                ⚠️ ¡Atención! Los gastos superan tus ingresos en €{Math.abs(disponible).toFixed(2)}
               </p>
             </div>
           ) : disponible < ingresoMensual * 0.2 && disponible > 0 ? (
             <div className="mt-3 p-2 bg-amber-900/20 border border-amber-800/30 rounded text-center">
               <p className="text-xs text-amber-400">
-                💡 Solo el {(porcentajeDisponible).toFixed(0)}% disponible. Considera reducir gastos fijos.
+                💡 Solo el {porcentajeDisponible.toFixed(0)}% disponible
+              </p>
+            </div>
+          ) : porcentajeDisponible > 50 ? (
+            <div className="mt-3 p-2 bg-emerald-900/20 border border-emerald-800/30 rounded text-center">
+              <p className="text-xs text-emerald-400">
+                ✅ Excelente! Tienes {porcentajeDisponible.toFixed(0)}% disponible para ahorrar
               </p>
             </div>
           ) : null}
           
-          {/* INFORMACIÓN DE FUENTES DE DATOS */}
-          <div className="mt-3 text-xs text-slate-600 flex justify-between">
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-              <span>API Ingresos: {ingresoMensual > 0 ? '✓ Conectada' : '✗ Sin datos'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-slate-500"></div>
-              <span>API Gastos: {gastosFijos > 0 ? '✓ Conectada' : '✗ Sin datos'}</span>
-            </div>
+          {/* RESUMEN RÁPIDO */}
+          <div className="mt-3 text-xs text-slate-600 text-center">
+            <span>
+              {gastosNormales > 0 && gastosFijos > 0 
+                ? `${gastosNormales.toFixed(0)}€ normales + ${gastosFijos.toFixed(0)}€ fijos` 
+                : 'Sin gastos registrados este mes'
+              }
+            </span>
           </div>
         </div>
       </CardContent>
