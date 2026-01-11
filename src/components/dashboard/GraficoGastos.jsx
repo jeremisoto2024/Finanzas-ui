@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   PieChart,
   Pie,
@@ -8,9 +8,7 @@ import {
   Legend,
 } from 'recharts'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { gastos } from '@/lib/data'
-import { gastosPorCategoria } from '@/lib/finanzas'
-import { categoriasConfig } from '@/lib/categorias'
+import { useGastos } from '@/contexts/GastosContext'
 import { motion } from 'framer-motion'
 
 // ICONOS LUCIDE REACT MODERNOS
@@ -29,75 +27,293 @@ import {
   Phone,
   Zap,
   DollarSign,
-  MoreHorizontal
+  MoreHorizontal,
+  Smartphone,
+  Users,
+  House,
+  Shield
 } from 'lucide-react'
 
-// Configuración de iconos por categoría
-const categoriaIconos = {
-  'Alquiler': Home,
-  'Alimentación': ShoppingCart,
-  'Transporte': Car,
-  'Entretenimiento': Film,
-  'Salud': Heart,
-  'Ropa': Shirt,
-  'Regalos': Gift,
-  'Ahorro': TrendingUp,
-  'Café': Coffee,
-  'Restaurante': Utensils,
-  'Internet': Wifi,
-  'Teléfono': Phone,
-  'Luz': Zap,
-  'Otros': MoreHorizontal
-}
+// Configuración FLEXIBLE de iconos por categoría
+const getIconForCategoria = (categoria) => {
+  const iconMap = {
+    // Vivienda y Alquiler
+    'alquiler': Home,
+    'vivienda': Home,
+    'hipoteca': Home,
+    'casa': Home,
+    'hogar': House,
+    
+    // Alimentación
+    'alimentación': ShoppingCart,
+    'alimentacion': ShoppingCart,
+    'comida': ShoppingCart,
+    'mercado': ShoppingCart,
+    'supermercado': ShoppingCart,
+    
+    // Transporte
+    'transporte': Car,
+    'gasolina': Car,
+    'combustible': Car,
+    'parking': Car,
+    'estacionamiento': Car,
+    
+    // Entretenimiento
+    'entretenimiento': Film,
+    'cine': Film,
+    'películas': Film,
+    'peliculas': Film,
+    'netflix': Film,
+    'streaming': Film,
+    
+    // Salud
+    'salud': Heart,
+    'médico': Heart,
+    'medico': Heart,
+    'farmacia': Heart,
+    'medicina': Heart,
+    'seguro': Shield,
+    'gimnasio': Heart,
+    
+    // Ropa y Moda
+    'ropa': Shirt,
+    'moda': Shirt,
+    'zapatos': Shirt,
+    'accesorios': Shirt,
+    
+    // Tecnología
+    'tecnología': Smartphone,
+    'tecnologia': Smartphone,
+    'electrónica': Smartphone,
+    'electronica': Smartphone,
+    'teléfono': Phone,
+    'telefono': Phone,
+    'móvil': Smartphone,
+    'movil': Smartphone,
+    'internet': Wifi,
+    'wifi': Wifi,
+    'ordenador': Smartphone,
+    
+    // Familia
+    'familia': Users,
+    'hijos': Users,
+    'niños': Users,
+    'esposa': Users,
+    'esposo': Users,
+    'padres': Users,
+    
+    // Educación
+    'educación': BookOpen,
+    'educacion': BookOpen,
+    'libros': BookOpen,
+    
+    // Trabajo
+    'trabajo': Briefcase,
+    'oficina': Briefcase,
+    
+    // Finanzas
+    'ahorro': TrendingUp,
+    'inversión': TrendingUp,
+    'inversion': TrendingUp,
+    
+    // Servicios
+    'luz': Zap,
+    'electricidad': Zap,
+    'agua': Zap,
+    'gas': Zap,
+    
+    // Restaurantes y Café
+    'restaurante': Utensils,
+    'comer fuera': Utensils,
+    'café': Coffee,
+    'cafe': Coffee,
+    'bar': Coffee,
+    
+    // Regalos
+    'regalos': Gift,
+    'cumpleaños': Gift,
+    'navidad': Gift,
+    
+    // Otros
+    'otros': MoreHorizontal,
+    'varios': MoreHorizontal,
+  };
+  
+  if (!categoria) return DollarSign;
+  
+  const categoriaLower = categoria.toLowerCase().trim();
+  
+  // Buscar coincidencia exacta
+  if (iconMap[categoriaLower]) {
+    return iconMap[categoriaLower];
+  }
+  
+  // Buscar coincidencia parcial
+  for (const key in iconMap) {
+    if (categoriaLower.includes(key) || key.includes(categoriaLower)) {
+      return iconMap[key];
+    }
+  }
+  
+  return DollarSign; // Icono por defecto
+};
 
-// COLORES ESPECÍFICOS PARA CADA CATEGORÍA (para evitar que se inviertan)
-const coloresPorCategoria = {
-  'Alquiler': '#3b82f6',       // AZUL para Alquiler
-  'Alimentación': '#10b981',   // VERDE para Alimentación
-  'Transporte': '#f59e0b',     // AMARILLO/ÁMBAR para Transporte
-  'Entretenimiento': '#8b5cf6', // VIOLETA para Entretenimiento
-  'Salud': '#ef4444',          // ROJO para Salud
-  'Ropa': '#ec4899',           // ROSA para Ropa
-  'Regalos': '#14b8a6',        // TURQUESA para Regalos
-  'Ahorro': '#84cc16',         // VERDE LIMA para Ahorro
-  'Café': '#f97316',           // NARANJA para Café
-  'Restaurante': '#6366f1',    // ÍNDIGO para Restaurante
-  'Internet': '#06b6d4',       // CIAN para Internet
-  'Teléfono': '#8b5cf6',       // VIOLETA para Teléfono
-  'Luz': '#fbbf24',            // AMARILLO para Luz
-  'Otros': '#94a3b8',          // GRIS para Otros
-}
+// Configuración de colores por categoría
+const getColorForCategoria = (categoria, index) => {
+  const colorMap = {
+    // Vivienda: Azules
+    'alquiler': '#3b82f6',
+    'vivienda': '#3b82f6',
+    'hipoteca': '#2563eb',
+    'hogar': '#1d4ed8',
+    
+    // Alimentación: Verdes
+    'alimentación': '#10b981',
+    'alimentacion': '#10b981',
+    'comida': '#059669',
+    'mercado': '#047857',
+    
+    // Transporte: Amarillos/Naranjas
+    'transporte': '#f59e0b',
+    'gasolina': '#d97706',
+    'taxi': '#b45309',
+    'autobús': '#92400e',
+    
+    // Entretenimiento: Violetas
+    'entretenimiento': '#8b5cf6',
+    'cine': '#7c3aed',
+    'música': '#6d28d9',
+    'videojuegos': '#5b21b6',
+    
+    // Salud: Rojos
+    'salud': '#ef4444',
+    'médico': '#dc2626',
+    'farmacia': '#b91c1c',
+    'gimnasio': '#991b1b',
+    
+    // Ropa: Rosas
+    'ropa': '#ec4899',
+    'moda': '#db2777',
+    'zapatos': '#be185d',
+    
+    // Tecnología: Índigo
+    'tecnología': '#6366f1',
+    'tecnologia': '#6366f1',
+    'teléfono': '#4f46e5',
+    'internet': '#4338ca',
+    
+    // Familia: Rosa claro
+    'familia': '#f472b6',
+    'hijos': '#f9a8d4',
+    
+    // Educación: Cian
+    'educación': '#06b6d4',
+    'educacion': '#06b6d4',
+    'libros': '#0891b2',
+    
+    // Trabajo: Gris
+    'trabajo': '#6b7280',
+    'oficina': '#4b5563',
+    
+    // Finanzas: Verde lima
+    'ahorro': '#84cc16',
+    'inversión': '#65a30d',
+    
+    // Servicios: Amarillo
+    'luz': '#fbbf24',
+    'agua': '#f59e0b',
+    
+    // Restaurantes: Índigo
+    'restaurante': '#6366f1',
+    'café': '#8b5cf6',
+    
+    // Regalos: Turquesa
+    'regalos': '#14b8a6',
+    'cumpleaños': '#0d9488',
+  };
+  
+  if (!categoria) return getDefaultColor(index);
+  
+  const categoriaLower = categoria.toLowerCase().trim();
+  
+  // Buscar coincidencia exacta
+  if (colorMap[categoriaLower]) {
+    return colorMap[categoriaLower];
+  }
+  
+  // Buscar coincidencia parcial
+  for (const key in colorMap) {
+    if (categoriaLower.includes(key) || key.includes(categoriaLower)) {
+      return colorMap[key];
+    }
+  }
+  
+  return getDefaultColor(index);
+};
 
-// Colores por defecto si no hay configuración
-const coloresDefault = [
-  '#3b82f6', // Azul - Alquiler
-  '#10b981', // Verde - Alimentación
-  '#f59e0b', // Ámbar - Transporte
-  '#8b5cf6', // Violeta - Entretenimiento
-  '#ef4444', // Rojo - Salud
-  '#ec4899', // Rosa - Ropa
-  '#14b8a6', // Turquesa - Regalos
-  '#84cc16', // Verde lima - Ahorro
-  '#f97316', // Naranja - Café
-  '#6366f1', // Índigo - Restaurante
-]
+// Colores por defecto para categorías no mapeadas
+const getDefaultColor = (index) => {
+  const defaultColors = [
+    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444',
+    '#ec4899', '#14b8a6', '#84cc16', '#f97316', '#6366f1',
+    '#06b6d4', '#8b5cf6', '#fbbf24', '#94a3b8', '#64748b'
+  ];
+  return defaultColors[index % defaultColors.length];
+};
 
-export default function GraficoGastos() {
-  const [activeIndex, setActiveIndex] = useState(null)
-  const porCategoria = gastosPorCategoria(gastos)
+// Componente principal
+export default function GraficoGastos({ modo = 'mesActual' }) {
+  const [activeIndex, setActiveIndex] = useState(null);
+  
+  const { 
+    gastosMesActual,
+    totalMesActual,
+    gastosPorCategoriaMesActual,
+    gastosFiltrados,
+    totalGastosFiltrados,
+    gastosPorCategoria,
+    formatearMesTexto,
+    mesActual,
+    filtroMes
+  } = useGastos();
 
-  // Ordenar los datos por monto (de mayor a menor) para consistencia
-  const dataOrdenada = Object.entries(porCategoria)
-    .sort(([, montoA], [, montoB]) => montoB - montoA)
-    .map(([categoria, monto], index) => ({
-      name: categoria,
-      value: monto,
-      // Usar color específico por categoría, si no existe, usar color por defecto basado en índice
-      color: coloresPorCategoria[categoria] || coloresDefault[index % coloresDefault.length],
-      icon: categoriaIconos[categoria] || DollarSign,
-    }))
+  // Seleccionar los datos según el modo
+  const { datos, mesTexto, total } = useMemo(() => {
+    switch (modo) {
+      case 'filtrados':
+        const porCategoriaFiltrados = gastosPorCategoria || {};
+        const totalFiltrados = totalGastosFiltrados || 0;
+        return {
+          datos: porCategoriaFiltrados,
+          mesTexto: filtroMes ? formatearMesTexto(filtroMes) : 'Gastos filtrados',
+          total: totalFiltrados
+        };
+      
+      case 'mesActual':
+      default:
+        const porCategoriaMes = gastosPorCategoriaMesActual || {};
+        const totalMes = totalMesActual || 0;
+        return {
+          datos: porCategoriaMes,
+          mesTexto: formatearMesTexto(mesActual),
+          total: totalMes
+        };
+    }
+  }, [modo, gastosPorCategoriaMesActual, totalMesActual, gastosPorCategoria, 
+      totalGastosFiltrados, filtroMes, formatearMesTexto, mesActual]);
 
-  const total = dataOrdenada.reduce((acc, item) => acc + item.value, 0)
+  // Preparar datos para el gráfico
+  const dataParaGrafico = useMemo(() => {
+    return Object.entries(datos)
+      .sort(([, montoA], [, montoB]) => montoB - montoA)
+      .map(([categoria, monto], index) => ({
+        name: categoria,
+        value: monto,
+        color: getColorForCategoria(categoria, index),
+        icon: getIconForCategoria(categoria),
+        porcentaje: total > 0 ? (monto / total) * 100 : 0
+      }));
+  }, [datos, total]);
 
   // Tooltip personalizado
   const CustomTooltip = ({ active, payload }) => {
@@ -110,12 +326,12 @@ export default function GraficoGastos() {
               className="w-4 h-4 rounded-full" 
               style={{ backgroundColor: data.color }}
             />
-            <p className="text-sm font-semibold text-white">{data.name}</p>
+            <p className="text-sm font-semibold text-white capitalize">{data.name.toLowerCase()}</p>
           </div>
           <div className="space-y-1">
             <p className="text-xl font-bold text-white">€{data.value.toFixed(2)}</p>
             <p className="text-sm text-slate-300">
-              {((data.value / total) * 100).toFixed(1)}% del total
+              {data.porcentaje.toFixed(1)}% del total
             </p>
           </div>
         </div>
@@ -123,6 +339,30 @@ export default function GraficoGastos() {
     }
     return null;
   };
+
+  // Si no hay datos
+  if (dataParaGrafico.length === 0) {
+    return (
+      <Card className="bg-slate-900/80 border border-slate-800 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+            <div className="p-2 bg-blue-900/30 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-blue-400" />
+            </div>
+            Distribución de Gastos
+          </CardTitle>
+          <p className="text-sm text-slate-400 mt-1">
+            {mesTexto} • Sin datos disponibles
+          </p>
+        </CardHeader>
+        <CardContent className="text-center py-12">
+          <DollarSign className="h-16 w-16 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400">No hay gastos registrados</p>
+          <p className="text-sm text-slate-500 mt-1">Añade gastos para ver el gráfico</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-slate-900/80 border border-slate-800 backdrop-blur-sm">
@@ -133,13 +373,18 @@ export default function GraficoGastos() {
           </div>
           Distribución de Gastos
         </CardTitle>
-        <p className="text-sm text-slate-400 mt-1">
-          Total: <span className="font-semibold text-red-400">€{total.toFixed(2)}</span>
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-1">
+          <p className="text-sm text-slate-400">
+            {mesTexto} • {dataParaGrafico.length} categorías
+          </p>
+          <p className="text-sm font-semibold text-red-400">
+            Total: €{total.toFixed(2)}
+          </p>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* GRÁFICO CON COLORES CORREGIDOS */}
+        {/* GRÁFICO PIE */}
         <motion.div
           className="h-72 w-full"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -149,7 +394,7 @@ export default function GraficoGastos() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={dataOrdenada}
+                data={dataParaGrafico}
                 dataKey="value"
                 innerRadius={60}
                 outerRadius={90}
@@ -162,7 +407,7 @@ export default function GraficoGastos() {
                 labelLine={false}
                 label={null}
               >
-                {dataOrdenada.map((entry, index) => (
+                {dataParaGrafico.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
@@ -176,11 +421,11 @@ export default function GraficoGastos() {
 
               <Tooltip content={<CustomTooltip />} />
               
-              {/* Leyenda con colores específicos */}
+              {/* Leyenda simple */}
               <Legend 
                 content={() => (
                   <div className="flex flex-wrap gap-2 justify-center mt-4">
-                    {dataOrdenada.slice(0, 3).map((item, index) => (
+                    {dataParaGrafico.slice(0, 3).map((item, index) => (
                       <div 
                         key={index}
                         className="flex items-center gap-1 px-2 py-1 bg-slate-800/50 rounded-md"
@@ -189,12 +434,14 @@ export default function GraficoGastos() {
                           className="w-2 h-2 rounded-full" 
                           style={{ backgroundColor: item.color }}
                         />
-                        <span className="text-xs text-slate-300">{item.name}</span>
+                        <span className="text-xs text-slate-300 capitalize">
+                          {item.name.toLowerCase()}
+                        </span>
                       </div>
                     ))}
-                    {dataOrdenada.length > 3 && (
+                    {dataParaGrafico.length > 3 && (
                       <div className="px-2 py-1 bg-slate-800/50 rounded-md text-xs text-slate-400">
-                        +{dataOrdenada.length - 3} más
+                        +{dataParaGrafico.length - 3} más
                       </div>
                     )}
                   </div>
@@ -204,19 +451,19 @@ export default function GraficoGastos() {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* LEYENDA MEJORADA - CON COLORES CORRECTOS */}
+        {/* LEYENDA DETALLADA */}
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-300">Detalle por categoría</h3>
             <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
-              {dataOrdenada.length} categorías
+              {dataParaGrafico.length} categorías
             </span>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2">
-            {dataOrdenada.map((item, index) => {
-              const Icon = item.icon
-              const porcentaje = ((item.value / total) * 100).toFixed(1)
+            {dataParaGrafico.map((item, index) => {
+              const Icon = item.icon;
+              const porcentaje = item.porcentaje;
 
               return (
                 <motion.div
@@ -246,12 +493,12 @@ export default function GraficoGastos() {
                       <Icon className="h-3 w-3" style={{ color: item.color }} />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-xs font-medium text-white truncate block">
-                        {item.name}
+                      <span className="text-xs font-medium text-white truncate block capitalize">
+                        {item.name.toLowerCase()}
                       </span>
                       <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
                         <div 
-                          className="h-1.5 rounded-full"
+                          className="h-1.5 rounded-full transition-all duration-300"
                           style={{ 
                             width: `${Math.min(porcentaje, 100)}%`,
                             backgroundColor: item.color,
@@ -263,30 +510,30 @@ export default function GraficoGastos() {
 
                   <div className="text-right flex-shrink-0 ml-2">
                     <div className="text-xs font-semibold text-slate-300">
-                      €{item.value.toFixed(0)}
+                      €{item.value.toFixed(2)}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {porcentaje}%
+                      {porcentaje.toFixed(1)}%
                     </div>
                   </div>
                 </motion.div>
-              )
+              );
             })}
           </div>
 
-          {/* RESUMEN CON COLORES CLAROS */}
+          {/* RESUMEN RÁPIDO */}
           <div className="pt-3 border-t border-slate-800">
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center p-2 bg-slate-800/30 rounded-lg">
                 <div className="text-xs text-slate-400">Mayor gasto</div>
-                {dataOrdenada.length > 0 && (
+                {dataParaGrafico.length > 0 && (
                   <div className="flex items-center justify-center gap-1">
                     <div 
                       className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: dataOrdenada[0].color }}
+                      style={{ backgroundColor: dataParaGrafico[0].color }}
                     />
-                    <div className="text-sm font-medium text-white truncate">
-                      {dataOrdenada[0].name}
+                    <div className="text-sm font-medium text-white truncate capitalize">
+                      {dataParaGrafico[0].name.toLowerCase()}
                     </div>
                   </div>
                 )}
@@ -294,7 +541,7 @@ export default function GraficoGastos() {
               <div className="text-center p-2 bg-slate-800/30 rounded-lg">
                 <div className="text-xs text-slate-400">Promedio/cat</div>
                 <div className="text-sm font-medium text-slate-300">
-                  €{(total / dataOrdenada.length).toFixed(0)}
+                  €{(total / dataParaGrafico.length).toFixed(0)}
                 </div>
               </div>
             </div>
@@ -302,5 +549,5 @@ export default function GraficoGastos() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
