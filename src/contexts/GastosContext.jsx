@@ -372,6 +372,63 @@ export function GastosProvider({ children }) {
     return stats;
   }, [gastosFiltrados]);
 
+  // ========== DATOS DEL MES ACTUAL ==========
+
+  // 1. Obtener el mes actual en formato YYYY-MM
+  const getMesActual = useMemo(() => {
+    const ahora = new Date();
+    const año = ahora.getFullYear();
+    const mes = ahora.getMonth() + 1;
+    return `${año}-${mes.toString().padStart(2, '0')}`;
+  }, []);
+
+  // 2. Gastos del mes actual (sin filtros adicionales)
+  const gastosMesActual = useMemo(() => {
+    return todosLosGastos.filter(gasto => {
+      if (!gasto.fecha) return false;
+      const fechaGasto = new Date(gasto.fecha);
+      const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+      return mesGasto === getMesActual;
+    });
+  }, [todosLosGastos, getMesActual]);
+
+  // 3. Total del mes actual
+  const totalMesActual = useMemo(() => {
+    return gastosMesActual.reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
+  }, [gastosMesActual]);
+
+  // 4. Gastos por categoría del mes actual
+  const gastosPorCategoriaMesActual = useMemo(() => {
+    const categorias = {};
+    gastosMesActual.forEach(gasto => {
+      const cat = gasto.categoria || 'Otros';
+      categorias[cat] = (categorias[cat] || 0) + (gasto.monto || 0);
+    });
+    return categorias;
+  }, [gastosMesActual]);
+
+  // 5. Estadísticas por tipo para el mes actual
+  const estadisticasPorTipoMesActual = useMemo(() => {
+    const stats = {
+      normal: { total: 0, count: 0, label: 'Gastos Normales' },
+      pago_fijo: { total: 0, count: 0, label: 'Pagos Fijos' },
+      cuota: { total: 0, count: 0, label: 'Cuotas Pagadas' }
+    };
+    
+    gastosMesActual.forEach(gasto => {
+      const tipo = gasto.origen || 'normal';
+      if (stats[tipo]) {
+        stats[tipo].total += gasto.monto || 0;
+        stats[tipo].count += 1;
+      } else {
+        stats.normal.total += gasto.monto || 0;
+        stats.normal.count += 1;
+      }
+    });
+    
+    return stats;
+  }, [gastosMesActual]);
+
   // Valor del contexto
   const value = {
     // Estados
@@ -405,6 +462,47 @@ export function GastosProvider({ children }) {
     totalGastosFiltrados,
     gastosPorCategoria,
     estadisticasPorTipo,
+    
+    // ========== NUEVOS DATOS DEL MES ACTUAL ==========
+    // Mes actual
+    mesActual: getMesActual,
+    
+    // Datos del mes actual
+    gastosMesActual,
+    totalMesActual,
+    gastosPorCategoriaMesActual,
+    estadisticasPorTipoMesActual,
+    
+    // ========== FUNCIONES ÚTILES ==========
+    // Función para formatear el mes actual
+    formatearMesActual: () => formatearMesTexto(getMesActual),
+    
+    // Función para obtener datos de un mes específico
+    getDatosPorMes: (mesFormato) => {
+      if (!mesFormato) return { gastos: [], total: 0, porCategoria: {} };
+      
+      const gastosDelMes = todosLosGastos.filter(gasto => {
+        if (!gasto.fecha) return false;
+        const fechaGasto = new Date(gasto.fecha);
+        const mesGasto = `${fechaGasto.getFullYear()}-${String(fechaGasto.getMonth() + 1).padStart(2, '0')}`;
+        return mesGasto === mesFormato;
+      });
+      
+      const totalDelMes = gastosDelMes.reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
+      
+      const porCategoriaDelMes = {};
+      gastosDelMes.forEach(gasto => {
+        const cat = gasto.categoria || 'Otros';
+        porCategoriaDelMes[cat] = (porCategoriaDelMes[cat] || 0) + (gasto.monto || 0);
+      });
+      
+      return {
+        gastos: gastosDelMes,
+        total: totalDelMes,
+        porCategoria: porCategoriaDelMes,
+        count: gastosDelMes.length
+      };
+    }
   };
 
   return (
