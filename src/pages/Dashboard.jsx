@@ -1,5 +1,4 @@
 import { motion } from "framer-motion"
-import ResumenGastos from "@/components/dashboard/ResumenGastos"
 import GraficoGastos from "@/components/dashboard/GraficoGastos"
 import DineroDisponible from "@/components/dashboard/DineroDisponible"
 import PagosFijos from "@/components/dashboard/PagosFijos"
