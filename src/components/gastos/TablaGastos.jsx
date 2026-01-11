@@ -13,7 +13,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { useGastos } from '@/contexts/GastosContext';
-import ResumenGastos from './ResumenGastos'; // Importar el componente ResumenGastos
+import ResumenGastos from '@/components/dashboard/ResumenGastos'; // Importar el componente ResumenGastos
 
 export default function TablaGastos() {
   const {
