@@ -3,7 +3,6 @@ import GraficoGastos from "@/components/dashboard/GraficoGastos"
 import DineroDisponible from "@/components/dashboard/DineroDisponible"
 import PagosFijos from "@/components/dashboard/PagosFijos"
 import BalanceMensual from "@/components/dashboard/BalanceMensual"
-import { Button } from "@/components/ui/button"
 
 export default function Dashboard() {
   return (
@@ -16,10 +15,6 @@ export default function Dashboard() {
       <BalanceMensual />
       <PagosFijos />
       <GraficoGastos />
-
-      <Button className="w-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
-        Añadir gasto
-      </Button>
     </motion.div>
   )
 }
