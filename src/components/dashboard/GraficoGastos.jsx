@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useGastos } from '@/contexts/GastosContext'
 import { motion } from 'framer-motion'
 
-// ICONOS LUCIDE REACT MODERNOS (solo los que existen)
+// ICONOS LUCIDE REACT MODERNOS
 import { 
   Home,
   ShoppingCart,
@@ -35,6 +35,132 @@ import {
   Briefcase,
   TrendingUp as TrendingUpIcon
 } from 'lucide-react'
+
+// FUNCIÓN PARA GENERAR COLORES ÚNICOS BASADOS EN EL NOMBRE DE LA CATEGORÍA
+const generateCategoryColor = (categoryName) => {
+  // Hash simple basado en el nombre para consistencia
+  const hash = categoryName.split('').reduce((acc, char) => {
+    return char.charCodeAt(0) + ((acc << 5) - acc);
+  }, 0);
+  
+  // Colores predefinidos para categorías comunes
+  const colorMap = {
+    // Vivienda: Azules
+    'vivienda': '#3b82f6',
+    'alquiler': '#2563eb',
+    'hipoteca': '#1d4ed8',
+    'hogar': '#1e40af',
+    
+    // Alimentación: Verdes
+    'alimentación': '#10b981',
+    'alimentacion': '#059669',
+    'comida': '#047857',
+    'supermercado': '#065f46',
+    'mercado': '#064e3b',
+    
+    // Transporte: Amarillos/Naranjas
+    'transporte': '#f59e0b',
+    'gasolina': '#d97706',
+    'autobús': '#b45309',
+    'taxi': '#92400e',
+    'uber': '#78350f',
+    
+    // Entretenimiento: Violetas
+    'entretenimiento': '#8b5cf6',
+    'cine': '#7c3aed',
+    'netflix': '#6d28d9',
+    'streaming': '#5b21b6',
+    'música': '#4c1d95',
+    
+    // Salud: Rojos
+    'salud': '#ef4444',
+    'médico': '#dc2626',
+    'farmacia': '#b91c1c',
+    'hospital': '#991b1b',
+    'medicina': '#7f1d1d',
+    
+    // Ropa: Rosas
+    'ropa': '#ec4899',
+    'moda': '#db2777',
+    'zapatos': '#be185d',
+    'accesorios': '#9d174d',
+    
+    // Tecnología: Índigos
+    'tecnología': '#6366f1',
+    'tecnologia': '#4f46e5',
+    'teléfono': '#4338ca',
+    'internet': '#3730a3',
+    'ordenador': '#312e81',
+    
+    // Familia: Rosas claros
+    'familia': '#f472b6',
+    'hijos': '#f9a8d4',
+    'esposa': '#fce7f3',
+    'esposo': '#fbcfe8',
+    
+    // Educación: Cian
+    'educación': '#06b6d4',
+    'educacion': '#0891b2',
+    'libros': '#0e7490',
+    'curso': '#155e75',
+    
+    // Trabajo: Grises
+    'trabajo': '#6b7280',
+    'oficina': '#4b5563',
+    'negocio': '#374151',
+    
+    // Ahorro/Inversión: Verdes Lima
+    'ahorro': '#84cc16',
+    'inversión': '#65a30d',
+    'inversion': '#4d7c0f',
+    'bolsa': '#3f6212',
+    
+    // Servicios: Amarillos
+    'luz': '#fbbf24',
+    'agua': '#f59e0b',
+    'gas': '#d97706',
+    'electricidad': '#b45309',
+    
+    // Restaurantes: Índigos
+    'restaurante': '#6366f1',
+    'café': '#8b5cf6',
+    'cafe': '#7c3aed',
+    'bar': '#6d28d9',
+    
+    // Regalos: Turquesas
+    'regalos': '#14b8a6',
+    'cumpleaños': '#0d9488',
+    'navidad': '#0f766e',
+    'aniversario': '#115e59',
+    
+    // Otros: Grises neutros
+    'otros': '#94a3b8',
+    'varios': '#64748b',
+    'misceláneo': '#475569',
+    'miscelaneo': '#334155',
+  };
+  
+  // Convertir a minúsculas y sin acentos
+  const normalized = categoryName.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  
+  // Buscar coincidencia exacta
+  if (colorMap[normalized]) {
+    return colorMap[normalized];
+  }
+  
+  // Buscar coincidencia parcial
+  for (const [key, color] of Object.entries(colorMap)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return color;
+    }
+  }
+  
+  // Si no se encuentra, generar color basado en hash
+  const hue = Math.abs(hash % 360);
+  return `hsl(${hue}, 70%, 60%)`;
+};
 
 // Configuración FLEXIBLE de iconos por categoría
 const getIconForCategoria = (categoria) => {
@@ -160,109 +286,6 @@ const getIconForCategoria = (categoria) => {
   return DollarSign; // Icono por defecto
 };
 
-// Configuración de colores por categoría
-const getColorForCategoria = (categoria, index) => {
-  const colorMap = {
-    // Vivienda: Azules
-    'alquiler': '#3b82f6',
-    'vivienda': '#3b82f6',
-    'hipoteca': '#2563eb',
-    'hogar': '#1d4ed8',
-    
-    // Alimentación: Verdes
-    'alimentación': '#10b981',
-    'alimentacion': '#10b981',
-    'comida': '#059669',
-    'mercado': '#047857',
-    
-    // Transporte: Amarillos/Naranjas
-    'transporte': '#f59e0b',
-    'gasolina': '#d97706',
-    'taxi': '#b45309',
-    'autobús': '#92400e',
-    
-    // Entretenimiento: Violetas
-    'entretenimiento': '#8b5cf6',
-    'cine': '#7c3aed',
-    'música': '#6d28d9',
-    'videojuegos': '#5b21b6',
-    
-    // Salud: Rojos
-    'salud': '#ef4444',
-    'médico': '#dc2626',
-    'farmacia': '#b91c1c',
-    'gimnasio': '#991b1b',
-    
-    // Ropa: Rosas
-    'ropa': '#ec4899',
-    'moda': '#db2777',
-    'zapatos': '#be185d',
-    
-    // Tecnología: Índigo
-    'tecnología': '#6366f1',
-    'tecnologia': '#6366f1',
-    'teléfono': '#4f46e5',
-    'internet': '#4338ca',
-    
-    // Familia: Rosa claro
-    'familia': '#f472b6',
-    'hijos': '#f9a8d4',
-    
-    // Educación: Cian
-    'educación': '#06b6d4',
-    'educacion': '#06b6d4',
-    'libros': '#0891b2',
-    
-    // Trabajo: Gris
-    'trabajo': '#6b7280',
-    'oficina': '#4b5563',
-    
-    // Finanzas: Verde lima
-    'ahorro': '#84cc16',
-    'inversión': '#65a30d',
-    
-    // Servicios: Amarillo
-    'luz': '#fbbf24',
-    'agua': '#f59e0b',
-    
-    // Restaurantes: Índigo
-    'restaurante': '#6366f1',
-    'café': '#8b5cf6',
-    
-    // Regalos: Turquesa
-    'regalos': '#14b8a6',
-    'cumpleaños': '#0d9488',
-  };
-  
-  if (!categoria) return getDefaultColor(index);
-  
-  const categoriaLower = categoria.toLowerCase().trim();
-  
-  // Buscar coincidencia exacta
-  if (colorMap[categoriaLower]) {
-    return colorMap[categoriaLower];
-  }
-  
-  // Buscar coincidencia parcial
-  for (const key in colorMap) {
-    if (categoriaLower.includes(key) || key.includes(categoriaLower)) {
-      return colorMap[key];
-    }
-  }
-  
-  return getDefaultColor(index);
-};
-
-// Colores por defecto para categorías no mapeadas
-const getDefaultColor = (index) => {
-  const defaultColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444',
-    '#ec4899', '#14b8a6', '#84cc16', '#f97316', '#6366f1',
-    '#06b6d4', '#8b5cf6', '#fbbf24', '#94a3b8', '#64748b'
-  ];
-  return defaultColors[index % defaultColors.length];
-};
-
 // Componente principal
 export default function GraficoGastos({ modo = 'mesActual' }) {
   const [activeIndex, setActiveIndex] = useState(null);
@@ -302,16 +325,24 @@ export default function GraficoGastos({ modo = 'mesActual' }) {
   }, [modo, gastosPorCategoriaMesActual, totalMesActual, gastosPorCategoria, 
       totalGastosFiltrados, filtroMes, formatearMesTexto, mesActual]);
 
-  // Preparar datos para el gráfico
+  // Preparar datos para el gráfico - CON COLORES ÚNICOS POR CATEGORÍA
   const dataParaGrafico = useMemo(() => {
-    return Object.entries(datos)
-      .sort(([, montoA], [, montoB]) => montoB - montoA)
-      .map(([categoria, monto], index) => ({
+    const categoriasUnicas = Object.keys(datos);
+    
+    // Crear un mapa de colores únicos por categoría
+    const colorMap = {};
+    categoriasUnicas.forEach(categoria => {
+      colorMap[categoria] = generateCategoryColor(categoria);
+    });
+    
+    return categoriasUnicas
+      .sort((a, b) => datos[b] - datos[a])
+      .map((categoria, index) => ({
         name: categoria,
-        value: monto,
-        color: getColorForCategoria(categoria, index),
+        value: datos[categoria],
+        color: colorMap[categoria], // Color único basado en el nombre
         icon: getIconForCategoria(categoria),
-        porcentaje: total > 0 ? (monto / total) * 100 : 0
+        porcentaje: total > 0 ? (datos[categoria] / total) * 100 : 0
       }));
   }, [datos, total]);
 
