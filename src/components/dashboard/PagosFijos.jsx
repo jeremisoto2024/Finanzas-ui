@@ -162,41 +162,40 @@ export default function PagosFijos() {
           return (
             <div
               key={pago.id || pago.nombre}
-              className="flex items-center justify-between p-3 hover:bg-slate-800/30 rounded-lg transition-colors"
+              className="p-3 hover:bg-slate-800/30 rounded-lg transition-colors"
             >
-              <div className="flex items-start gap-3 flex-1">
-                <div className="p-2 bg-slate-800 rounded-lg">
+              {/* PRIMERA LÍNEA: Nombre + Monto bien alineados */}
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm font-medium text-white">{pago.nombre}</span>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-white">{pago.nombre}</span>
-                    <CheckCircle className="h-3 w-3 text-green-400" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="capitalize">{pago.frecuencia || 'mensual'}</span>
-                      <span className="text-slate-700">•</span>
-                      <span>{pago.metodo}</span>
-                      {pago.fechaInicio && (
-                        <>
-                          <span className="text-slate-700">•</span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-2.5 w-2.5" />
-                            {formatearFecha(pago.fechaInicio)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {porcentaje}% del total • {pago.categoria || 'Alquiler'}
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-green-400" />
+                  <span className="text-sm font-semibold text-slate-300">
+                    €{montoFormateado}
+                  </span>
                 </div>
               </div>
-              <div className="text-right ml-4">
-                <div className="text-sm font-semibold text-slate-300 whitespace-nowrap">
-                  €{montoFormateado}
+              
+              {/* SEGUNDA LÍNEA: Detalles */}
+              <div className="text-xs text-slate-500 space-y-1 ml-6">
+                <div className="flex items-center gap-2">
+                  <span className="capitalize">{pago.frecuencia || 'mensual'}</span>
+                  <span className="text-slate-700">·</span>
+                  <span>{pago.metodo || 'Transferencia'}</span>
+                  {pago.fechaInicio && (
+                    <>
+                      <span className="text-slate-700">·</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-2.5 w-2.5" />
+                        {formatearFecha(pago.fechaInicio)}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div>
+                  {porcentaje}% del total · {pago.categoria || 'Alquiler'}
                 </div>
               </div>
             </div>
