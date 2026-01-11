@@ -45,7 +45,8 @@ import {
   Coins,
   PiggyBank,
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon
+  TrendingDown as TrendingDownIcon,
+  Shield
 } from 'lucide-react'
 
 // Configuración FLEXIBLE de iconos por categoría
@@ -316,16 +317,11 @@ const getColorForCategoria = (categoria) => {
   return '#94a3b8'; // Color por defecto
 };
 
-// Prop para controlar qué datos mostrar
-interface ResumenGastosProps {
-  modo?: 'mesActual' | 'filtrados' | 'todos';
-  titulo?: string;
-}
-
+// Componente principal
 export default function ResumenGastos({ 
   modo = 'mesActual',
   titulo = 'Resumen de Gastos'
-}: ResumenGastosProps) {
+}) {
   const { 
     // Datos del mes actual
     gastosMesActual,
