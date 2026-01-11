@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useGastos } from '@/contexts/GastosContext'
 import { motion } from 'framer-motion'
 
-// ICONOS LUCIDE REACT MODERNOS
+// ICONOS LUCIDE REACT MODERNOS (solo los que existen)
 import { 
   Home,
   ShoppingCart,
@@ -30,8 +30,10 @@ import {
   MoreHorizontal,
   Smartphone,
   Users,
-  House,
-  Shield
+  Shield,
+  Book,
+  Briefcase,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react'
 
 // Configuración FLEXIBLE de iconos por categoría
@@ -42,7 +44,7 @@ const getIconForCategoria = (categoria) => {
     'vivienda': Home,
     'hipoteca': Home,
     'casa': Home,
-    'hogar': House,
+    'hogar': Home,
     
     // Alimentación
     'alimentación': ShoppingCart,
@@ -103,18 +105,18 @@ const getIconForCategoria = (categoria) => {
     'padres': Users,
     
     // Educación
-    'educación': BookOpen,
-    'educacion': BookOpen,
-    'libros': BookOpen,
+    'educación': Book,
+    'educacion': Book,
+    'libros': Book,
     
     // Trabajo
     'trabajo': Briefcase,
     'oficina': Briefcase,
     
     // Finanzas
-    'ahorro': TrendingUp,
-    'inversión': TrendingUp,
-    'inversion': TrendingUp,
+    'ahorro': TrendingUpIcon,
+    'inversión': TrendingUpIcon,
+    'inversion': TrendingUpIcon,
     
     // Servicios
     'luz': Zap,
@@ -266,12 +268,10 @@ export default function GraficoGastos({ modo = 'mesActual' }) {
   const [activeIndex, setActiveIndex] = useState(null);
   
   const { 
-    gastosMesActual,
-    totalMesActual,
     gastosPorCategoriaMesActual,
-    gastosFiltrados,
-    totalGastosFiltrados,
+    totalMesActual,
     gastosPorCategoria,
+    totalGastosFiltrados,
     formatearMesTexto,
     mesActual,
     filtroMes
