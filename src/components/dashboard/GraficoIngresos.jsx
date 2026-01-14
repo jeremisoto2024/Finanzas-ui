@@ -10,7 +10,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 
-// ICONOS LUCIDE REACT MODERNOS para ingresos (paleta verde)
+// ICONOS LUCIDE REACT MODERNOS para ingresos
 import { 
   TrendingUp,
   DollarSign,
@@ -38,13 +38,14 @@ import {
   TrendingDown
 } from 'lucide-react'
 
-// FUNCIÓN PARA GENERAR COLORES ÚNICOS BASADOS EN EL NOMBRE DE LA CATEGORÍA (paleta verde para ingresos)
+// PALETA DE COLORES VARIADA PARA INGRESOS
 const generateCategoryColor = (categoryName) => {
+  // Hash simple basado en el nombre para consistencia
   const hash = categoryName.split('').reduce((acc, char) => {
     return char.charCodeAt(0) + ((acc << 5) - acc);
   }, 0);
   
-  // Colores predefinidos para categorías de INGRESOS (paleta verde)
+  // Paleta variada pero con predominio de tonos verdes para ingresos
   const colorMap = {
     // Sueldos y nóminas: Verdes
     'sueldo': '#10b981',
@@ -52,84 +53,128 @@ const generateCategoryColor = (categoryName) => {
     'nómina': '#047857',
     'nomina': '#065f46',
     'empleo': '#064e3b',
+    'trabajo': '#0f766e',
     
-    // Freelance/Consultoría: Verdes azulados
-    'freelance': '#0d9488',
-    'consultoría': '#0f766e',
-    'consultoria': '#115e59',
-    'independiente': '#134e4a',
+    // Freelance/Consultoría: Azules
+    'freelance': '#3b82f6',
+    'consultoría': '#2563eb',
+    'consultoria': '#1d4ed8',
+    'independiente': '#1e40af',
+    'autónomo': '#1e3a8a',
+    'autonomo': '#1e3a8a',
     
-    // Inversiones: Verdes esmeralda
+    // Inversiones: Esmeraldas
     'inversión': '#34d399',
     'inversion': '#10b981',
     'dividendos': '#059669',
     'bolsa': '#047857',
     'acciones': '#065f46',
+    'cripto': '#059669',
     
     // Ventas: Verdes lima
     'ventas': '#84cc16',
     'venta': '#65a30d',
     'ecommerce': '#4d7c0f',
     'tienda': '#3f6212',
+    'online': '#365314',
     
-    // Alquiler/Propiedades: Verdes turquesa
+    // Alquiler/Propiedades: Turquesas
     'alquiler': '#14b8a6',
     'renta': '#0d9488',
     'propiedad': '#0f766e',
     'inmueble': '#115e59',
+    'hipoteca': '#134e4a',
     
-    // Bonos/Extras: Verdes claros
-    'bonus': '#86efac',
-    'extra': '#4ade80',
-    'propina': '#22c55e',
-    'comisión': '#16a34a',
-    'comision': '#15803d',
+    // Bonos/Extras: Amarillos/Naranjas
+    'bonus': '#f59e0b',
+    'extra': '#d97706',
+    'extras': '#b45309',
+    'propina': '#92400e',
+    'comisión': '#78350f',
+    'comision': '#78350f',
+    'incentivo': '#fbbf24',
     
-    // Subsidios/Ayudas: Verdes oliva
-    'subsidio': '#a3e635',
-    'ayuda': '#84cc16',
-    'beca': '#65a30d',
+    // Subsidios/Ayudas: Violetas
+    'subsidio': '#8b5cf6',
+    'ayuda': '#7c3aed',
+    'beca': '#6d28d9',
+    'subvención': '#5b21b6',
+    'subvencion': '#5b21b6',
     
-    // Reembolsos: Verdes menta
-    'reembolso': '#99f6e4',
-    'devolución': '#5eead4',
-    'devolucion': '#2dd4bf',
+    // Reembolsos: Cian
+    'reembolso': '#06b6d4',
+    'devolución': '#0891b2',
+    'devolucion': '#0e7490',
+    'reintegro': '#155e75',
     
-    // Educación/Formación: Verdes agua
-    'educación': '#06b6d4',
-    'educacion': '#0891b2',
-    'curso': '#0e7490',
-    'formación': '#155e75',
-    'formacion': '#164e63',
+    // Educación/Formación: Índigos
+    'educación': '#6366f1',
+    'educacion': '#4f46e5',
+    'curso': '#4338ca',
+    'formación': '#3730a3',
+    'formacion': '#3730a3',
+    'capacitación': '#312e81',
+    'capacitacion': '#312e81',
     
-    // Otros ingresos: Grises verdes
+    // Regalos/Herencia: Rosas
+    'regalo': '#ec4899',
+    'regalos': '#db2777',
+    'herencia': '#be185d',
+    'donación': '#9d174d',
+    'donacion': '#9d174d',
+    
+    // Otros ingresos: Variados
     'otros': '#94a3b8',
     'varios': '#64748b',
     'misceláneo': '#475569',
     'miscelaneo': '#334155',
     'diversos': '#1e293b',
+    'ingreso': '#10b981',
   };
   
   // Convertir a minúsculas y sin acentos
   const normalized = categoryName.toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
   
-  // Buscar coincidencia exacta
+  // Buscar coincidencia exacta primero
   if (colorMap[normalized]) {
     return colorMap[normalized];
   }
   
-  // Buscar coincidencia parcial
+  // Buscar coincidencia parcial en las claves
   for (const [key, color] of Object.entries(colorMap)) {
+    // Verificar si la categoría contiene la palabra clave o viceversa
     if (normalized.includes(key) || key.includes(normalized)) {
       return color;
     }
   }
   
-  // Si no se encuentra, generar color basado en hash (tonos verdes)
-  const hue = 120 + Math.abs(hash % 100); // Rango de verdes: 120-220
-  return `hsl(${hue}, 70%, 50%)`;
+  // Si no se encuentra, generar color basado en hash con variedad
+  // Usamos diferentes rangos de colores según el hash
+  const hashNum = Math.abs(hash);
+  
+  // Asignar diferentes paletas según el módulo del hash
+  const colorGroups = [
+    // Verdes (40%)
+    ['#10b981', '#059669', '#047857', '#065f46', '#064e3b', '#0f766e', '#134e4a'],
+    // Azules (20%)
+    ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a'],
+    // Esmeraldas (15%)
+    ['#34d399', '#10b981', '#059669', '#047857'],
+    // Turquesas (10%)
+    ['#14b8a6', '#0d9488', '#0f766e', '#115e59'],
+    // Amarillos/Naranjas (10%)
+    ['#f59e0b', '#d97706', '#b45309', '#92400e'],
+    // Violetas (5%)
+    ['#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6'],
+  ];
+  
+  const groupIndex = hashNum % colorGroups.length;
+  const colorIndex = hashNum % colorGroups[groupIndex].length;
+  
+  return colorGroups[groupIndex][colorIndex];
 };
 
 // Configuración FLEXIBLE de iconos por categoría (para ingresos)
@@ -142,13 +187,16 @@ const getIconForCategoria = (categoria) => {
     'nomina': Wallet,
     'empleo': Briefcase,
     'trabajo': Briefcase,
+    'contrato': Briefcase,
     
     // Freelance/Independiente
-    'freelance': Smartphone,
     'freelance': Smartphone,
     'consultoría': Users,
     'consultoria': Users,
     'independiente': TrendingUpIcon,
+    'autónomo': TrendingUpIcon,
+    'autonomo': TrendingUpIcon,
+    'proyecto': Briefcase,
     
     // Inversiones
     'inversión': TrendingUpIcon,
@@ -156,35 +204,47 @@ const getIconForCategoria = (categoria) => {
     'dividendos': TrendingUpIcon,
     'bolsa': TrendingUpIcon,
     'acciones': TrendingUpIcon,
+    'cripto': TrendingUpIcon,
+    'fondos': TrendingUpIcon,
     
     // Ventas
     'ventas': ShoppingCart,
     'venta': ShoppingCart,
     'ecommerce': ShoppingCart,
     'tienda': ShoppingCart,
+    'online': ShoppingCart,
+    'mercado': ShoppingCart,
     
     // Alquiler/Propiedades
     'alquiler': Home,
     'renta': Home,
     'propiedad': Home,
     'inmueble': Home,
+    'hipoteca': Home,
+    'arrendamiento': Home,
     
     // Bonos y Extras
     'bonus': Gift,
     'extra': Zap,
+    'extras': Zap,
     'propina': DollarSign,
     'comisión': CreditCard,
     'comision': CreditCard,
+    'incentivo': Gift,
+    'premio': Gift,
     
     // Subsidios/Becas
     'subsidio': Shield,
     'ayuda': Shield,
     'beca': Book,
+    'subvención': Shield,
+    'subvencion': Shield,
     
     // Reembolsos
     'reembolso': CreditCard,
     'devolución': CreditCard,
     'devolucion': CreditCard,
+    'reintegro': CreditCard,
     
     // Educación
     'educación': Book,
@@ -192,12 +252,23 @@ const getIconForCategoria = (categoria) => {
     'curso': Book,
     'formación': Book,
     'formacion': Book,
+    'capacitación': Book,
+    'capacitacion': Book,
+    
+    // Regalos/Herencia
+    'regalo': Gift,
+    'regalos': Gift,
+    'herencia': Gift,
+    'donación': Gift,
+    'donacion': Gift,
     
     // Otros
     'otros': MoreHorizontal,
     'varios': MoreHorizontal,
     'misceláneo': MoreHorizontal,
     'miscelaneo': MoreHorizontal,
+    'diversos': MoreHorizontal,
+    'ingreso': DollarSign,
   };
   
   if (!categoria) return DollarSign;
@@ -236,14 +307,16 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
         setIngresos(data);
       } catch (err) {
         console.error('Error fetching ingresos:', err);
-        // Datos de ejemplo como fallback
+        // Datos de ejemplo como fallback con variedad de categorías
         setIngresos([
           { id: 1, fecha: '2025-10-01', concepto: 'Salario mensual', metodo: 'Transferencia', categoria: 'Sueldo', cuenta: 'BBVA', monto: 2500 },
           { id: 2, fecha: '2025-10-05', concepto: 'Trabajo freelance', metodo: 'PayPal', categoria: 'Freelance', cuenta: 'PayPal', monto: 450 },
           { id: 3, fecha: '2025-10-10', concepto: 'Venta de artículos', metodo: 'Bizum', categoria: 'Ventas', cuenta: 'Revolut', monto: 120 },
-          { id: 4, fecha: '2025-10-15', concepto: 'Consultoría', metodo: 'Transferencia', categoria: 'Freelance', cuenta: 'BBVA', monto: 800 },
-          { id: 5, fecha: '2025-10-20', concepto: 'Propinas', metodo: 'Efectivo', categoria: 'Extras', cuenta: 'Efectivo', monto: 85 },
-          { id: 6, fecha: '2025-10-25', concepto: 'Dividendos inversiones', metodo: 'Transferencia', categoria: 'Inversión', cuenta: 'BBVA', monto: 300 },
+          { id: 4, fecha: '2025-10-15', concepto: 'Consultoría proyecto', metodo: 'Transferencia', categoria: 'Consultoría', cuenta: 'BBVA', monto: 800 },
+          { id: 5, fecha: '2025-10-20', concepto: 'Propinas restaurante', metodo: 'Efectivo', categoria: 'Propinas', cuenta: 'Efectivo', monto: 85 },
+          { id: 6, fecha: '2025-10-25', concepto: 'Dividendos inversiones', metodo: 'Transferencia', categoria: 'Inversiones', cuenta: 'BBVA', monto: 300 },
+          { id: 7, fecha: '2025-10-28', concepto: 'Bonus trimestral', metodo: 'Transferencia', categoria: 'Bonus', cuenta: 'BBVA', monto: 500 },
+          { id: 8, fecha: '2025-10-30', concepto: 'Alquiler local', metodo: 'Transferencia', categoria: 'Alquiler', cuenta: 'BBVA', monto: 700 },
         ]);
       } finally {
         setLoading(false);
@@ -323,7 +396,7 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
       const cuenta = ingreso.cuenta?.toLowerCase() || '';
       const monto = ingreso.monto || 0;
       
-      if (cuenta.includes('efectivo')) {
+      if (cuenta.includes('efectivo') || cuenta === 'efectivo') {
         efectivo += monto;
       } else if (cuenta.includes('bbva')) {
         bbva += monto;
