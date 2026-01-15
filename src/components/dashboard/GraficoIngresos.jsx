@@ -37,7 +37,9 @@ import {
   Shield,
   TrendingDown,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Banknote,
+  PiggyBank
 } from 'lucide-react'
 
 // PALETA DE COLORES VARIADA PARA INGRESOS
@@ -154,7 +156,6 @@ const generateCategoryColor = (categoryName) => {
   }
   
   // Si no se encuentra, generar color basado en hash con variedad
-  // Usamos diferentes rangos de colores según el hash
   const hashNum = Math.abs(hash);
   
   // Asignar diferentes paletas según el módulo del hash
@@ -297,12 +298,14 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const [ingresos, setIngresos] = useState([]);
   const [gastos, setGastos] = useState([]);
+  const [pagosFijos, setPagosFijos] = useState([]);
+  const [comprasCuotas, setComprasCuotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroMes, setFiltroMes] = useState('');
 
-  // Obtener datos de la API de ingresos y gastos
+  // Obtener datos de TODAS las APIs
   useEffect(() => {
-    const fetchDatos = async () => {
+    const fetchTodosLosDatos = async () => {
       try {
         setLoading(true);
         
@@ -312,15 +315,31 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
         const ingresosData = await resIngresos.json();
         setIngresos(ingresosData);
         
-        // 2. Obtener gastos
+        // 2. Obtener gastos normales
         const resGastos = await fetch('/api/gastos');
         if (!resGastos.ok) throw new Error('Error cargando gastos');
         const gastosData = await resGastos.json();
         setGastos(gastosData);
-        
+
+        // 3. Obtener pagos fijos
+        const resPagos = await fetch('/api/pagos-fijos');
+        if (resPagos.ok) {
+          const pagosData = await resPagos.json();
+          // Solo pagos fijos activos
+          setPagosFijos(pagosData.filter(p => p.activo === true));
+        }
+
+        // 4. Obtener compras a cuotas
+        const resCuotas = await fetch('/api/compras-cuotas');
+        if (resCuotas.ok) {
+          const cuotasData = await resCuotas.json();
+          // Solo compras a cuotas activas
+          setComprasCuotas(cuotasData.filter(c => c.activo === true));
+        }
+
       } catch (err) {
         console.error('Error fetching datos:', err);
-        // Datos de ejemplo como fallback con variedad de categorías
+        // Datos de ejemplo como fallback
         setIngresos([
           { id: 1, fecha: '2025-10-01', concepto: 'Salario mensual', metodo: 'Transferencia', categoria: 'Sueldo', cuenta: 'BBVA', monto: 2500 },
           { id: 2, fecha: '2025-10-05', concepto: 'Trabajo freelance', metodo: 'PayPal', categoria: 'Freelance', cuenta: 'PayPal', monto: 450 },
@@ -332,7 +351,7 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
           { id: 8, fecha: '2025-10-30', concepto: 'Alquiler local', metodo: 'Transferencia', categoria: 'Alquiler', cuenta: 'BBVA', monto: 700 },
         ]);
         
-        // Datos de ejemplo de gastos
+        // Gastos normales de ejemplo
         setGastos([
           { id: 1, fecha: '2025-10-02', concepto: 'Compra supermercado', metodo: 'Tarjeta', categoria: 'Alimentación', cuenta: 'BBVA', monto: 120 },
           { id: 2, fecha: '2025-10-03', concepto: 'Gasolina', metodo: 'Tarjeta', categoria: 'Transporte', cuenta: 'BBVA', monto: 60 },
@@ -343,12 +362,72 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
           { id: 7, fecha: '2025-10-20', concepto: 'Regalo cumpleaños', metodo: 'Tarjeta', categoria: 'Regalos', cuenta: 'BBVA', monto: 40 },
           { id: 8, fecha: '2025-10-25', concepto: 'Transporte público', metodo: 'Efectivo', categoria: 'Transporte', cuenta: 'Efectivo', monto: 30 },
         ]);
+        
+        // Pagos fijos de ejemplo (YA PAGADOS)
+        setPagosFijos([
+          { 
+            id: '1', 
+            nombre: 'Alquiler Enero', 
+            monto: 750.00, 
+            metodo: 'Transferencia', 
+            categoria: 'Vivienda', 
+            frecuencia: 'mensual', 
+            activo: true, 
+            fechaInicio: '2025-10-01',
+            fechaRealPago: '2025-10-01',
+            cuenta: 'BBVA'
+          }
+        ]);
+        
+        // Compras a cuotas de ejemplo (CUOTAS YA PAGADAS)
+        setComprasCuotas([
+          { 
+            id: '1', 
+            concepto: 'Aliexpress 1', 
+            montoTotal: 33.74,
+            cuotasTotales: 4,
+            cuotasPagadas: 3,
+            montoPrimeraCuota: 10.00,
+            montoUltimaCuota: 7.46,
+            fechaInicio: '2025-10-01',
+            metodo: 'Tarjeta',
+            categoria: 'Tecnología',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            cuenta: 'BBVA',
+            historialCuotas: [
+              { numero: 1, monto: 10.00, pagada: true, fecha: '2025-10-01' },
+              { numero: 2, monto: 8.64, pagada: true, fecha: '2025-10-01' },
+              { numero: 3, monto: 7.64, pagada: true, fecha: '2025-10-01' },
+              { numero: 4, monto: 7.46, pagada: false, fecha: '2025-11-01' }
+            ]
+          },
+          { 
+            id: '2', 
+            concepto: 'Shein', 
+            montoTotal: 50.74,
+            cuotasTotales: 4,
+            cuotasPagadas: 1,
+            fechaInicio: '2025-10-01',
+            metodo: 'Tarjeta',
+            categoria: 'Otros',
+            activo: true,
+            frecuenciaPago: 'mensual',
+            cuenta: 'BBVA',
+            historialCuotas: [
+              { numero: 1, monto: 12.69, pagada: true, fecha: '2025-10-01' },
+              { numero: 2, monto: 12.69, pagada: false, fecha: '2025-11-01' },
+              { numero: 3, monto: 12.68, pagada: false, fecha: '2025-12-01' },
+              { numero: 4, monto: 12.68, pagada: false, fecha: '2026-01-01' }
+            ]
+          }
+        ]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDatos();
+    fetchTodosLosDatos();
   }, []);
 
   // Función para formatear mes a texto
@@ -368,102 +447,88 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
     return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
   }, []);
 
-  // Calcular ingresos por categoría
-  const calcularIngresosPorCategoria = useMemo(() => {
-    const ingresosFiltrados = ingresos.filter(ingreso => {
-      if (!ingreso.fecha) return false;
-      const fecha = new Date(ingreso.fecha);
-      const mesIngreso = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-      
-      switch (modo) {
-        case 'filtrados':
-          return !filtroMes || mesIngreso === filtroMes;
-        case 'mesActual':
-        default:
-          return mesIngreso === mesActual;
-      }
-    });
-
-    // Agrupar por categoría
-    const porCategoria = {};
-    let total = 0;
+  // 1. Transformar pagos fijos YA EFECTUADOS en gastos
+  const transformarPagosFijosAGastos = useMemo(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
     
-    ingresosFiltrados.forEach(ingreso => {
-      const categoria = ingreso.categoria || 'Otros';
-      porCategoria[categoria] = (porCategoria[categoria] || 0) + (ingreso.monto || 0);
-      total += ingreso.monto || 0;
-    });
-
-    return { porCategoria, total };
-  }, [ingresos, modo, filtroMes, mesActual]);
-
-  // Calcular gastos por cuenta
-  const calcularGastosPorCuenta = useMemo(() => {
-    const gastosFiltrados = gastos.filter(gasto => {
-      if (!gasto.fecha) return false;
-      const fecha = new Date(gasto.fecha);
-      const mesGasto = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    return pagosFijos.map(pago => {
+      const fechaPagoStr = pago.fechaRealPago || pago.fechaInicio;
+      if (!fechaPagoStr) return null;
       
-      switch (modo) {
-        case 'filtrados':
-          return !filtroMes || mesGasto === filtroMes;
-        case 'mesActual':
-        default:
-          return mesGasto === mesActual;
-      }
-    });
+      const fechaPago = new Date(fechaPagoStr);
+      fechaPago.setHours(0, 0, 0, 0);
+      
+      // Solo incluir si la fecha de pago es HOY o PASADA
+      if (fechaPago > hoy) return null;
+      
+      return {
+        id: `pago-fijo-${pago.id}`,
+        fecha: fechaPagoStr,
+        concepto: `${pago.nombre} (Pago Fijo)`,
+        metodo: pago.metodo,
+        categoria: pago.categoria,
+        cuenta: pago.cuenta || 'BBVA',
+        monto: parseFloat(pago.monto),
+        origen: 'pago_fijo',
+        esHistorico: true
+      };
+    }).filter(Boolean);
+  }, [pagosFijos]);
 
+  // 2. Transformar CUOTAS YA PAGADAS en gastos
+  const transformarCuotasAGastos = useMemo(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    const gastosCuotas = [];
+    
+    comprasCuotas.forEach(compra => {
+      if (!compra.historialCuotas || compra.historialCuotas.length === 0) return;
+      
+      compra.historialCuotas.forEach(cuota => {
+        if (!cuota.pagada) return;
+        if (!cuota.fecha) return;
+        
+        const fechaCuota = new Date(cuota.fecha);
+        fechaCuota.setHours(0, 0, 0, 0);
+        
+        // Solo incluir si la fecha es hoy o pasada
+        if (fechaCuota <= hoy) {
+          gastosCuotas.push({
+            id: `cuota-${compra.id}-${cuota.numero}`,
+            fecha: cuota.fecha,
+            concepto: `${compra.concepto} (Cuota ${cuota.numero}/${compra.cuotasTotales})`,
+            metodo: compra.metodo,
+            categoria: compra.categoria,
+            cuenta: compra.cuenta || 'BBVA',
+            monto: parseFloat(cuota.monto.toFixed(2)),
+            origen: 'cuota',
+            esHistorico: true
+          });
+        }
+      });
+    });
+    
+    return gastosCuotas;
+  }, [comprasCuotas]);
+
+  // 3. Combinar TODOS los gastos históricos
+  const todosLosGastosHistoricos = useMemo(() => {
+    return [
+      ...gastos.map(g => ({ ...g, origen: 'normal' })),
+      ...transformarPagosFijosAGastos,
+      ...transformarCuotasAGastos
+    ];
+  }, [gastos, transformarPagosFijosAGastos, transformarCuotasAGastos]);
+
+  // 4. Calcular ingresos por cuenta (HISTÓRICOS - desde siempre)
+  const ingresosPorCuentaHistorico = useMemo(() => {
     let efectivo = 0;
     let bbva = 0;
     let otrasCuentas = 0;
     
-    gastosFiltrados.forEach(gasto => {
-      const cuenta = gasto.cuenta?.toLowerCase() || '';
-      const monto = gasto.monto || 0;
-      
-      if (cuenta.includes('efectivo') || cuenta === 'efectivo') {
-        efectivo += monto;
-      } else if (cuenta.includes('bbva')) {
-        bbva += monto;
-      } else {
-        otrasCuentas += monto;
-      }
-    });
-
-    const total = efectivo + bbva + otrasCuentas;
-    
-    return {
-      efectivo,
-      bbva,
-      otrasCuentas,
-      total,
-      porcentajeEfectivo: total > 0 ? (efectivo / total) * 100 : 0,
-      porcentajeBBVA: total > 0 ? (bbva / total) * 100 : 0,
-      porcentajeOtras: total > 0 ? (otrasCuentas / total) * 100 : 0,
-    };
-  }, [gastos, modo, filtroMes, mesActual]);
-
-  // Calcular distribución por cuenta (Efectivo vs BBVA) - INGRESOS
-  const distribucionIngresosPorCuenta = useMemo(() => {
-    const ingresosFiltrados = ingresos.filter(ingreso => {
-      if (!ingreso.fecha) return false;
-      const fecha = new Date(ingreso.fecha);
-      const mesIngreso = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-      
-      switch (modo) {
-        case 'filtrados':
-          return !filtroMes || mesIngreso === filtroMes;
-        case 'mesActual':
-        default:
-          return mesIngreso === mesActual;
-      }
-    });
-
-    let efectivo = 0;
-    let bbva = 0;
-    let otrasCuentas = 0;
-    
-    ingresosFiltrados.forEach(ingreso => {
+    ingresos.forEach(ingreso => {
       const cuenta = ingreso.cuenta?.toLowerCase() || '';
       const monto = ingreso.monto || 0;
       
@@ -487,39 +552,71 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
       porcentajeBBVA: total > 0 ? (bbva / total) * 100 : 0,
       porcentajeOtras: total > 0 ? (otrasCuentas / total) * 100 : 0,
     };
-  }, [ingresos, modo, filtroMes, mesActual]);
+  }, [ingresos]);
 
-  // Calcular saldo disponible por cuenta (Ingresos - Gastos)
-  const calcularSaldoDisponible = useMemo(() => {
-    const ingresosPorCuenta = distribucionIngresosPorCuenta;
-    const gastosPorCuenta = calcularGastosPorCuenta;
+  // 5. Calcular gastos por cuenta (HISTÓRICOS - desde siempre)
+  const gastosPorCuentaHistorico = useMemo(() => {
+    let efectivo = 0;
+    let bbva = 0;
+    let otrasCuentas = 0;
     
-    const saldoEfectivo = ingresosPorCuenta.efectivo - gastosPorCuenta.efectivo;
-    const saldoBBVA = ingresosPorCuenta.bbva - gastosPorCuenta.bbva;
-    const saldoOtras = ingresosPorCuenta.otrasCuentas - gastosPorCuenta.otrasCuentas;
+    todosLosGastosHistoricos.forEach(gasto => {
+      const cuenta = gasto.cuenta?.toLowerCase() || '';
+      const monto = gasto.monto || 0;
+      
+      if (cuenta.includes('efectivo') || cuenta === 'efectivo') {
+        efectivo += monto;
+      } else if (cuenta.includes('bbva')) {
+        bbva += monto;
+      } else {
+        otrasCuentas += monto;
+      }
+    });
+
+    const total = efectivo + bbva + otrasCuentas;
     
-    const totalIngresos = ingresosPorCuenta.total;
-    const totalGastos = gastosPorCuenta.total;
+    return {
+      efectivo,
+      bbva,
+      otrasCuentas,
+      total,
+      porcentajeEfectivo: total > 0 ? (efectivo / total) * 100 : 0,
+      porcentajeBBVA: total > 0 ? (bbva / total) * 100 : 0,
+      porcentajeOtras: total > 0 ? (otrasCuentas / total) * 100 : 0,
+    };
+  }, [todosLosGastosHistoricos]);
+
+  // 6. Calcular SALDO ACTUAL por cuenta (Ingresos Históricos - Gastos Históricos)
+  const saldoActualPorCuenta = useMemo(() => {
+    const ingresos = ingresosPorCuentaHistorico;
+    const gastos = gastosPorCuentaHistorico;
+    
+    const saldoEfectivo = ingresos.efectivo - gastos.efectivo;
+    const saldoBBVA = ingresos.bbva - gastos.bbva;
+    const saldoOtras = ingresos.otrasCuentas - gastos.otrasCuentas;
+    
+    const totalIngresos = ingresos.total;
+    const totalGastos = gastos.total;
     const saldoTotal = totalIngresos - totalGastos;
     
     return {
       efectivo: {
-        ingresos: ingresosPorCuenta.efectivo,
-        gastos: gastosPorCuenta.efectivo,
+        ingresos: ingresos.efectivo,
+        gastos: gastos.efectivo,
         saldo: saldoEfectivo,
-        porcentajeGastado: ingresosPorCuenta.efectivo > 0 ? (gastosPorCuenta.efectivo / ingresosPorCuenta.efectivo) * 100 : 0
+        porcentajeGastado: ingresos.efectivo > 0 ? (gastos.efectivo / ingresos.efectivo) * 100 : 0
       },
       bbva: {
-        ingresos: ingresosPorCuenta.bbva,
-        gastos: gastosPorCuenta.bbva,
+        ingresos: ingresos.bbva,
+        gastos: gastos.bbva,
         saldo: saldoBBVA,
-        porcentajeGastado: ingresosPorCuenta.bbva > 0 ? (gastosPorCuenta.bbva / ingresosPorCuenta.bbva) * 100 : 0
+        porcentajeGastado: ingresos.bbva > 0 ? (gastos.bbva / ingresos.bbva) * 100 : 0
       },
       otrasCuentas: {
-        ingresos: ingresosPorCuenta.otrasCuentas,
-        gastos: gastosPorCuenta.otrasCuentas,
+        ingresos: ingresos.otrasCuentas,
+        gastos: gastos.otrasCuentas,
         saldo: saldoOtras,
-        porcentajeGastado: ingresosPorCuenta.otrasCuentas > 0 ? (gastosPorCuenta.otrasCuentas / ingresosPorCuenta.otrasCuentas) * 100 : 0
+        porcentajeGastado: ingresos.otrasCuentas > 0 ? (gastos.otrasCuentas / ingresos.otrasCuentas) * 100 : 0
       },
       total: {
         ingresos: totalIngresos,
@@ -528,7 +625,35 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
         porcentajeGastado: totalIngresos > 0 ? (totalGastos / totalIngresos) * 100 : 0
       }
     };
-  }, [distribucionIngresosPorCuenta, calcularGastosPorCuenta]);
+  }, [ingresosPorCuentaHistorico, gastosPorCuentaHistorico]);
+
+  // Calcular ingresos por categoría (para el gráfico del mes actual/filtrado)
+  const calcularIngresosPorCategoria = useMemo(() => {
+    const ingresosFiltrados = ingresos.filter(ingreso => {
+      if (!ingreso.fecha) return false;
+      const fecha = new Date(ingreso.fecha);
+      const mesIngreso = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      
+      switch (modo) {
+        case 'filtrados':
+          return !filtroMes || mesIngreso === filtroMes;
+        case 'mesActual':
+        default:
+          return mesIngreso === mesActual;
+      }
+    });
+
+    const porCategoria = {};
+    let total = 0;
+    
+    ingresosFiltrados.forEach(ingreso => {
+      const categoria = ingreso.categoria || 'Otros';
+      porCategoria[categoria] = (porCategoria[categoria] || 0) + (ingreso.monto || 0);
+      total += ingreso.monto || 0;
+    });
+
+    return { porCategoria, total };
+  }, [ingresos, modo, filtroMes, mesActual]);
 
   // Preparar datos para el gráfico
   const { datos, mesTexto, total } = useMemo(() => {
@@ -556,7 +681,6 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
   const dataParaGrafico = useMemo(() => {
     const categoriasUnicas = Object.keys(datos);
     
-    // Crear un mapa de colores únicos por categoría
     const colorMap = {};
     categoriasUnicas.forEach(categoria => {
       colorMap[categoria] = generateCategoryColor(categoria);
@@ -698,7 +822,6 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
 
               <Tooltip content={<CustomTooltip />} />
               
-              {/* Leyenda simple */}
               <Legend 
                 content={() => (
                   <div className="flex flex-wrap gap-2 justify-center mt-4">
@@ -728,11 +851,14 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* DISTRIBUCIÓN POR CUENTA CON SALDO DISPONIBLE */}
+        {/* SALDO ACTUAL EN CADA CUENTA */}
         <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
           <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-emerald-400" />
-            Estado de cuentas (Ingresos - Gastos)
+            <PiggyBank className="h-4 w-4 text-emerald-400" />
+            Saldo Actual por Cuenta
+            <span className="text-xs text-slate-500 ml-auto">
+              (Ingresos Totales - Todos los Gastos)
+            </span>
           </h3>
           <div className="space-y-3">
             {/* CUENTA EFECTIVO */}
@@ -743,33 +869,31 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
                   <span className="text-slate-300">Efectivo</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-300">Saldo: €{calcularSaldoDisponible.efectivo.saldo.toFixed(2)}</span>
-                  <span className={`text-xs ml-2 ${
-                    calcularSaldoDisponible.efectivo.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  <span className={`text-lg font-bold ${
+                    saldoActualPorCuenta.efectivo.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
-                    ({calcularSaldoDisponible.efectivo.saldo >= 0 ? '+' : ''}{calcularSaldoDisponible.efectivo.saldo.toFixed(2)})
+                    €{saldoActualPorCuenta.efectivo.saldo.toFixed(2)}
                   </span>
                 </div>
               </div>
-              <div className="text-xs text-slate-500 flex justify-between mb-1">
-                <span>Ingresos: €{calcularSaldoDisponible.efectivo.ingresos.toFixed(2)}</span>
-                <span>Gastos: €{calcularSaldoDisponible.efectivo.gastos.toFixed(2)}</span>
+              <div className="text-xs text-slate-500 flex justify-between">
+                <span>Ingresos: €{saldoActualPorCuenta.efectivo.ingresos.toFixed(2)}</span>
+                <span>Gastos: €{saldoActualPorCuenta.efectivo.gastos.toFixed(2)}</span>
               </div>
-              <div className="w-full bg-slate-700 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    calcularSaldoDisponible.efectivo.porcentajeGastado > 100 ? 'bg-red-500' : 
-                    calcularSaldoDisponible.efectivo.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-emerald-400'
-                  }`}
-                  style={{ 
-                    width: `${Math.min(calcularSaldoDisponible.efectivo.porcentajeGastado, 100)}%`,
-                    maxWidth: '100%'
-                  }}
-                ></div>
-              </div>
-              <div className="text-xs text-slate-500 text-right">
-                {calcularSaldoDisponible.efectivo.porcentajeGastado.toFixed(1)}% gastado
-              </div>
+              {saldoActualPorCuenta.efectivo.ingresos > 0 && (
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      saldoActualPorCuenta.efectivo.porcentajeGastado > 100 ? 'bg-red-500' : 
+                      saldoActualPorCuenta.efectivo.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-emerald-400'
+                    }`}
+                    style={{ 
+                      width: `${Math.min(saldoActualPorCuenta.efectivo.porcentajeGastado, 100)}%`,
+                      maxWidth: '100%'
+                    }}
+                  ></div>
+                </div>
+              )}
             </div>
 
             {/* CUENTA BBVA */}
@@ -780,37 +904,35 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
                   <span className="text-slate-300">BBVA</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-300">Saldo: €{calcularSaldoDisponible.bbva.saldo.toFixed(2)}</span>
-                  <span className={`text-xs ml-2 ${
-                    calcularSaldoDisponible.bbva.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  <span className={`text-lg font-bold ${
+                    saldoActualPorCuenta.bbva.saldo >= 0 ? 'text-blue-400' : 'text-red-400'
                   }`}>
-                    ({calcularSaldoDisponible.bbva.saldo >= 0 ? '+' : ''}{calcularSaldoDisponible.bbva.saldo.toFixed(2)})
+                    €{saldoActualPorCuenta.bbva.saldo.toFixed(2)}
                   </span>
                 </div>
               </div>
-              <div className="text-xs text-slate-500 flex justify-between mb-1">
-                <span>Ingresos: €{calcularSaldoDisponible.bbva.ingresos.toFixed(2)}</span>
-                <span>Gastos: €{calcularSaldoDisponible.bbva.gastos.toFixed(2)}</span>
+              <div className="text-xs text-slate-500 flex justify-between">
+                <span>Ingresos: €{saldoActualPorCuenta.bbva.ingresos.toFixed(2)}</span>
+                <span>Gastos: €{saldoActualPorCuenta.bbva.gastos.toFixed(2)}</span>
               </div>
-              <div className="w-full bg-slate-700 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    calcularSaldoDisponible.bbva.porcentajeGastado > 100 ? 'bg-red-500' : 
-                    calcularSaldoDisponible.bbva.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-blue-400'
-                  }`}
-                  style={{ 
-                    width: `${Math.min(calcularSaldoDisponible.bbva.porcentajeGastado, 100)}%`,
-                    maxWidth: '100%'
-                  }}
-                ></div>
-              </div>
-              <div className="text-xs text-slate-500 text-right">
-                {calcularSaldoDisponible.bbva.porcentajeGastado.toFixed(1)}% gastado
-              </div>
+              {saldoActualPorCuenta.bbva.ingresos > 0 && (
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      saldoActualPorCuenta.bbva.porcentajeGastado > 100 ? 'bg-red-500' : 
+                      saldoActualPorCuenta.bbva.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-blue-400'
+                    }`}
+                    style={{ 
+                      width: `${Math.min(saldoActualPorCuenta.bbva.porcentajeGastado, 100)}%`,
+                      maxWidth: '100%'
+                    }}
+                  ></div>
+                </div>
+              )}
             </div>
 
             {/* OTRAS CUENTAS (si hay) */}
-            {calcularSaldoDisponible.otrasCuentas.ingresos > 0 && (
+            {saldoActualPorCuenta.otrasCuentas.ingresos > 0 && (
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <div className="flex items-center gap-2">
@@ -818,33 +940,31 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
                     <span className="text-slate-300">Otras cuentas</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-slate-300">Saldo: €{calcularSaldoDisponible.otrasCuentas.saldo.toFixed(2)}</span>
-                    <span className={`text-xs ml-2 ${
-                      calcularSaldoDisponible.otrasCuentas.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                    <span className={`text-lg font-bold ${
+                      saldoActualPorCuenta.otrasCuentas.saldo >= 0 ? 'text-slate-300' : 'text-red-400'
                     }`}>
-                      ({calcularSaldoDisponible.otrasCuentas.saldo >= 0 ? '+' : ''}{calcularSaldoDisponible.otrasCuentas.saldo.toFixed(2)})
+                      €{saldoActualPorCuenta.otrasCuentas.saldo.toFixed(2)}
                     </span>
                   </div>
                 </div>
-                <div className="text-xs text-slate-500 flex justify-between mb-1">
-                  <span>Ingresos: €{calcularSaldoDisponible.otrasCuentas.ingresos.toFixed(2)}</span>
-                  <span>Gastos: €{calcularSaldoDisponible.otrasCuentas.gastos.toFixed(2)}</span>
+                <div className="text-xs text-slate-500 flex justify-between">
+                  <span>Ingresos: €{saldoActualPorCuenta.otrasCuentas.ingresos.toFixed(2)}</span>
+                  <span>Gastos: €{saldoActualPorCuenta.otrasCuentas.gastos.toFixed(2)}</span>
                 </div>
-                <div className="w-full bg-slate-700 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      calcularSaldoDisponible.otrasCuentas.porcentajeGastado > 100 ? 'bg-red-500' : 
-                      calcularSaldoDisponible.otrasCuentas.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-slate-400'
-                    }`}
-                    style={{ 
-                      width: `${Math.min(calcularSaldoDisponible.otrasCuentas.porcentajeGastado, 100)}%`,
-                      maxWidth: '100%'
-                    }}
-                  ></div>
-                </div>
-                <div className="text-xs text-slate-500 text-right">
-                  {calcularSaldoDisponible.otrasCuentas.porcentajeGastado.toFixed(1)}% gastado
-                </div>
+                {saldoActualPorCuenta.otrasCuentas.ingresos > 0 && (
+                  <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        saldoActualPorCuenta.otrasCuentas.porcentajeGastado > 100 ? 'bg-red-500' : 
+                        saldoActualPorCuenta.otrasCuentas.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-slate-400'
+                      }`}
+                      style={{ 
+                        width: `${Math.min(saldoActualPorCuenta.otrasCuentas.porcentajeGastado, 100)}%`,
+                        maxWidth: '100%'
+                      }}
+                    ></div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -853,45 +973,65 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-center p-2 bg-emerald-900/20 rounded-lg">
                   <div className="text-xs text-emerald-400">Efectivo</div>
-                  <div className={`text-sm font-semibold ${
-                    calcularSaldoDisponible.efectivo.saldo >= 0 ? 'text-emerald-300' : 'text-red-300'
+                  <div className={`text-sm font-bold ${
+                    saldoActualPorCuenta.efectivo.saldo >= 0 ? 'text-emerald-300' : 'text-red-300'
                   }`}>
-                    €{calcularSaldoDisponible.efectivo.saldo.toFixed(0)}
+                    €{saldoActualPorCuenta.efectivo.saldo.toFixed(0)}
                   </div>
                 </div>
                 <div className="text-center p-2 bg-blue-900/20 rounded-lg">
                   <div className="text-xs text-blue-400">BBVA</div>
-                  <div className={`text-sm font-semibold ${
-                    calcularSaldoDisponible.bbva.saldo >= 0 ? 'text-blue-300' : 'text-red-300'
+                  <div className={`text-sm font-bold ${
+                    saldoActualPorCuenta.bbva.saldo >= 0 ? 'text-blue-300' : 'text-red-300'
                   }`}>
-                    €{calcularSaldoDisponible.bbva.saldo.toFixed(0)}
+                    €{saldoActualPorCuenta.bbva.saldo.toFixed(0)}
                   </div>
                 </div>
                 <div className="text-center p-2 bg-slate-800/50 rounded-lg">
                   <div className="text-xs text-slate-400">Total</div>
-                  <div className={`text-sm font-semibold ${
-                    calcularSaldoDisponible.total.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  <div className={`text-sm font-bold ${
+                    saldoActualPorCuenta.total.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
-                    €{calcularSaldoDisponible.total.saldo.toFixed(0)}
+                    €{saldoActualPorCuenta.total.saldo.toFixed(0)}
                   </div>
                 </div>
               </div>
               
+              {/* DESGLOSE DETALLADO */}
+              <div className="mt-3 text-xs text-slate-500 space-y-1">
+                <div className="flex justify-between">
+                  <span>Total ingresos:</span>
+                  <span className="text-emerald-400">€{saldoActualPorCuenta.total.ingresos.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total gastos (incl. pagos fijos y cuotas):</span>
+                  <span className="text-red-400">€{saldoActualPorCuenta.total.gastos.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-medium">
+                  <span>Saldo neto:</span>
+                  <span className={`${
+                    saldoActualPorCuenta.total.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    €{saldoActualPorCuenta.total.saldo.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
               {/* ALERTAS DE SALDO NEGATIVO */}
               <div className="mt-3 space-y-1">
-                {calcularSaldoDisponible.efectivo.saldo < 0 && (
+                {saldoActualPorCuenta.efectivo.saldo < 0 && (
                   <div className="flex items-center gap-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">
                     <AlertCircle className="h-3 w-3" />
                     <span>¡Atención! Saldo negativo en Efectivo</span>
                   </div>
                 )}
-                {calcularSaldoDisponible.bbva.saldo < 0 && (
+                {saldoActualPorCuenta.bbva.saldo < 0 && (
                   <div className="flex items-center gap-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">
                     <AlertCircle className="h-3 w-3" />
                     <span>¡Atención! Saldo negativo en BBVA</span>
                   </div>
                 )}
-                {calcularSaldoDisponible.total.saldo < 0 && (
+                {saldoActualPorCuenta.total.saldo < 0 && (
                   <div className="flex items-center gap-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">
                     <AlertCircle className="h-3 w-3" />
                     <span>¡Atención! Saldo total negativo</span>
@@ -905,7 +1045,7 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
         {/* LEYENDA DETALLADA */}
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-300">Detalle por categoría</h3>
+            <h3 className="text-sm font-semibold text-slate-300">Detalle por categoría ({mesTexto})</h3>
             <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
               {dataParaGrafico.length} categorías
             </span>
@@ -976,7 +1116,7 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
           <div className="pt-3 border-t border-slate-800">
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center p-2 bg-slate-800/30 rounded-lg">
-                <div className="text-xs text-slate-400">Mayor ingreso</div>
+                <div className="text-xs text-slate-400">Mayor ingreso ({mesTexto})</div>
                 {dataParaGrafico.length > 0 && (
                   <div className="flex items-center justify-center gap-1">
                     <div 
