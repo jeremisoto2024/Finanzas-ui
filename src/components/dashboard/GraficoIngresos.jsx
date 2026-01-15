@@ -35,7 +35,9 @@ import {
   Wifi,
   Phone,
   Shield,
-  TrendingDown
+  TrendingDown,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react'
 
 // PALETA DE COLORES VARIADA PARA INGRESOS
@@ -294,19 +296,30 @@ const getIconForCategoria = (categoria) => {
 export default function GraficoIngresos({ modo = 'mesActual' }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const [ingresos, setIngresos] = useState([]);
+  const [gastos, setGastos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroMes, setFiltroMes] = useState('');
 
-  // Obtener datos de la API de ingresos
+  // Obtener datos de la API de ingresos y gastos
   useEffect(() => {
-    const fetchIngresos = async () => {
+    const fetchDatos = async () => {
       try {
-        const res = await fetch('/api/ingresos');
-        if (!res.ok) throw new Error('Error cargando ingresos');
-        const data = await res.json();
-        setIngresos(data);
+        setLoading(true);
+        
+        // 1. Obtener ingresos
+        const resIngresos = await fetch('/api/ingresos');
+        if (!resIngresos.ok) throw new Error('Error cargando ingresos');
+        const ingresosData = await resIngresos.json();
+        setIngresos(ingresosData);
+        
+        // 2. Obtener gastos
+        const resGastos = await fetch('/api/gastos');
+        if (!resGastos.ok) throw new Error('Error cargando gastos');
+        const gastosData = await resGastos.json();
+        setGastos(gastosData);
+        
       } catch (err) {
-        console.error('Error fetching ingresos:', err);
+        console.error('Error fetching datos:', err);
         // Datos de ejemplo como fallback con variedad de categorías
         setIngresos([
           { id: 1, fecha: '2025-10-01', concepto: 'Salario mensual', metodo: 'Transferencia', categoria: 'Sueldo', cuenta: 'BBVA', monto: 2500 },
@@ -318,12 +331,24 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
           { id: 7, fecha: '2025-10-28', concepto: 'Bonus trimestral', metodo: 'Transferencia', categoria: 'Bonus', cuenta: 'BBVA', monto: 500 },
           { id: 8, fecha: '2025-10-30', concepto: 'Alquiler local', metodo: 'Transferencia', categoria: 'Alquiler', cuenta: 'BBVA', monto: 700 },
         ]);
+        
+        // Datos de ejemplo de gastos
+        setGastos([
+          { id: 1, fecha: '2025-10-02', concepto: 'Compra supermercado', metodo: 'Tarjeta', categoria: 'Alimentación', cuenta: 'BBVA', monto: 120 },
+          { id: 2, fecha: '2025-10-03', concepto: 'Gasolina', metodo: 'Tarjeta', categoria: 'Transporte', cuenta: 'BBVA', monto: 60 },
+          { id: 3, fecha: '2025-10-05', concepto: 'Cena restaurante', metodo: 'Efectivo', categoria: 'Restaurante', cuenta: 'Efectivo', monto: 45 },
+          { id: 4, fecha: '2025-10-10', concepto: 'Netflix', metodo: 'Tarjeta', categoria: 'Entretenimiento', cuenta: 'BBVA', monto: 15 },
+          { id: 5, fecha: '2025-10-12', concepto: 'Ropa', metodo: 'Tarjeta', categoria: 'Ropa', cuenta: 'BBVA', monto: 80 },
+          { id: 6, fecha: '2025-10-15', concepto: 'Farmacia', metodo: 'Efectivo', categoria: 'Salud', cuenta: 'Efectivo', monto: 25 },
+          { id: 7, fecha: '2025-10-20', concepto: 'Regalo cumpleaños', metodo: 'Tarjeta', categoria: 'Regalos', cuenta: 'BBVA', monto: 40 },
+          { id: 8, fecha: '2025-10-25', concepto: 'Transporte público', metodo: 'Efectivo', categoria: 'Transporte', cuenta: 'Efectivo', monto: 30 },
+        ]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchIngresos();
+    fetchDatos();
   }, []);
 
   // Función para formatear mes a texto
@@ -372,8 +397,54 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
     return { porCategoria, total };
   }, [ingresos, modo, filtroMes, mesActual]);
 
-  // Calcular distribución por cuenta (Efectivo vs BBVA)
-  const distribucionPorCuenta = useMemo(() => {
+  // Calcular gastos por cuenta
+  const calcularGastosPorCuenta = useMemo(() => {
+    const gastosFiltrados = gastos.filter(gasto => {
+      if (!gasto.fecha) return false;
+      const fecha = new Date(gasto.fecha);
+      const mesGasto = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      
+      switch (modo) {
+        case 'filtrados':
+          return !filtroMes || mesGasto === filtroMes;
+        case 'mesActual':
+        default:
+          return mesGasto === mesActual;
+      }
+    });
+
+    let efectivo = 0;
+    let bbva = 0;
+    let otrasCuentas = 0;
+    
+    gastosFiltrados.forEach(gasto => {
+      const cuenta = gasto.cuenta?.toLowerCase() || '';
+      const monto = gasto.monto || 0;
+      
+      if (cuenta.includes('efectivo') || cuenta === 'efectivo') {
+        efectivo += monto;
+      } else if (cuenta.includes('bbva')) {
+        bbva += monto;
+      } else {
+        otrasCuentas += monto;
+      }
+    });
+
+    const total = efectivo + bbva + otrasCuentas;
+    
+    return {
+      efectivo,
+      bbva,
+      otrasCuentas,
+      total,
+      porcentajeEfectivo: total > 0 ? (efectivo / total) * 100 : 0,
+      porcentajeBBVA: total > 0 ? (bbva / total) * 100 : 0,
+      porcentajeOtras: total > 0 ? (otrasCuentas / total) * 100 : 0,
+    };
+  }, [gastos, modo, filtroMes, mesActual]);
+
+  // Calcular distribución por cuenta (Efectivo vs BBVA) - INGRESOS
+  const distribucionIngresosPorCuenta = useMemo(() => {
     const ingresosFiltrados = ingresos.filter(ingreso => {
       if (!ingreso.fecha) return false;
       const fecha = new Date(ingreso.fecha);
@@ -417,6 +488,47 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
       porcentajeOtras: total > 0 ? (otrasCuentas / total) * 100 : 0,
     };
   }, [ingresos, modo, filtroMes, mesActual]);
+
+  // Calcular saldo disponible por cuenta (Ingresos - Gastos)
+  const calcularSaldoDisponible = useMemo(() => {
+    const ingresosPorCuenta = distribucionIngresosPorCuenta;
+    const gastosPorCuenta = calcularGastosPorCuenta;
+    
+    const saldoEfectivo = ingresosPorCuenta.efectivo - gastosPorCuenta.efectivo;
+    const saldoBBVA = ingresosPorCuenta.bbva - gastosPorCuenta.bbva;
+    const saldoOtras = ingresosPorCuenta.otrasCuentas - gastosPorCuenta.otrasCuentas;
+    
+    const totalIngresos = ingresosPorCuenta.total;
+    const totalGastos = gastosPorCuenta.total;
+    const saldoTotal = totalIngresos - totalGastos;
+    
+    return {
+      efectivo: {
+        ingresos: ingresosPorCuenta.efectivo,
+        gastos: gastosPorCuenta.efectivo,
+        saldo: saldoEfectivo,
+        porcentajeGastado: ingresosPorCuenta.efectivo > 0 ? (gastosPorCuenta.efectivo / ingresosPorCuenta.efectivo) * 100 : 0
+      },
+      bbva: {
+        ingresos: ingresosPorCuenta.bbva,
+        gastos: gastosPorCuenta.bbva,
+        saldo: saldoBBVA,
+        porcentajeGastado: ingresosPorCuenta.bbva > 0 ? (gastosPorCuenta.bbva / ingresosPorCuenta.bbva) * 100 : 0
+      },
+      otrasCuentas: {
+        ingresos: ingresosPorCuenta.otrasCuentas,
+        gastos: gastosPorCuenta.otrasCuentas,
+        saldo: saldoOtras,
+        porcentajeGastado: ingresosPorCuenta.otrasCuentas > 0 ? (gastosPorCuenta.otrasCuentas / ingresosPorCuenta.otrasCuentas) * 100 : 0
+      },
+      total: {
+        ingresos: totalIngresos,
+        gastos: totalGastos,
+        saldo: saldoTotal,
+        porcentajeGastado: totalIngresos > 0 ? (totalGastos / totalIngresos) * 100 : 0
+      }
+    };
+  }, [distribucionIngresosPorCuenta, calcularGastosPorCuenta]);
 
   // Preparar datos para el gráfico
   const { datos, mesTexto, total } = useMemo(() => {
@@ -499,7 +611,7 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
         </CardHeader>
         <CardContent className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-slate-400">Cargando ingresos...</p>
+          <p className="text-slate-400">Cargando ingresos y gastos...</p>
         </CardContent>
       </Card>
     );
@@ -616,14 +728,14 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* DISTRIBUCIÓN POR CUENTA (EFECTIVO vs BBVA) */}
+        {/* DISTRIBUCIÓN POR CUENTA CON SALDO DISPONIBLE */}
         <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700">
           <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
             <Wallet className="h-4 w-4 text-emerald-400" />
-            Distribución por cuenta
+            Estado de cuentas (Ingresos - Gastos)
           </h3>
           <div className="space-y-3">
-            {/* Barra de efectivo */}
+            {/* CUENTA EFECTIVO */}
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <div className="flex items-center gap-2">
@@ -631,21 +743,36 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
                   <span className="text-slate-300">Efectivo</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-300">€{distribucionPorCuenta.efectivo.toFixed(2)}</span>
-                  <span className="text-emerald-400 text-xs ml-2">
-                    ({distribucionPorCuenta.porcentajeEfectivo.toFixed(1)}%)
+                  <span className="text-slate-300">Saldo: €{calcularSaldoDisponible.efectivo.saldo.toFixed(2)}</span>
+                  <span className={`text-xs ml-2 ${
+                    calcularSaldoDisponible.efectivo.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    ({calcularSaldoDisponible.efectivo.saldo >= 0 ? '+' : ''}{calcularSaldoDisponible.efectivo.saldo.toFixed(2)})
                   </span>
                 </div>
               </div>
+              <div className="text-xs text-slate-500 flex justify-between mb-1">
+                <span>Ingresos: €{calcularSaldoDisponible.efectivo.ingresos.toFixed(2)}</span>
+                <span>Gastos: €{calcularSaldoDisponible.efectivo.gastos.toFixed(2)}</span>
+              </div>
               <div className="w-full bg-slate-700 rounded-full h-2">
                 <div 
-                  className="h-2 rounded-full bg-emerald-400 transition-all duration-300"
-                  style={{ width: `${Math.min(distribucionPorCuenta.porcentajeEfectivo, 100)}%` }}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    calcularSaldoDisponible.efectivo.porcentajeGastado > 100 ? 'bg-red-500' : 
+                    calcularSaldoDisponible.efectivo.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-emerald-400'
+                  }`}
+                  style={{ 
+                    width: `${Math.min(calcularSaldoDisponible.efectivo.porcentajeGastado, 100)}%`,
+                    maxWidth: '100%'
+                  }}
                 ></div>
+              </div>
+              <div className="text-xs text-slate-500 text-right">
+                {calcularSaldoDisponible.efectivo.porcentajeGastado.toFixed(1)}% gastado
               </div>
             </div>
 
-            {/* Barra de BBVA */}
+            {/* CUENTA BBVA */}
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <div className="flex items-center gap-2">
@@ -653,22 +780,37 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
                   <span className="text-slate-300">BBVA</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-300">€{distribucionPorCuenta.bbva.toFixed(2)}</span>
-                  <span className="text-blue-400 text-xs ml-2">
-                    ({distribucionPorCuenta.porcentajeBBVA.toFixed(1)}%)
+                  <span className="text-slate-300">Saldo: €{calcularSaldoDisponible.bbva.saldo.toFixed(2)}</span>
+                  <span className={`text-xs ml-2 ${
+                    calcularSaldoDisponible.bbva.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    ({calcularSaldoDisponible.bbva.saldo >= 0 ? '+' : ''}{calcularSaldoDisponible.bbva.saldo.toFixed(2)})
                   </span>
                 </div>
               </div>
+              <div className="text-xs text-slate-500 flex justify-between mb-1">
+                <span>Ingresos: €{calcularSaldoDisponible.bbva.ingresos.toFixed(2)}</span>
+                <span>Gastos: €{calcularSaldoDisponible.bbva.gastos.toFixed(2)}</span>
+              </div>
               <div className="w-full bg-slate-700 rounded-full h-2">
                 <div 
-                  className="h-2 rounded-full bg-blue-400 transition-all duration-300"
-                  style={{ width: `${Math.min(distribucionPorCuenta.porcentajeBBVA, 100)}%` }}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    calcularSaldoDisponible.bbva.porcentajeGastado > 100 ? 'bg-red-500' : 
+                    calcularSaldoDisponible.bbva.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-blue-400'
+                  }`}
+                  style={{ 
+                    width: `${Math.min(calcularSaldoDisponible.bbva.porcentajeGastado, 100)}%`,
+                    maxWidth: '100%'
+                  }}
                 ></div>
+              </div>
+              <div className="text-xs text-slate-500 text-right">
+                {calcularSaldoDisponible.bbva.porcentajeGastado.toFixed(1)}% gastado
               </div>
             </div>
 
-            {/* Barra de otras cuentas */}
-            {distribucionPorCuenta.otrasCuentas > 0 && (
+            {/* OTRAS CUENTAS (si hay) */}
+            {calcularSaldoDisponible.otrasCuentas.ingresos > 0 && (
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <div className="flex items-center gap-2">
@@ -676,40 +818,85 @@ export default function GraficoIngresos({ modo = 'mesActual' }) {
                     <span className="text-slate-300">Otras cuentas</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-slate-300">€{distribucionPorCuenta.otrasCuentas.toFixed(2)}</span>
-                    <span className="text-slate-400 text-xs ml-2">
-                      ({distribucionPorCuenta.porcentajeOtras.toFixed(1)}%)
+                    <span className="text-slate-300">Saldo: €{calcularSaldoDisponible.otrasCuentas.saldo.toFixed(2)}</span>
+                    <span className={`text-xs ml-2 ${
+                      calcularSaldoDisponible.otrasCuentas.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                      ({calcularSaldoDisponible.otrasCuentas.saldo >= 0 ? '+' : ''}{calcularSaldoDisponible.otrasCuentas.saldo.toFixed(2)})
                     </span>
                   </div>
                 </div>
+                <div className="text-xs text-slate-500 flex justify-between mb-1">
+                  <span>Ingresos: €{calcularSaldoDisponible.otrasCuentas.ingresos.toFixed(2)}</span>
+                  <span>Gastos: €{calcularSaldoDisponible.otrasCuentas.gastos.toFixed(2)}</span>
+                </div>
                 <div className="w-full bg-slate-700 rounded-full h-2">
                   <div 
-                    className="h-2 rounded-full bg-slate-400 transition-all duration-300"
-                    style={{ width: `${Math.min(distribucionPorCuenta.porcentajeOtras, 100)}%` }}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      calcularSaldoDisponible.otrasCuentas.porcentajeGastado > 100 ? 'bg-red-500' : 
+                      calcularSaldoDisponible.otrasCuentas.porcentajeGastado > 80 ? 'bg-amber-500' : 'bg-slate-400'
+                    }`}
+                    style={{ 
+                      width: `${Math.min(calcularSaldoDisponible.otrasCuentas.porcentajeGastado, 100)}%`,
+                      maxWidth: '100%'
+                    }}
                   ></div>
+                </div>
+                <div className="text-xs text-slate-500 text-right">
+                  {calcularSaldoDisponible.otrasCuentas.porcentajeGastado.toFixed(1)}% gastado
                 </div>
               </div>
             )}
 
-            {/* Resumen */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-700">
-              <div className="text-center p-2 bg-emerald-900/20 rounded-lg">
-                <div className="text-xs text-emerald-400">Efectivo</div>
-                <div className="text-sm font-semibold text-emerald-300">
-                  €{distribucionPorCuenta.efectivo.toFixed(0)}
+            {/* RESUMEN TOTAL */}
+            <div className="pt-3 border-t border-slate-700">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center p-2 bg-emerald-900/20 rounded-lg">
+                  <div className="text-xs text-emerald-400">Efectivo</div>
+                  <div className={`text-sm font-semibold ${
+                    calcularSaldoDisponible.efectivo.saldo >= 0 ? 'text-emerald-300' : 'text-red-300'
+                  }`}>
+                    €{calcularSaldoDisponible.efectivo.saldo.toFixed(0)}
+                  </div>
+                </div>
+                <div className="text-center p-2 bg-blue-900/20 rounded-lg">
+                  <div className="text-xs text-blue-400">BBVA</div>
+                  <div className={`text-sm font-semibold ${
+                    calcularSaldoDisponible.bbva.saldo >= 0 ? 'text-blue-300' : 'text-red-300'
+                  }`}>
+                    €{calcularSaldoDisponible.bbva.saldo.toFixed(0)}
+                  </div>
+                </div>
+                <div className="text-center p-2 bg-slate-800/50 rounded-lg">
+                  <div className="text-xs text-slate-400">Total</div>
+                  <div className={`text-sm font-semibold ${
+                    calcularSaldoDisponible.total.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    €{calcularSaldoDisponible.total.saldo.toFixed(0)}
+                  </div>
                 </div>
               </div>
-              <div className="text-center p-2 bg-blue-900/20 rounded-lg">
-                <div className="text-xs text-blue-400">BBVA</div>
-                <div className="text-sm font-semibold text-blue-300">
-                  €{distribucionPorCuenta.bbva.toFixed(0)}
-                </div>
-              </div>
-              <div className="text-center p-2 bg-slate-800/50 rounded-lg">
-                <div className="text-xs text-slate-400">Total</div>
-                <div className="text-sm font-semibold text-slate-300">
-                  €{distribucionPorCuenta.total.toFixed(0)}
-                </div>
+              
+              {/* ALERTAS DE SALDO NEGATIVO */}
+              <div className="mt-3 space-y-1">
+                {calcularSaldoDisponible.efectivo.saldo < 0 && (
+                  <div className="flex items-center gap-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>¡Atención! Saldo negativo en Efectivo</span>
+                  </div>
+                )}
+                {calcularSaldoDisponible.bbva.saldo < 0 && (
+                  <div className="flex items-center gap-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>¡Atención! Saldo negativo en BBVA</span>
+                  </div>
+                )}
+                {calcularSaldoDisponible.total.saldo < 0 && (
+                  <div className="flex items-center gap-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>¡Atención! Saldo total negativo</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
