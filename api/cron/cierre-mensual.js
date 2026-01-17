@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     const pagosFijos = await notion.databases.query({
       database_id: PAGOS_FIJOS_DB_ID,
       filter: {
-        property: "Fecha",
+        property: "Fecha creación",
         date: {
           on_or_after: startOfMonth,
           before: startOfNextMonth,
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     const comprasCuotas = await notion.databases.query({
       database_id: COMPRAS_CUOTAS_DB_ID,
       filter: {
-        property: "Fecha",
+        property: "Fecha creación",
         date: {
           on_or_after: startOfMonth,
           before: startOfNextMonth,
