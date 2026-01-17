@@ -18,3 +18,11 @@
   "outputDirectory": "dist",
   "framework": "vite"
 }
+{
+  "crons": [
+    {
+      "path": "/api/cron/cierre-mensual",
+      "schedule": "0 0 1 * *"
+    }
+  ]
+}
