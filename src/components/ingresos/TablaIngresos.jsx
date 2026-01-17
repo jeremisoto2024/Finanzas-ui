@@ -31,7 +31,6 @@ import {
 
 export default function TablaIngresos() {
   // Estados para los datos de Notion
-  const esSaldoInicial = ingreso.categoria === 'Saldo inicial'
   const [ingresosMensuales, setIngresosMensuales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
