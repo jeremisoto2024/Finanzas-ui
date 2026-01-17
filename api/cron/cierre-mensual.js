@@ -10,9 +10,13 @@ const EXPENSES_DB_ID = process.env.NOTION_EXPENSES_DB;
 const PAGOS_FIJOS_DB_ID = process.env.NOTION_PAGOS_FIJOS_DATABASE_ID;
 const COMPRAS_CUOTAS_DB_ID = process.env.NOTION_COMPRAS_CUOTAS_DATABASE_ID;
 
+// 🔐 Función financiera segura (EUROS)
+const round2 = (num) =>
+  Math.round((num + Number.EPSILON) * 100) / 100;
+
 export default async function handler(req, res) {
   try {
-    // 1️⃣ Obtener último resumen (para saldo inicial)
+    // 1️⃣ Obtener último resumen (saldo inicial)
     const resumenPrevio = await notion.databases.query({
       database_id: RESUMEN_DB_ID,
       sorts: [
@@ -24,19 +28,22 @@ export default async function handler(req, res) {
       page_size: 1,
     });
 
-    const saldoInicial =
+    const saldoInicial = round2(
       resumenPrevio.results.length > 0
         ? resumenPrevio.results[0].properties["Saldo final"]?.number || 0
-        : 0;
+        : 0
+    );
 
     // 2️⃣ Ingresos
     const ingresos = await notion.databases.query({
       database_id: INCOME_DB_ID,
     });
 
-    const totalIngresos = ingresos.results.reduce(
-      (sum, p) => sum + (p.properties?.Cantidad?.number || 0),
-      0
+    const totalIngresos = round2(
+      ingresos.results.reduce(
+        (sum, p) => sum + (p.properties?.Cantidad?.number || 0),
+        0
+      )
     );
 
     // 3️⃣ Gastos
@@ -69,12 +76,14 @@ export default async function handler(req, res) {
       0
     );
 
-    const totalGastos =
-      totalGastosBase + totalPagosFijos + totalCuotas;
+    const totalGastos = round2(
+      totalGastosBase + totalPagosFijos + totalCuotas
+    );
 
     // 6️⃣ Saldo final
-    const saldoFinal =
-      saldoInicial + totalIngresos - totalGastos;
+    const saldoFinal = round2(
+      saldoInicial + totalIngresos - totalGastos
+    );
 
     // 7️⃣ Crear resumen mensual
     const now = new Date();
@@ -103,6 +112,7 @@ export default async function handler(req, res) {
       totalIngresos,
       totalGastos,
       saldoFinal,
+      moneda: "EUR",
     });
   } catch (error) {
     console.error(error);
