@@ -58,10 +58,8 @@ export default async function handler(req, res) {
     );
 
     // 3️⃣ Gastos de TODOS LOS MESES (históricos acumulados)
-    // NO aplicamos filtro por fecha para obtener todos los gastos históricos
     const gastos = await notion.databases.query({
       database_id: EXPENSES_DB_ID,
-      // Sin filtro de fecha para obtener todos los registros
     });
 
     const totalGastosBase = round2(
@@ -72,10 +70,8 @@ export default async function handler(req, res) {
     );
 
     // 4️⃣ Pagos fijos de TODOS LOS MESES (históricos acumulados)
-    // NO aplicamos filtro por fecha para obtener todos los pagos fijos históricos
     const pagosFijos = await notion.databases.query({
       database_id: PAGOS_FIJOS_DB_ID,
-      // Sin filtro de fecha para obtener todos los registros
     });
 
     const totalPagosFijos = round2(
@@ -86,10 +82,8 @@ export default async function handler(req, res) {
     );
 
     // 5️⃣ Compras a cuotas de TODOS LOS MESES (históricos acumulados)
-    // NO aplicamos filtro por fecha para obtener todas las cuotas históricas
     const comprasCuotas = await notion.databases.query({
       database_id: COMPRAS_CUOTAS_DB_ID,
-      // Sin filtro de fecha para obtener todos los registros
     });
 
     const totalCuotas = round2(
@@ -104,62 +98,78 @@ export default async function handler(req, res) {
       totalGastosBase + totalPagosFijos + totalCuotas
     );
 
-    // 7️⃣ Calcular saldo acumulado histórico
-    // Esto es para ver el saldo total histórico, no solo del mes
-    const saldoAcumulado = round2(
+    // 7️⃣ Calcular saldo final (acumulado histórico)
+    const saldoFinal = round2(
       saldoInicial + totalIngresos - totalGastos
     );
 
-    // 8️⃣ Para el cierre mensual, también podemos calcular el saldo solo del mes
-    // (opcional, dependiendo de lo que quieras mostrar)
-    const saldoMes = round2(
-      totalIngresos - totalGastosBase  // Solo gastos normales del mes (sin pagos fijos/cuotas si están en otras DBs)
-    );
+    // 8️⃣ Crear propiedades basadas en lo que EXISTE en tu base de datos
+    // Verifica los nombres EXACTOS de las propiedades en tu base de datos Notion
+    const propiedadesResumen = {
+      Mes: { 
+        title: [{ 
+          type: "text", 
+          text: { content: mes } 
+        }] 
+      },
+      "Saldo inicial": { 
+        number: saldoInicial 
+      },
+      "Total ingresos": { 
+        number: totalIngresos 
+      },
+      "Total gastos": { 
+        number: totalGastos  // Asegúrate de que esta propiedad existe como "number"
+      },
+      "Saldo final": { 
+        number: saldoFinal 
+      },
+      "Fecha creación": { 
+        date: { start: now.toISOString() } 
+      }
+    };
 
-    // 9️⃣ Guardar resumen mensual con ambos valores
+    // 9️⃣ Guardar resumen mensual
     await notion.pages.create({
       parent: { database_id: RESUMEN_DB_ID },
-      properties: {
-        Mes: { title: [{ text: { content: mes } }] },
-        "Saldo inicial": { number: saldoInicial },
-        "Total ingresos": { number: totalIngresos },
-        "Total gastos": { 
-          rich_text: [{ 
-            text: { 
-              content: `Mensual: €${totalGastosBase}, Histórico: €${totalGastos}` 
-            } 
-          }] 
-        },
-        "Saldo final": { number: saldoAcumulado },
-        "Saldo mes": { number: saldoMes },
-        "Fecha creación": { date: { start: now.toISOString() } },
-      },
+      properties: propiedadesResumen
     });
 
+    // 🔟 Devolver respuesta exitosa
     res.status(200).json({
       ok: true,
       mes,
       saldoInicial,
       totalIngresos,
-      totalGastosBase,  // Gastos del mes (si aplica)
-      totalGastos,      // Gastos totales históricos
-      totalPagosFijos,  // Pagos fijos históricos
-      totalCuotas,      // Cuotas históricas
-      saldoAcumulado,   // Saldo histórico total
-      saldoMes,         // Saldo solo del mes actual
+      totalGastosBase,  // Gastos normales acumulados
+      totalPagosFijos,  // Pagos fijos acumulados
+      totalCuotas,      // Cuotas acumuladas
+      totalGastos,      // Total gastos acumulados (todos)
+      saldoFinal,
       moneda: "EUR",
       notas: {
         ingresos: "Solo del mes actual",
         gastos: "Históricos acumulados (todos los meses)",
-        pagosFijos: "Históricos acumulados (todos los meses)",
-        comprasCuotas: "Históricos acumulados (todos los meses)"
+        calculo: `Saldo final = ${saldoInicial} + ${totalIngresos} - ${totalGastos} = ${saldoFinal}`
       }
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("Error detallado en cierre mensual:", error);
+    
+    // Información adicional para debugging
+    console.log("Variables del entorno:", {
+      RESUMEN_DB_ID: RESUMEN_DB_ID ? "Definido" : "No definido",
+      INCOME_DB_ID: INCOME_DB_ID ? "Definido" : "No definido",
+      EXPENSES_DB_ID: EXPENSES_DB_ID ? "Definido" : "No definido",
+      PAGOS_FIJOS_DB_ID: PAGOS_FIJOS_DB_ID ? "Definido" : "No definido",
+      COMPRAS_CUOTAS_DB_ID: COMPRAS_CUOTAS_DB_ID ? "Definido" : "No definido"
+    });
+
     res.status(500).json({
       error: "Error en cierre mensual",
       details: error.message,
+      suggestion: "Verifica los nombres de las propiedades en tu base de datos de Notion"
     });
   }
 }
