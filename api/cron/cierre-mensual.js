@@ -303,7 +303,7 @@ export default async function handler(req, res) {
         "Saldo final": {
           number: saldoFinalTotal
         },
-        "Fecha": {
+        "Fecha creación ": {
           date: { start: now.toISOString() }
         }
       };
