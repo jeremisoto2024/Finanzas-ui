@@ -140,14 +140,13 @@ export default async function handler(req, res) {
       });
     }
     
-    // 4️⃣ Calcular saldo final
-    const saldoFinal = round2(saldoInicial + totalIngresos - totalGastos);
+    // 4️⃣ Calcular saldo base final (sin pagos fijos y cuotas)
+    const saldoBaseFinal = round2(saldoInicial + totalIngresos - totalGastos);
     
-    console.log(`🧮 Cálculo final: ${saldoInicial} + ${totalIngresos} - ${totalGastos} = ${saldoFinal}`);
+    console.log(`🧮 Cálculo base: ${saldoInicial} + ${totalIngresos} - ${totalGastos} = ${saldoBaseFinal}`);
     
-    // 5️⃣ Intentar obtener pagos fijos y cuotas (opcional)
+    // 5️⃣ Intentar obtener pagos fijos (opcional)
     let totalPagosFijos = 0;
-    let totalCuotas = 0;
     
     // Pagos fijos (opcional)
     if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
@@ -167,47 +166,130 @@ export default async function handler(req, res) {
           }, 0)
         );
         
-        console.log(`💳 Total pagos fijos históricos: ${totalPagosFijos}`);
+        console.log(`💳 Total pagos fijos históricos: ${totalPagosFijos}, registros: ${pagosFijos.results.length}`);
       } catch (error) {
         console.error("⚠️ Error obteniendo pagos fijos (continuando...):", error.message);
       }
     }
     
-    // Compras a cuotas (opcional)
+    // 6️⃣ Compras a cuotas - LEER HISTORIAL DE CUOTAS PAGADAS
+    let totalCuotasPagadas = 0;
+    
     if (process.env.NOTION_COMPRAS_CUOTAS_DATABASE_ID) {
       try {
+        console.log(`📊 Leyendo compras a cuotas...`);
         const comprasCuotas = await notion.databases.query({
           database_id: process.env.NOTION_COMPRAS_CUOTAS_DATABASE_ID,
         });
         
-        totalCuotas = round2(
-          comprasCuotas.results.reduce((sum, page) => {
-            const props = page.properties;
-            // Para cuotas, podríamos necesitar lógica diferente
-            const cantidad = props.Cantidad?.number || 
-                            props.cantidad?.number || 
-                            props.Monto?.number || 
-                            props["Valor total"]?.number || 0;
-            return sum + cantidad;
-          }, 0)
-        );
+        console.log(`📄 Encontradas ${comprasCuotas.results.length} compras a cuotas`);
         
-        console.log(`💳 Total cuotas históricas: ${totalCuotas}`);
+        // Procesar cada compra a cuotas
+        for (let i = 0; i < comprasCuotas.results.length; i++) {
+          const compra = comprasCuotas.results[i];
+          const props = compra.properties;
+          
+          // Obtener el concepto de la compra
+          const concepto = props.Concepto?.title?.[0]?.text?.content || 
+                          props.concepto?.title?.[0]?.text?.content || 
+                          props.Nombre?.title?.[0]?.text?.content || 
+                          "Compra sin nombre";
+          
+          // Intentar obtener el historial de cuotas de diferentes maneras
+          let historialCuotas = null;
+          
+          // 1. Buscar en propiedad "Historial Cuotas" como rich text
+          const historialTexto = props["Historial Cuotas"]?.rich_text?.[0]?.plain_text ||
+                                props["historial cuotas"]?.rich_text?.[0]?.plain_text ||
+                                props["Historial cuotas"]?.rich_text?.[0]?.plain_text;
+          
+          if (historialTexto) {
+            try {
+              historialCuotas = JSON.parse(historialTexto);
+              console.log(`📋 Historial encontrado en texto para "${concepto}":`, historialCuotas);
+            } catch (parseError) {
+              console.error(`❌ Error parseando JSON de "${concepto}":`, parseError.message);
+            }
+          }
+          
+          // 2. Buscar en propiedad "Cuotas" o similar
+          if (!historialCuotas) {
+            const cuotasTexto = props.Cuotas?.rich_text?.[0]?.plain_text ||
+                               props.cuotas?.rich_text?.[0]?.plain_text ||
+                               props["Plan de pagos"]?.rich_text?.[0]?.plain_text;
+            
+            if (cuotasTexto) {
+              try {
+                historialCuotas = JSON.parse(cuotasTexto);
+                console.log(`📋 Historial encontrado en "Cuotas" para "${concepto}"`);
+              } catch (parseError) {
+                console.error(`❌ Error parseando JSON de "Cuotas" para "${concepto}":`, parseError.message);
+              }
+            }
+          }
+          
+          // 3. Si no hay historial, intentar con cuotas pagadas/totales
+          if (!historialCuotas) {
+            const cuotasPagadas = props["Cuotas pagadas"]?.number || 0;
+            const cuotasTotales = props["Cuotas totales"]?.number || 0;
+            const montoTotal = props["Monto total"]?.number || 
+                              props["monto total"]?.number ||
+                              props["Monto Total"]?.number || 0;
+            
+            if (cuotasTotales > 0 && montoTotal > 0) {
+              console.log(`ℹ️ "${concepto}": ${cuotasPagadas}/${cuotasTotales} cuotas pagadas, Monto total: ${montoTotal}`);
+              
+              // Calcular monto por cuota
+              const montoPorCuota = montoTotal / cuotasTotales;
+              totalCuotasPagadas += round2(montoPorCuota * cuotasPagadas);
+            }
+            continue;
+          }
+          
+          // Procesar el historial de cuotas si se encontró
+          if (Array.isArray(historialCuotas)) {
+            console.log(`🔍 Procesando historial de cuotas para "${concepto}":`, historialCuotas);
+            
+            // Filtrar cuotas pagadas y sumar sus montos
+            const cuotasPagadas = historialCuotas.filter(cuota => cuota.pagada === true);
+            
+            let montoTotalCuotasPagadas = 0;
+            cuotasPagadas.forEach(cuota => {
+              montoTotalCuotasPagadas += cuota.monto || 0;
+            });
+            
+            totalCuotasPagadas += round2(montoTotalCuotasPagadas);
+            
+            console.log(`✓ "${concepto}": ${cuotasPagadas.length} cuotas pagadas, Total: €${montoTotalCuotasPagadas.toFixed(2)}`);
+          }
+        }
+        
+        console.log(`💳 Total cuotas pagadas (históricas): €${totalCuotasPagadas.toFixed(2)}`);
+        
       } catch (error) {
-        console.error("⚠️ Error obteniendo cuotas (continuando...):", error.message);
+        console.error("❌ Error obteniendo compras a cuotas:", error.message);
+        console.error("Stack trace:", error.stack);
       }
+    } else {
+      console.log("ℹ️ NOTION_COMPRAS_CUOTAS_DATABASE_ID no está definida, omitiendo cuotas");
     }
     
-    // 6️⃣ Guardar resumen mensual en Notion
+    // 7️⃣ Calcular saldo final TOTAL (incluyendo pagos fijos y cuotas)
+    const totalGastosConExtras = round2(totalGastos + totalPagosFijos + totalCuotasPagadas);
+    const saldoFinalTotal = round2(saldoInicial + totalIngresos - totalGastosConExtras);
+    
+    console.log("\n📊 RESUMEN FINAL:");
+    console.log(`💰 Saldo inicial: €${saldoInicial.toFixed(2)}`);
+    console.log(`📈 Ingresos mes ${mes}: €${totalIngresos.toFixed(2)}`);
+    console.log(`💸 Gastos históricos: €${totalGastos.toFixed(2)}`);
+    console.log(`💳 Pagos fijos históricos: €${totalPagosFijos.toFixed(2)}`);
+    console.log(`💳 Cuotas pagadas históricas: €${totalCuotasPagadas.toFixed(2)}`);
+    console.log(`🧮 Total gastos: €${totalGastosConExtras.toFixed(2)}`);
+    console.log(`💰 Saldo final total: €${saldoFinalTotal.toFixed(2)}`);
+    
+    // 8️⃣ Guardar resumen mensual en Notion
     try {
-      // Primero, verificar la estructura de la base de datos
-      const databaseInfo = await notion.databases.retrieve({
-        database_id: RESUMEN_DB_ID
-      });
-      
-      console.log("📋 Propiedades disponibles en la base de datos:", Object.keys(databaseInfo.properties));
-      
-      // Preparar propiedades basadas en lo que existe
+      // Preparar propiedades para Notion
       const propiedades = {
         Mes: {
           title: [{ text: { content: mes } }]
@@ -219,17 +301,24 @@ export default async function handler(req, res) {
           number: totalIngresos
         },
         "Saldo final": {
-          number: saldoFinal
+          number: saldoFinalTotal
         },
         "Fecha": {
           date: { start: now.toISOString() }
         }
       };
       
-      // Solo agregar "Total gastos" si existe como propiedad
-      if (databaseInfo.properties["Total gastos"]) {
-        propiedades["Total gastos"] = { number: totalGastos };
-      }
+      // Agregar propiedades adicionales si existen
+      const propsToAdd = {
+        "Total gastos": totalGastos,
+        "Pagos fijos": totalPagosFijos,
+        "Cuotas pagadas": totalCuotasPagadas
+      };
+      
+      // Intentar agregar cada propiedad (solo si existe en la base de datos)
+      Object.entries(propsToAdd).forEach(([propName, value]) => {
+        propiedades[propName] = { number: value };
+      });
       
       await notion.pages.create({
         parent: { database_id: RESUMEN_DB_ID },
@@ -242,7 +331,7 @@ export default async function handler(req, res) {
       // Continuar y devolver datos aunque falle el guardado
     }
     
-    // 7️⃣ Devolver respuesta exitosa
+    // 9️⃣ Devolver respuesta exitosa
     return res.status(200).json({
       ok: true,
       mes,
@@ -250,11 +339,15 @@ export default async function handler(req, res) {
       totalIngresos,
       totalGastos,
       totalPagosFijos,
-      totalCuotas,
-      saldoFinal,
+      totalCuotasPagadas,
+      saldoFinalTotal,
       calculo: {
-        formula: `Saldo final = ${saldoInicial} (inicial) + ${totalIngresos} (ingresos mes) - ${totalGastos} (gastos históricos)`,
-        resultado: saldoFinal
+        formula: `Saldo final = ${saldoInicial} (inicial) + ${totalIngresos} (ingresos mes) - (${totalGastos} + ${totalPagosFijos} + ${totalCuotasPagadas})`,
+        resultado: saldoFinalTotal
+      },
+      cuotas: {
+        nota: "Suma solo cuotas con pagada: true en el historial",
+        total_cuotas_pagadas: totalCuotasPagadas
       }
     });
     
