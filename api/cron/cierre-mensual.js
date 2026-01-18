@@ -113,13 +113,54 @@ export default async function handler(req, res) {
       });
     }
     
-    // 3️⃣ Gastos de TODOS LOS MESES (históricos acumulados)
-    let totalGastos = 0;
-    try {
-      const gastos = await notion.databases.query({
-        database_id: EXPENSES_DB_ID,
-        // Sin filtro para obtener todos los gastos históricos
-      });
+    // 3️⃣ Gastos SOLO DEL MES ACTUAL
+let totalGastos = 0;
+try {
+  const startOfMonth = new Date(year, month, 1).toISOString();
+  const startOfNextMonth = new Date(year, month + 1, 1).toISOString();
+
+  const gastos = await notion.databases.query({
+    database_id: EXPENSES_DB_ID,
+    filter: {
+      and: [
+        {
+          property: "Fecha del gasto", // ⚠️ usa el nombre exacto en Notion
+          date: {
+            on_or_after: startOfMonth,
+          },
+        },
+        {
+          property: "Fecha del gasto",
+          date: {
+            before: startOfNextMonth,
+          },
+        },
+      ],
+    },
+  });
+
+  totalGastos = round2(
+    gastos.results.reduce((sum, page) => {
+      const props = page.properties;
+      const cantidad =
+        props.Cantidad?.number ||
+        props.cantidad?.number ||
+        props.Monto?.number ||
+        0;
+      return sum + cantidad;
+    }, 0)
+  );
+
+  console.log(
+    `💸 Gastos mes ${mes}: ${totalGastos}, registros: ${gastos.results.length}`
+  );
+} catch (error) {
+  console.error("❌ Error obteniendo gastos:", error.message);
+  return res.status(500).json({
+    error: "Error obteniendo gastos",
+    details: error.message,
+  });
+}
       
       totalGastos = round2(
         gastos.results.reduce((sum, page) => {
