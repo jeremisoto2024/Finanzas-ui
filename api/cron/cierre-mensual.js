@@ -167,32 +167,53 @@ try {
     
     console.log(`🧮 Cálculo base: ${saldoInicial} + ${totalIngresos} - ${totalGastos} = ${saldoBaseFinal}`);
     
-    // 5️⃣ Intentar obtener pagos fijos (opcional)
-    let totalPagosFijos = 0;
-    
-    // Pagos fijos (opcional)
-    if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
-      try {
-        const pagosFijos = await notion.databases.query({
-          database_id: process.env.NOTION_PAGOS_FIJOS_DATABASE_ID,
-        });
-        
-        totalPagosFijos = round2(
-          pagosFijos.results.reduce((sum, page) => {
-            const props = page.properties;
-            const cantidad = props.Cantidad?.number || 
-                            props.cantidad?.number || 
-                            props.Monto?.number || 
-                            props.Valor?.number || 0;
-            return sum + cantidad;
-          }, 0)
-        );
-        
-        console.log(`💳 Total pagos fijos históricos: ${totalPagosFijos}, registros: ${pagosFijos.results.length}`);
-      } catch (error) {
-        console.error("⚠️ Error obteniendo pagos fijos (continuando...):", error.message);
-      }
-    }
+    // 5️⃣ Pagos fijos SOLO DEL MES ACTUAL
+let totalPagosFijos = 0;
+
+if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
+  try {
+    const startOfMonth = new Date(year, month, 1).toISOString();
+    const startOfNextMonth = new Date(year, month + 1, 1).toISOString();
+
+    const pagosFijos = await notion.databases.query({
+      database_id: process.env.NOTION_PAGOS_FIJOS_DATABASE_ID,
+      filter: {
+        and: [
+          {
+            property: "Fecha creación",
+            date: {
+              on_or_after: startOfMonth,
+            },
+          },
+          {
+            property: "Fecha creación",
+            date: {
+              before: startOfNextMonth,
+            },
+          },
+        ],
+      },
+    });
+
+    totalPagosFijos = round2(
+      pagosFijos.results.reduce((sum, page) => {
+        const props = page.properties;
+        const cantidad =
+          props.Cantidad?.number ||
+          props.Monto?.number ||
+          props.Valor?.number ||
+          0;
+        return sum + cantidad;
+      }, 0)
+    );
+
+    console.log(
+      `💳 Pagos fijos mes ${mes}: ${totalPagosFijos}, registros: ${pagosFijos.results.length}`
+    );
+  } catch (error) {
+    console.error("⚠️ Error obteniendo pagos fijos:", error.message);
+  }
+}
     
     // 6️⃣ Compras a cuotas - LEER HISTORIAL DE CUOTAS PAGADAS
     let totalCuotasPagadas = 0;
