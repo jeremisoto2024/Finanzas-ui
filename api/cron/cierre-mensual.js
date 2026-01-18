@@ -161,25 +161,6 @@ try {
     details: error.message,
   });
 }
-      
-      totalGastos = round2(
-        gastos.results.reduce((sum, page) => {
-          const props = page.properties;
-          const cantidad = props.Cantidad?.number || 
-                          props.cantidad?.number || 
-                          props.Monto?.number || 0;
-          return sum + cantidad;
-        }, 0)
-      );
-      
-      console.log(`💸 Total gastos históricos: ${totalGastos}, registros: ${gastos.results.length}`);
-    } catch (error) {
-      console.error("❌ Error obteniendo gastos:", error.message);
-      return res.status(500).json({
-        error: "Error obteniendo gastos",
-        details: error.message
-      });
-    }
     
     // 4️⃣ Calcular saldo base final (sin pagos fijos y cuotas)
     const saldoBaseFinal = round2(saldoInicial + totalIngresos - totalGastos);
