@@ -44,7 +44,12 @@ export default async function handler(req, res) {
     const month = now.getMonth();
     const mes = `${year}-${String(month + 1).padStart(2, "0")}`;
     
+    // Fechas para filtrar solo el mes actual
+    const startOfMonth = new Date(year, month, 1);
+    const startOfNextMonth = new Date(year, month + 1, 1);
+    
     console.log(`📅 Procesando mes: ${mes}`);
+    console.log(`📆 Rango: ${startOfMonth.toISOString()} → ${startOfNextMonth.toISOString()}`);
     
     // 1️⃣ Saldo inicial = saldo final del mes anterior
     let saldoInicial = 0;
@@ -62,18 +67,15 @@ export default async function handler(req, res) {
                       props["Saldo Final"]?.number || 0;
         saldoInicial = round2(saldoInicial);
       }
-      console.log(`💰 Saldo inicial: ${saldoInicial}`);
+      console.log(`💰 Saldo inicial (del mes anterior): ${saldoInicial}`);
     } catch (error) {
       console.error("❌ Error obteniendo saldo inicial:", error.message);
       // Continuar con saldo inicial 0
     }
     
-    // 2️⃣ Ingresos SOLO DEL MES ACTUAL
+    // 2️⃣ Ingresos SOLO DEL MES ACTUAL (✅ ya correcto)
     let totalIngresos = 0;
     try {
-      const startOfMonth = new Date(year, month, 1).toISOString();
-      const startOfNextMonth = new Date(year, month + 1, 1).toISOString();
-      
       const ingresos = await notion.databases.query({
         database_id: INCOME_DB_ID,
         filter: {
@@ -81,13 +83,13 @@ export default async function handler(req, res) {
             {
               property: "Fecha del ingreso",
               date: {
-                on_or_after: startOfMonth,
+                on_or_after: startOfMonth.toISOString(),
               },
             },
             {
               property: "Fecha del ingreso",
               date: {
-                before: startOfNextMonth,
+                before: startOfNextMonth.toISOString(),
               },
             },
           ],
@@ -113,119 +115,119 @@ export default async function handler(req, res) {
       });
     }
     
-    // 3️⃣ Gastos SOLO DEL MES ACTUAL
-let totalGastos = 0;
-try {
-  const startOfMonth = new Date(year, month, 1).toISOString();
-  const startOfNextMonth = new Date(year, month + 1, 1).toISOString();
-
-  const gastos = await notion.databases.query({
-    database_id: EXPENSES_DB_ID,
-    filter: {
-      and: [
-        {
-          property: "Fecha del gasto", // ⚠️ usa el nombre exacto en Notion
-          date: {
-            on_or_after: startOfMonth,
-          },
-        },
-        {
-          property: "Fecha del gasto",
-          date: {
-            before: startOfNextMonth,
-          },
-        },
-      ],
-    },
-  });
-
-  totalGastos = round2(
-    gastos.results.reduce((sum, page) => {
-      const props = page.properties;
-      const cantidad =
-        props.Cantidad?.number ||
-        props.cantidad?.number ||
-        props.Monto?.number ||
-        0;
-      return sum + cantidad;
-    }, 0)
-  );
-
-  console.log(
-    `💸 Gastos mes ${mes}: ${totalGastos}, registros: ${gastos.results.length}`
-  );
-} catch (error) {
-  console.error("❌ Error obteniendo gastos:", error.message);
-  return res.status(500).json({
-    error: "Error obteniendo gastos",
-    details: error.message,
-  });
-}
-    
-    // 4️⃣ Calcular saldo base final (sin pagos fijos y cuotas)
-    const saldoBaseFinal = round2(saldoInicial + totalIngresos - totalGastos);
-    
-    console.log(`🧮 Cálculo base: ${saldoInicial} + ${totalIngresos} - ${totalGastos} = ${saldoBaseFinal}`);
-    
-    // 5️⃣ Pagos fijos SOLO DEL MES ACTUAL
-let totalPagosFijos = 0;
-
-if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
-  try {
-    const startOfMonth = new Date(year, month, 1).toISOString();
-    const startOfNextMonth = new Date(year, month + 1, 1).toISOString();
-
-    const pagosFijos = await notion.databases.query({
-      database_id: process.env.NOTION_PAGOS_FIJOS_DATABASE_ID,
-      filter: {
-        and: [
-          {
-            property: "Fecha creación",
-            date: {
-              on_or_after: startOfMonth,
+    // 3️⃣ Gastos SOLO DEL MES ACTUAL (✅ ahora correcto)
+    let totalGastos = 0;
+    try {
+      const gastos = await notion.databases.query({
+        database_id: EXPENSES_DB_ID,
+        filter: {
+          and: [
+            {
+              property: "Fecha del gasto", // ⚠️ usa el nombre exacto en Notion
+              date: {
+                on_or_after: startOfMonth.toISOString(),
+              },
             },
-          },
-          {
-            property: "Fecha creación",
-            date: {
-              before: startOfNextMonth,
+            {
+              property: "Fecha del gasto",
+              date: {
+                before: startOfNextMonth.toISOString(),
+              },
             },
-          },
-        ],
-      },
-    });
+          ],
+        },
+      });
 
-    totalPagosFijos = round2(
-      pagosFijos.results.reduce((sum, page) => {
-        const props = page.properties;
-        const cantidad =
-          props.Cantidad?.number ||
-          props.Monto?.number ||
-          props.Valor?.number ||
-          0;
-        return sum + cantidad;
-      }, 0)
-    );
+      totalGastos = round2(
+        gastos.results.reduce((sum, page) => {
+          const props = page.properties;
+          const cantidad =
+            props.Cantidad?.number ||
+            props.cantidad?.number ||
+            props.Monto?.number ||
+            0;
+          return sum + cantidad;
+        }, 0)
+      );
 
-    console.log(
-      `💳 Pagos fijos mes ${mes}: ${totalPagosFijos}, registros: ${pagosFijos.results.length}`
-    );
-  } catch (error) {
-    console.error("⚠️ Error obteniendo pagos fijos:", error.message);
-  }
-}
+      console.log(
+        `💸 Gastos mes ${mes}: ${totalGastos}, registros: ${gastos.results.length}`
+      );
+    } catch (error) {
+      console.error("❌ Error obteniendo gastos:", error.message);
+      return res.status(500).json({
+        error: "Error obteniendo gastos",
+        details: error.message,
+      });
+    }
     
-    // 6️⃣ Compras a cuotas - LEER HISTORIAL DE CUOTAS PAGADAS
-    let totalCuotasPagadas = 0;
+    // 4️⃣ Pagos fijos SOLO DEL MES ACTUAL (✅ ahora correcto)
+    let totalPagosFijos = 0;
+    if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
+      try {
+        const pagosFijos = await notion.databases.query({
+          database_id: process.env.NOTION_PAGOS_FIJOS_DATABASE_ID,
+          filter: {
+            and: [
+              {
+                property: "Fecha creación",
+                date: {
+                  on_or_after: startOfMonth.toISOString(),
+                },
+              },
+              {
+                property: "Fecha creación",
+                date: {
+                  before: startOfNextMonth.toISOString(),
+                },
+              },
+            ],
+          },
+        });
+
+        totalPagosFijos = round2(
+          pagosFijos.results.reduce((sum, page) => {
+            const props = page.properties;
+            const cantidad =
+              props.Cantidad?.number ||
+              props.Monto?.number ||
+              props.Valor?.number ||
+              0;
+            return sum + cantidad;
+          }, 0)
+        );
+
+        console.log(
+          `💳 Pagos fijos mes ${mes}: ${totalPagosFijos}, registros: ${pagosFijos.results.length}`
+        );
+      } catch (error) {
+        console.error("⚠️ Error obteniendo pagos fijos:", error.message);
+      }
+    } else {
+      console.log("⚠️ NOTION_PAGOS_FIJOS_DATABASE_ID no definida");
+    }
+    
+    // 5️⃣ Compras a cuotas - SOLO CUOTAS PAGADAS EN EL MES ACTUAL ✅ (corregido)
+    let totalCuotasPagadasMes = 0; // Cambié el nombre para ser más claro
     
     if (process.env.NOTION_COMPRAS_CUOTAS_DATABASE_ID) {
       try {
-        console.log(`📊 Leyendo compras a cuotas...`);
+        console.log(`📊 Leyendo compras a cuotas para el mes ${mes}...`);
         const comprasCuotas = await notion.databases.query({
           database_id: process.env.NOTION_COMPRAS_CUOTAS_DATABASE_ID,
         });
         
         console.log(`📄 Encontradas ${comprasCuotas.results.length} compras a cuotas`);
+        
+        // Función para verificar si una fecha está en el mes actual
+        const fechaEnMesActual = (fechaString) => {
+          try {
+            const fechaCuota = new Date(fechaString);
+            return fechaCuota >= startOfMonth && fechaCuota < startOfNextMonth;
+          } catch (e) {
+            return false;
+          }
+        };
         
         // Procesar cada compra a cuotas
         for (let i = 0; i < comprasCuotas.results.length; i++) {
@@ -249,7 +251,7 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
           if (historialTexto) {
             try {
               historialCuotas = JSON.parse(historialTexto);
-              console.log(`📋 Historial encontrado en texto para "${concepto}":`, historialCuotas);
+              console.log(`📋 Historial encontrado para "${concepto}" (${historialCuotas.length} cuotas)`);
             } catch (parseError) {
               console.error(`❌ Error parseando JSON de "${concepto}":`, parseError.message);
             }
@@ -271,43 +273,39 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
             }
           }
           
-          // 3. Si no hay historial, intentar con cuotas pagadas/totales
-          if (!historialCuotas) {
-            const cuotasPagadas = props["Cuotas pagadas"]?.number || 0;
-            const cuotasTotales = props["Cuotas totales"]?.number || 0;
-            const montoTotal = props["Monto total"]?.number || 
-                              props["monto total"]?.number ||
-                              props["Monto Total"]?.number || 0;
-            
-            if (cuotasTotales > 0 && montoTotal > 0) {
-              console.log(`ℹ️ "${concepto}": ${cuotasPagadas}/${cuotasTotales} cuotas pagadas, Monto total: ${montoTotal}`);
-              
-              // Calcular monto por cuota
-              const montoPorCuota = montoTotal / cuotasTotales;
-              totalCuotasPagadas += round2(montoPorCuota * cuotasPagadas);
-            }
+          // Si no hay historial, no podemos calcular cuotas pagadas en este mes específico
+          if (!historialCuotas || !Array.isArray(historialCuotas)) {
+            console.log(`ℹ️ "${concepto}" no tiene historial de cuotas en formato JSON, se omite.`);
             continue;
           }
           
-          // Procesar el historial de cuotas si se encontró
-          if (Array.isArray(historialCuotas)) {
-            console.log(`🔍 Procesando historial de cuotas para "${concepto}":`, historialCuotas);
+          // Procesar el historial de cuotas
+          console.log(`🔍 Procesando historial de cuotas para "${concepto}":`);
+          
+          // Filtrar cuotas pagadas EN EL MES ACTUAL
+          const cuotasPagadasMes = historialCuotas.filter(cuota => {
+            // La cuota debe estar pagada y tener fecha
+            if (!cuota.pagada || !cuota.fecha) {
+              return false;
+            }
             
-            // Filtrar cuotas pagadas y sumar sus montos
-            const cuotasPagadas = historialCuotas.filter(cuota => cuota.pagada === true);
-            
-            let montoTotalCuotasPagadas = 0;
-            cuotasPagadas.forEach(cuota => {
-              montoTotalCuotasPagadas += cuota.monto || 0;
-            });
-            
-            totalCuotasPagadas += round2(montoTotalCuotasPagadas);
-            
-            console.log(`✓ "${concepto}": ${cuotasPagadas.length} cuotas pagadas, Total: €${montoTotalCuotasPagadas.toFixed(2)}`);
+            // Verificar que la fecha esté en el mes actual
+            return fechaEnMesActual(cuota.fecha);
+          });
+          
+          // Sumar montos de cuotas pagadas en el mes actual
+          let montoCuotasMes = 0;
+          cuotasPagadasMes.forEach(cuota => {
+            montoCuotasMes += cuota.monto || 0;
+          });
+          
+          if (cuotasPagadasMes.length > 0) {
+            totalCuotasPagadasMes += round2(montoCuotasMes);
+            console.log(`✓ "${concepto}": ${cuotasPagadasMes.length} cuotas pagadas este mes, Total: €${montoCuotasMes.toFixed(2)}`);
           }
         }
         
-        console.log(`💳 Total cuotas pagadas (históricas): €${totalCuotasPagadas.toFixed(2)}`);
+        console.log(`💳 Total cuotas pagadas en ${mes}: €${totalCuotasPagadasMes.toFixed(2)}`);
         
       } catch (error) {
         console.error("❌ Error obteniendo compras a cuotas:", error.message);
@@ -317,20 +315,22 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
       console.log("ℹ️ NOTION_COMPRAS_CUOTAS_DATABASE_ID no está definida, omitiendo cuotas");
     }
     
-    // 7️⃣ Calcular saldo final TOTAL (incluyendo pagos fijos y cuotas)
-    const totalGastosConExtras = round2(totalGastos + totalPagosFijos + totalCuotasPagadas);
-    const saldoFinalTotal = round2(saldoInicial + totalIngresos - totalGastosConExtras);
+    // 6️⃣ Calcular gastos totales DEL MES (suma de todo)
+    const totalGastosDelMes = round2(totalGastos + totalPagosFijos + totalCuotasPagadasMes);
     
-    console.log("\n📊 RESUMEN FINAL:");
+    // 7️⃣ Calcular saldo final TOTAL
+    const saldoFinalTotal = round2(saldoInicial + totalIngresos - totalGastosDelMes);
+    
+    console.log("\n📊 RESUMEN FINAL DEL MES:");
     console.log(`💰 Saldo inicial: €${saldoInicial.toFixed(2)}`);
     console.log(`📈 Ingresos mes ${mes}: €${totalIngresos.toFixed(2)}`);
-    console.log(`💸 Gastos históricos: €${totalGastos.toFixed(2)}`);
-    console.log(`💳 Pagos fijos históricos: €${totalPagosFijos.toFixed(2)}`);
-    console.log(`💳 Cuotas pagadas históricas: €${totalCuotasPagadas.toFixed(2)}`);
-    console.log(`🧮 Total gastos: €${totalGastosConExtras.toFixed(2)}`);
+    console.log(`💸 Gastos del mes: €${totalGastos.toFixed(2)}`);
+    console.log(`💳 Pagos fijos del mes: €${totalPagosFijos.toFixed(2)}`);
+    console.log(`💳 Cuotas pagadas este mes: €${totalCuotasPagadasMes.toFixed(2)}`);
+    console.log(`🧮 TOTAL GASTOS DEL MES: €${totalGastosDelMes.toFixed(2)}`);
     console.log(`💰 Saldo final total: €${saldoFinalTotal.toFixed(2)}`);
     
-    // 8️⃣ Guardar resumen mensual en Notion
+    // 8️⃣ Guardar resumen mensual en Notion (SOLO propiedades que existen)
     try {
       // Preparar propiedades para Notion
       const propiedades = {
@@ -343,6 +343,9 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
         "Total ingresos": {
           number: totalIngresos
         },
+        "Total gastos": { // ← Esto es lo MÁS IMPORTANTE: la suma de todos los gastos del mes
+          number: totalGastosDelMes
+        },
         "Saldo final": {
           number: saldoFinalTotal
         },
@@ -351,17 +354,10 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
         }
       };
       
-      // Agregar propiedades adicionales si existen
-      const propsToAdd = {
-        "Total gastos": totalGastos,
-        "Pagos fijos": totalPagosFijos,
-        "Cuotas pagadas": totalCuotasPagadas
-      };
+      // NO agregar propiedades adicionales si no existen en tu DB de resumen
+      // Solo mantenemos las propiedades básicas que SÍ tienes
       
-      // Intentar agregar cada propiedad (solo si existe en la base de datos)
-      Object.entries(propsToAdd).forEach(([propName, value]) => {
-        propiedades[propName] = { number: value };
-      });
+      console.log("📝 Guardando en Resumen Mensual con propiedades:", Object.keys(propiedades));
       
       await notion.pages.create({
         parent: { database_id: RESUMEN_DB_ID },
@@ -371,6 +367,16 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
       console.log("✅ Resumen guardado exitosamente en Notion");
     } catch (error) {
       console.error("❌ Error guardando en Notion:", error.message);
+      // Sugerencia específica
+      if (error.message.includes("is not a property")) {
+        console.error("💡 SOLUCIÓN: Asegúrate de tener estas propiedades en tu DB 'Resumen Mensual':");
+        console.error("   - Mes (Title)");
+        console.error("   - Saldo inicial (Number)");
+        console.error("   - Total ingresos (Number)");
+        console.error("   - Total gastos (Number) ← MÁS IMPORTANTE");
+        console.error("   - Saldo final (Number)");
+        console.error("   - Fecha creación (Date)");
+      }
       // Continuar y devolver datos aunque falle el guardado
     }
     
@@ -382,15 +388,22 @@ if (process.env.NOTION_PAGOS_FIJOS_DATABASE_ID) {
       totalIngresos,
       totalGastos,
       totalPagosFijos,
-      totalCuotasPagadas,
+      totalCuotasPagadas: totalCuotasPagadasMes,
+      totalGastosDelMes, // ← Nuevo: suma de todos los gastos del mes
       saldoFinalTotal,
       calculo: {
-        formula: `Saldo final = ${saldoInicial} (inicial) + ${totalIngresos} (ingresos mes) - (${totalGastos} + ${totalPagosFijos} + ${totalCuotasPagadas})`,
+        formula: `Saldo final = ${saldoInicial} (inicial) + ${totalIngresos} (ingresos mes) - (${totalGastos} + ${totalPagosFijos} + ${totalCuotasPagadasMes})`,
         resultado: saldoFinalTotal
       },
       cuotas: {
-        nota: "Suma solo cuotas con pagada: true en el historial",
-        total_cuotas_pagadas: totalCuotasPagadas
+        nota: "Solo cuotas con pagada: true y fecha dentro del mes actual",
+        total_cuotas_pagadas_mes: totalCuotasPagadasMes
+      },
+      debug: {
+        rango_mes: {
+          inicio: startOfMonth.toISOString(),
+          fin: startOfNextMonth.toISOString()
+        }
       }
     });
     
