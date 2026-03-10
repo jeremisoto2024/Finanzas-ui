@@ -18,7 +18,6 @@ export default function Dashboard() {
           <DineroDisponible />
         </div>
         <div className="lg:col-span-1">
-          <BalanceMensual />
         </div>
         <div className="lg:col-span-1">
           <PagosFijos />
