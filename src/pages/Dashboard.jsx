@@ -4,6 +4,7 @@ import GraficoIngresos from "@/components/dashboard/GraficoIngresos"
 import DineroDisponible from "@/components/dashboard/DineroDisponible"
 import PagosFijos from "@/components/dashboard/PagosFijos"
 
+
 export default function Dashboard() {
   return (
     <motion.div
